@@ -9,6 +9,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> opts) : DbContext(opts)
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<SiteContent> SiteContents => Set<SiteContent>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -21,6 +22,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> opts) : DbContext(opts)
             e.HasIndex(x => x.GoogleId).IsUnique();
             e.Property(x => x.Name).HasMaxLength(200);
             e.Property(x => x.GoogleId).HasMaxLength(100);
+            e.Property(x => x.IsAdmin).HasDefaultValue(false);
+            e.Property(x => x.PasswordHash).HasMaxLength(500);
         });
 
         b.Entity<Product>(e =>
@@ -69,6 +72,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> opts) : DbContext(opts)
                 .WithMany(p => p.OrderItems)
                 .HasForeignKey(x => x.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        b.Entity<SiteContent>(e =>
+        {
+            e.ToTable("site_content");
+            e.HasKey(x => x.Key);
+            e.Property(x => x.Key).HasMaxLength(100);
+            e.Property(x => x.Value).IsRequired();
+            e.Property(x => x.Type).HasMaxLength(20).HasDefaultValue("text");
         });
     }
 }

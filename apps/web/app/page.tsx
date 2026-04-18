@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { fetchProducts } from '@/lib/api';
+import { fetchProducts, fetchSiteContent } from '@/lib/api';
 import { ProductCover } from '@/components/shared/ProductCover';
 import { ProductCard } from '@/components/ProductCard';
 import { Star } from '@/components/shared/Star';
@@ -7,7 +7,7 @@ import { Squiggle } from '@/components/shared/Squiggle';
 import { HomeFaq } from './_home/HomeFaq';
 
 export default async function HomePage() {
-  const products = await fetchProducts();
+  const [products, content] = await Promise.all([fetchProducts(), fetchSiteContent()]);
   const featured = products.slice(0, 6);
 
   return (
@@ -23,7 +23,7 @@ export default async function HomePage() {
             <div className="fade-up">
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px', background: 'var(--mint)', border: '2.5px solid var(--ink)', borderRadius: 999, fontFamily: 'Sniglet, sans-serif', fontSize: 13, marginBottom: 20 }}>
                 <span style={{ width: 8, height: 8, background: 'var(--ink)', borderRadius: '50%' }} />
-                Leaving Etsy · Lower prices, bigger smiles
+                {content['home.announcement'] ?? 'Leaving Etsy · Lower prices, bigger smiles'}
               </div>
               <h1 className="display" style={{ fontSize: 'clamp(48px, 8vw, 96px)', margin: '0 0 20px' }}>
                 Printable<br />
@@ -36,7 +36,7 @@ export default async function HomePage() {
                 <br />books for<br />tiny hands.
               </h1>
               <p style={{ fontSize: 19, maxWidth: 500, marginBottom: 30, color: 'var(--ink-soft)' }}>
-                Instant-download PDFs made by parents who were tired of the algorithm. Print <i>as many times as you like</i>, keep the file forever, and colour quiet rainy afternoons away.
+                {content['home.hero.subtext'] ?? 'Instant-download PDFs made by parents who were tired of the algorithm. Print as many times as you like, keep the file forever, and colour quiet rainy afternoons away.'}
               </p>
               <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
                 <Link href="/shop" className="btn primary lg">Browse the shop →</Link>

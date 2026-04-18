@@ -1,32 +1,61 @@
 import Link from 'next/link';
+import { fetchSiteContent } from '@/lib/api';
 
-export default function AboutPage() {
+const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
+
+function photoUrl(val: string) {
+  if (!val) return null;
+  return val.startsWith('/uploads') ? `${API}${val}` : val;
+}
+
+export default async function AboutPage() {
+  const content = await fetchSiteContent();
+
+  const headline = content['about.headline'] ?? 'Two parents, a kitchen table, lots of crayons.';
+  const intro = content['about.intro'] ?? "Jovie Joy started in 2023 when Mel and Ross couldn't find colouring pages they actually liked for their daughter Jovie (hi, namesake!). So they drew their own. Then their friends asked for copies. Then the friends' friends did. Eventually they put them on Etsy.";
+  const photos = [
+    photoUrl(content['about.photo.1']),
+    photoUrl(content['about.photo.2']),
+    photoUrl(content['about.photo.3']),
+  ];
+  const captions = [
+    'studio photo: mel and ross at the kitchen table',
+    'studio photo: printer + drawing tools',
+    'studio photo: jovie (2y old) colouring',
+  ];
+
   return (
     <div style={{ padding: '30px 0 40px' }}>
       <div className="page" style={{ maxWidth: 860 }}>
         <div className="handwritten" style={{ fontSize: 30, color: 'var(--tomato)', marginBottom: -4 }}>hi, we&rsquo;re glad you&rsquo;re here</div>
         <h1 className="display" style={{ fontSize: 84, margin: '0 0 24px', lineHeight: 0.9 }}>
-          Two parents,<br />a kitchen table,<br />lots of crayons.
+          {headline.split(',').map((part, i, arr) => (
+            <span key={i}>{part}{i < arr.length - 1 ? ',' : ''}<br /></span>
+          ))}
         </h1>
         <p style={{ fontSize: 20, color: 'var(--ink-soft)', marginBottom: 40, maxWidth: 640 }}>
-          Jovie Joy started in 2023 when Mel and Ross couldn&rsquo;t find colouring pages they actually
-          <i> liked</i> for their daughter Jovie (hi, namesake!). So they drew their own. Then their friends
-          asked for copies. Then the friends&rsquo; friends did. Eventually they put them on Etsy.
+          {intro}
         </p>
       </div>
 
       <div style={{ background: 'var(--sun)', padding: '60px 0', borderTop: '2.5px solid var(--ink)', borderBottom: '2.5px solid var(--ink)', margin: '40px 0' }}>
         <div className="page" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
-          {['studio photo: mel and ross at the kitchen table', 'studio photo: printer + drawing tools', 'studio photo: jovie (2y old) colouring'].map((cap, i) => (
+          {photos.map((src, i) => (
             <div key={i} style={{
               aspectRatio: '4/3', background: 'var(--paper)', border: '2.5px solid var(--ink)',
               borderRadius: 16, position: 'relative', overflow: 'hidden',
               transform: `rotate(${[-2, 1, -1][i]}deg)`,
             }}>
-              <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(45deg, rgba(0,0,0,0.05) 0, rgba(0,0,0,0.05) 2px, transparent 2px, transparent 14px)' }} />
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, textAlign: 'center', fontFamily: 'monospace', fontSize: 12, color: 'var(--ink-soft)' }}>
-                [{cap}]
-              </div>
+              {src ? (
+                <img src={src} alt={captions[i]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <>
+                  <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(45deg, rgba(0,0,0,0.05) 0, rgba(0,0,0,0.05) 2px, transparent 2px, transparent 14px)' }} />
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, textAlign: 'center', fontFamily: 'monospace', fontSize: 12, color: 'var(--ink-soft)' }}>
+                    [{captions[i]}]
+                  </div>
+                </>
+              )}
             </div>
           ))}
         </div>

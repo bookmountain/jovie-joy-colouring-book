@@ -6,7 +6,8 @@
       "Bash(cp /Users/book/.claude/projects/-Users-book-Projects-jovie-free-colouring-book/c9e73808-d709-4f62-b79c-e1bb88618c09/tool-results/webfetch-1776496060713-m1wk0u.bin design-bundle/bundle.gz)",
       "Bash(gunzip -k bundle.gz)",
       "Bash(unzip -l /Users/book/Projects/jovie-free-colouring-book/jovie-free-colouring-book-handoff.zip)",
-      "Bash(unzip -o jovie-free-colouring-book-handoff.zip -d .)"
+      "Bash(unzip -o jovie-free-colouring-book-handoff.zip -d .)",
+      "mcp__Claude_Preview__preview_start"
     ]
   }
 }

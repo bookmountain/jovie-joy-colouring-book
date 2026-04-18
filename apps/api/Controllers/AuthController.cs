@@ -25,7 +25,6 @@ public class AuthController(
     }
 
     // Google redirects back here with ?code=...
-    // We exchange, upsert user, mint JWT, then bounce to the frontend with the token.
     [HttpGet("google/callback")]
     public async Task<IActionResult> GoogleCallback(
         [FromQuery] string code,
@@ -42,7 +41,6 @@ public class AuthController(
         {
             var user = await google.ExchangeCodeAsync(code, ct);
             var jwt = tokens.CreateJwt(user);
-            // Frontend reads ?token=... on /auth/callback, stores it, redirects onward.
             var returnTo = string.IsNullOrWhiteSpace(state) ? "/" : state;
             return Redirect($"{webAppUrl}/auth/callback?token={Uri.EscapeDataString(jwt)}&returnTo={Uri.EscapeDataString(returnTo)}");
         }
@@ -50,6 +48,23 @@ public class AuthController(
         {
             return Redirect($"{webAppUrl}/auth/callback?error={Uri.EscapeDataString(ex.Message)}");
         }
+    }
+
+    // Admin login — email + password
+    [HttpPost("admin/login")]
+    public async Task<ActionResult<AuthResponse>> AdminLogin(
+        [FromBody] AdminLoginRequest req,
+        CancellationToken ct)
+    {
+        var user = await db.Users.FirstOrDefaultAsync(
+            u => u.Email == req.Email && u.IsAdmin, ct);
+
+        if (user is null || string.IsNullOrEmpty(user.PasswordHash) ||
+            !PasswordHasher.Verify(req.Password, user.PasswordHash))
+            return Unauthorized(new { message = "Invalid credentials" });
+
+        var jwt = tokens.CreateJwt(user);
+        return Ok(new AuthResponse(jwt, UserDto.From(user)));
     }
 
     [Authorize]

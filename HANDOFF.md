@@ -7,7 +7,7 @@ This is a partial scaffold. Backend is ~60% complete; frontend and deploy pipeli
 ### Root
 - `README.md`, `.gitignore`
 - `docker-compose.yml` (local dev Postgres on port 5433)
-- `docker-compose.prod.yml` (prod — attaches to existing `bookcv-db` container's network)
+- `docker-compose.prod.yml` (prod — runs its own `jovie-joy-db` Postgres container)
 - `docs/SERVER-SETUP.md` (one-time VM setup: self-hosted runner, database, env files, Google + Stripe)
 
 ### Backend (`apps/api/`)

@@ -4,7 +4,7 @@ Run these on the VM at `192.168.4.106` yourself. Do not paste passwords or token
 
 ## 1. Rotate credentials
 
-You shared an SSH password earlier. Rotate it now:
+If you haven't already, rotate any shared SSH password:
 
 ```bash
 passwd
@@ -12,7 +12,7 @@ passwd
 
 ## 2. Install the GitHub Actions self-hosted runner
 
-In GitHub, go to the repo → Settings → Actions → Runners → **New self-hosted runner**, choose Linux x64, and copy the fresh registration token. (Tokens are short-lived — don't reuse old ones.)
+In GitHub, go to the repo → Settings → Actions → Runners → **New self-hosted runner**, choose Linux x64, and copy the fresh registration token. (Tokens are short-lived — generate a new one each time.)
 
 On the VM, as the `book` user:
 
@@ -32,30 +32,11 @@ sudo ./svc.sh start
 sudo ./svc.sh status
 ```
 
-Verify in the repo's runner settings page that the runner shows as idle.
+Verify the runner shows as idle in the repo's Settings → Actions → Runners page.
 
-## 3. Create the database
+## 3. Clone the repo
 
-The existing `bookcv-db` container runs Postgres 17. Add a new database and user alongside `bookcv`:
-
-```bash
-# Pick a strong password and save it — you'll put it in apps/api/.env below.
-DB_PASS='replace-me-strong-password'
-
-docker exec -i bookcv-db psql -U postgres <<SQL
-CREATE USER jovie WITH ENCRYPTED PASSWORD '${DB_PASS}';
-CREATE DATABASE jovie_joy OWNER jovie;
-GRANT ALL PRIVILEGES ON DATABASE jovie_joy TO jovie;
-SQL
-```
-
-Verify:
-
-```bash
-docker exec -it bookcv-db psql -U jovie -d jovie_joy -c "\l"
-```
-
-## 4. Clone the repo
+The deploy workflow does `git pull` inside `/work/jovie-joy`, so it must be a real git checkout:
 
 ```bash
 cd /work
@@ -63,27 +44,16 @@ git clone https://github.com/bookmountain/jovie-joy-colouring-book.git jovie-joy
 cd jovie-joy
 ```
 
-## 5. Identify the docker network bookcv-db is on
+## 4. Create the production env file
 
-```bash
-docker inspect bookcv-db --format '{{range $n, $c := .NetworkSettings.Networks}}{{$n}}{{"\n"}}{{end}}'
-```
-
-Edit `docker-compose.prod.yml` and change the `bookcv` network name under `networks:` to match. From inside that network the API reaches Postgres at `bookcv-db:5432`.
-
-## 6. Create production env files
-
-```bash
-mkdir -p apps/api apps/web
-```
-
-`apps/api/.env`:
+`apps/api/.env` (gitignored — safe to live in the checkout):
 
 ```env
 ASPNETCORE_ENVIRONMENT=Production
 ASPNETCORE_URLS=http://0.0.0.0:8080
 
-ConnectionStrings__Default=Host=bookcv-db;Port=5432;Database=jovie_joy;Username=jovie;Password=REPLACE_ME
+# "db" is the service name in docker-compose.prod.yml
+ConnectionStrings__Default=Host=db;Port=5432;Database=jovie_joy;Username=postgres;Password=postgres
 
 # openssl rand -base64 48
 Jwt__Secret=REPLACE_WITH_32_BYTES_OF_RANDOM
@@ -101,75 +71,71 @@ Stripe__SecretKey=sk_test_REPLACE_ME
 Stripe__WebhookSecret=whsec_REPLACE_ME
 Stripe__SuccessUrl=http://192.168.4.106:3080/checkout/success?session_id={CHECKOUT_SESSION_ID}
 Stripe__CancelUrl=http://192.168.4.106:3080/checkout
+
+Admin__Email=admin@joviejoy.com
+Admin__Password=changeme123
 ```
 
-`apps/web/.env.local`:
-
-```env
-NEXT_PUBLIC_API_URL=http://192.168.4.106:5080
-NEXT_PUBLIC_APP_URL=http://192.168.4.106:3080
-NODE_ENV=production
-```
-
-Lock them down:
+Lock it down:
 
 ```bash
-chmod 600 apps/api/.env apps/web/.env.local
+chmod 600 /work/jovie-joy/apps/api/.env
 ```
 
-## 7. First boot
+## 5. First boot
 
-With the self-hosted runner approach, the GitHub Actions workflow builds the docker images on the VM itself and runs `docker compose up`. But for the very first deploy you can also do it manually to verify everything works:
+Push to `main` (or click "Run workflow" in the Actions tab). The deploy workflow runs on the self-hosted runner and:
+
+1. Verifies `/work/jovie-joy` is a git checkout and the `.env` exists (fails fast otherwise)
+2. `git fetch && git reset --hard origin/main` inside `/work/jovie-joy` (leaves the gitignored `.env` alone)
+3. `docker compose -f docker-compose.prod.yml build && up -d`
+4. Polls `http://localhost:5080/health` for up to 60s
+5. Prunes old images
+
+This starts three containers: `jovie-joy-db` (Postgres), `jovie-joy-api`, and `jovie-joy-web`. EF Core migrations apply automatically on API startup, seeding the admin user.
+
+To smoke-test manually:
 
 ```bash
 cd /work/jovie-joy
-docker compose -f docker-compose.prod.yml build
 docker compose -f docker-compose.prod.yml up -d
-docker compose -f docker-compose.prod.yml logs -f
 ```
 
-EF Core migrations apply automatically on API startup.
-
-## 8. Google OAuth configuration
+## 6. Google OAuth configuration
 
 Google Cloud Console → APIs & Services → Credentials → Create OAuth client ID → Web application.
 
 Authorized redirect URIs:
-- `http://localhost:5080/auth/google/callback` (dev)
+- `http://localhost:8080/auth/google/callback` (dev)
 - `http://192.168.4.106:5080/auth/google/callback` (prod — or your domain if you have one)
 
 Copy the client ID and secret into `apps/api/.env`.
 
-## 9. Stripe configuration
+## 7. Stripe configuration
 
 Stripe Dashboard:
 
 1. Grab the test secret key → `Stripe__SecretKey`.
 2. Webhooks → Add endpoint.
    - URL: `https://your-public-domain/webhooks/stripe`.
-   - **Important:** Stripe can only reach public URLs. `192.168.4.106` is a private IP, so webhooks will not fire against your VM directly. Options:
+   - **Important:** Stripe can only reach public URLs. `192.168.4.106` is a private IP, so webhooks will not fire directly. Options:
      - Put a reverse proxy with a public DNS record in front of the VM.
      - Use a tunnel (Cloudflare Tunnel, ngrok) to expose `/webhooks/stripe` publicly.
-     - For local development, use `stripe listen --forward-to localhost:5080/webhooks/stripe` from the Stripe CLI.
+     - For local development, use `stripe listen --forward-to localhost:8080/webhooks/stripe` from the Stripe CLI.
    - Events to subscribe to: `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`.
 3. Copy the signing secret → `Stripe__WebhookSecret`.
 
-Without webhooks, the checkout → Stripe redirect → success page flow still works; it just won't persist the paid order to the database until the webhook hits. Not production-ready until this piece is connected.
+## 8. Common ops
 
-## 10. Common ops
+All commands run from `/work/jovie-joy`.
 
 ```bash
 # Tail logs
 docker compose -f docker-compose.prod.yml logs -f api
 docker compose -f docker-compose.prod.yml logs -f web
 
-# Manual redeploy (the GitHub Actions workflow does this automatically)
-git pull
-docker compose -f docker-compose.prod.yml build
-docker compose -f docker-compose.prod.yml up -d
-
 # Connect to the app DB
-docker exec -it bookcv-db psql -U jovie -d jovie_joy
+docker exec -it jovie-joy-db psql -U postgres -d jovie_joy
 
 # Runner status
 sudo /work/actions-runner/svc.sh status

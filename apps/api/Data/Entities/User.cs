@@ -9,5 +9,9 @@ public class User
     public string? AvatarUrl { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    public bool IsAdmin { get; set; } = false;
+    // PBKDF2 hash — only set for admin accounts that use password login
+    public string? PasswordHash { get; set; }
+
     public ICollection<Order> Orders { get; set; } = new List<Order>();
 }

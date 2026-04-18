@@ -4,28 +4,33 @@ Printable colouring books for tiny hands. Monorepo with Next.js frontend + ASP.N
 
 ## Stack
 
-- **Frontend** — Next.js 15 (App Router), Tailwind CSS, shadcn/ui, TypeScript
-- **Backend** — ASP.NET Core 9 Web API, EF Core, Npgsql
-- **Database** — PostgreSQL 17 (shared container with `bookcv-db` in prod)
-- **Auth** — Google OAuth via ASP.NET, JWT-issued sessions
-- **Payments** — Stripe Checkout (one-time, digital PDF downloads)
-- **Deploy** — GitHub Actions → self-hosted VM via SSH
+| Layer    | Tech                                                                 |
+| -------- | -------------------------------------------------------------------- |
+| Frontend | Next.js 15 (App Router), TypeScript                                  |
+| Backend  | ASP.NET Core 9, Entity Framework Core                                |
+| Database | PostgreSQL 17                                                        |
+| Auth     | Google OIDC (id_token via JWKS) + admin email/password, JWT sessions |
+| Payments | Stripe Checkout (one-time, digital PDF downloads)                    |
+| Deploy   | GitHub Actions → self-hosted runner on VM                            |
 
 ## Repo layout
 
 ```
 .
 ├── apps/
-│   ├── web/          Next.js frontend
-│   └── api/          ASP.NET Core backend
-├── .github/workflows/ CI + deploy pipelines
-├── docker-compose.yml Local dev (+ prod reference)
+│   ├── web/                Next.js frontend
+│   └── api/                ASP.NET Core backend
+│       └── uploads/        PDF and image uploads (git-ignored)
+├── .github/workflows/      CI + deploy pipelines
+├── docker-compose.yml      Local dev
+├── docker-compose.prod.yml Production
 └── README.md
 ```
 
 ## Local development
 
 ### Prerequisites
+
 - Node 20+
 - .NET 9 SDK
 - Docker (for Postgres)
@@ -40,42 +45,75 @@ docker compose up -d db
 cd apps/api
 cp .env.example .env               # fill in Google + Stripe keys
 dotnet restore
-dotnet ef database update          # apply migrations
-dotnet run                         # http://localhost:5080
+dotnet ef database update          # apply migrations (seeds admin user too)
+dotnet run                         # http://localhost:8080
 
 # 3. Frontend (new terminal)
 cd apps/web
-cp .env.local.example .env.local   # fill in NEXT_PUBLIC_API_URL etc.
 npm install
-npm run dev                        # http://localhost:3000
+NEXT_PUBLIC_API_URL=http://localhost:8080 npm run dev   # http://localhost:3000
+```
+
+## Admin dashboard
+
+The admin panel lives at `/admin`. Visit `/admin/login` to sign in with your admin credentials.
+
+### Default credentials
+
+| Field    | Value                |
+| -------- | -------------------- |
+| Email    | `admin@joviejoy.com` |
+| Password | `changeme123`        |
+
+**Change the password before going to production.** Update `Admin__Email` and `Admin__Password` in `apps/api/.env` (or environment variables on the server). The API seeds the admin user on startup — if the user already exists the seed is skipped, so you must update the hash in the database directly after first deploy, or set the vars before first run.
+
+### Admin sections
+
+- **Analytics** — revenue stats, 30-day chart, top products
+- **Products** — create/edit products, upload PDFs
+- **Orders** — paginated order list with status filter and line-item drill-down
+- **Content** — edit home page text, about page text, and upload photos
+
+## Google OAuth setup
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials
+2. Create an **OAuth 2.0 Client ID** (Web application)
+3. Add authorised redirect URI: `http://localhost:8080/auth/google/callback` (and your prod URL)
+4. Copy Client ID and Client Secret into `apps/api/.env`:
+
+```
+Google__ClientId=YOUR_CLIENT_ID
+Google__ClientSecret=YOUR_CLIENT_SECRET
 ```
 
 ## Deployment
 
-Deploys via a **GitHub Actions self-hosted runner** installed on the VM at `192.168.4.106`. Pushes to `main` trigger the workflow; because the runner is already on the VM, deployment is just `docker compose up -d` in the repo's working directory — no SSH keys needed.
+Deploys via a **GitHub Actions self-hosted runner** on the VM at `192.168.4.106`. Pushes to `main` trigger the workflow; the runner runs `docker compose -f docker-compose.prod.yml up -d --build` in the repo checkout directory.
 
-One-time server setup (run yourself — see `docs/SERVER-SETUP.md`):
+One-time server setup:
+
 - Install the self-hosted runner as a systemd service
-- Create DB + user in the existing `bookcv-db` container
-- Clone repo to `/work/jovie-joy`
-- Populate `apps/api/.env` and `apps/web/.env.local` with production secrets
+- Create DB and user in the existing `bookcv-db` container
+- Clone the repo to `/work/jovie-joy`
+- Populate `apps/api/.env` with production secrets (see below)
 
-## Secrets you'll need
+### Backend env vars (`apps/api/.env`)
 
-Frontend (`apps/web/.env.local`):
-- `NEXT_PUBLIC_API_URL` — e.g. `http://localhost:5080` locally
-
-Backend (`apps/api/.env`):
-- `ConnectionStrings__Default` — Postgres connection string
-- `Google__ClientId`, `Google__ClientSecret` — from Google Cloud Console
-- `Jwt__Secret` — 32+ byte random string, different per environment
-- `Jwt__Issuer`, `Jwt__Audience`
-- `Stripe__SecretKey`, `Stripe__WebhookSecret` — from Stripe Dashboard
-- `Stripe__SuccessUrl`, `Stripe__CancelUrl`
-
-GitHub Actions:
-- Secrets are **not required** for deploy — the self-hosted runner already has filesystem access to the repo checkout on the VM.
-- If you later add image publishing to GHCR, you'll need `GITHUB_TOKEN` (auto-provided) or a PAT.
+```
+ConnectionStrings__Default=Host=bookcv-db;Database=jovie;Username=jovie;Password=...
+Google__ClientId=...
+Google__ClientSecret=...
+Jwt__Secret=<32+ random chars>
+Jwt__Issuer=jovie-joy-api
+Jwt__Audience=jovie-joy-web
+Stripe__SecretKey=sk_live_...
+Stripe__WebhookSecret=whsec_...
+Stripe__SuccessUrl=https://yourdomain.com/success
+Stripe__CancelUrl=https://yourdomain.com/cart
+WebAppUrl=https://yourdomain.com
+Admin__Email=admin@joviejoy.com
+Admin__Password=changeme123
+```
 
 ## License
 

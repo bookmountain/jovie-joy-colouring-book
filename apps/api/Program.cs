@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using DotNetEnv;
 using JovieJoy.Api.Data;
@@ -7,22 +8,20 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Stripe;
 
-// Load .env file if present (development convenience; prod uses real env vars)
-Env.TraversePath().Load();
+if (System.IO.File.Exists(".env.local"))
+    Env.Load(".env.local");
+else
+    Env.TraversePath().Load();
+
+JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Allow configuration from environment variables using the __ separator
-// (e.g. Jwt__Secret -> Jwt:Secret). AddEnvironmentVariables is already added
-// by CreateBuilder, this is just a reminder of the convention.
 builder.Configuration.AddEnvironmentVariables();
 
 // ----- Database -----
 var connectionString = builder.Configuration.GetConnectionString("Default")
     ?? throw new InvalidOperationException("ConnectionStrings__Default is required");
-
-builder.Services.AddDbContext<AppDbContext>(opts =>
-    opts.UseNpgsql(connectionString));
+builder.Services.AddDbContext<AppDbContext>(opts => opts.UseNpgsql(connectionString));
 
 // ----- JWT auth -----
 var jwtSecret = builder.Configuration["Jwt:Secret"]
@@ -50,23 +49,22 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(opts =>
+{
+    opts.AddPolicy("AdminOnly", p => p.RequireRole("admin"));
+});
 
 // ----- App services -----
 builder.Services.AddScoped<ITokenService, JovieJoy.Api.Services.TokenService>();
 builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
 builder.Services.AddScoped<IStripeService, StripeService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
-
 builder.Services.AddHttpClient();
 
-// Stripe SDK static config
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"]
     ?? throw new InvalidOperationException("Stripe__SecretKey is required");
 
 // ----- CORS -----
-// The web app runs on a different origin in dev (3000) and prod (3080).
-// WebAppUrl is the allowed origin.
 var webAppUrl = builder.Configuration["WebAppUrl"] ?? "http://localhost:3000";
 builder.Services.AddCors(opts =>
 {
@@ -83,14 +81,13 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// ----- Migrations on startup -----
-// For a small app this is fine. At scale, split into a separate migration
-// job so multiple replicas don't race.
+// ----- Migrations + seed on startup -----
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var cfg = scope.ServiceProvider.GetRequiredService<IConfiguration>();
     db.Database.Migrate();
-    await DbSeeder.SeedAsync(db);
+    await DbSeeder.SeedAsync(db, cfg);
 }
 
 if (app.Environment.IsDevelopment())
@@ -99,13 +96,19 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Serve uploaded files (PDFs, images) from /uploads
+var uploadsPath = Path.Combine(builder.Environment.ContentRootPath, "uploads");
+Directory.CreateDirectory(uploadsPath);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads",
+});
+
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
-
-// Lightweight health probe
 app.MapGet("/health", () => Results.Ok(new { status = "ok", time = DateTime.UtcNow }));
 
 app.Run();

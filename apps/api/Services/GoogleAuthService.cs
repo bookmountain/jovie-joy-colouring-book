@@ -1,7 +1,11 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
 using JovieJoy.Api.Data;
 using JovieJoy.Api.Data.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Protocols;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Microsoft.IdentityModel.Tokens;
 
 namespace JovieJoy.Api.Services;
 
@@ -11,20 +15,22 @@ public interface IGoogleAuthService
     Task<User> ExchangeCodeAsync(string code, CancellationToken ct = default);
 }
 
-// Manual OAuth2 implementation — simpler and more transparent than wiring up
-// the AspNetCore.Authentication.Google handler for a pure-API flow.
-//
-// Flow:
-//   1. Frontend -> GET /auth/google       (server redirects to Google)
+// OAuth2 + OIDC flow:
+//   1. Frontend -> GET /auth/google  (server redirects to Google)
 //   2. User approves at Google
 //   3. Google -> GET /auth/google/callback?code=...
-//   4. Server exchanges code for tokens, fetches userinfo, upserts User,
-//      issues our JWT, redirects to ${WebAppUrl}/auth/callback?token=...
+//   4. Server exchanges code for tokens, validates the OIDC id_token,
+//      upserts User, issues our JWT, redirects to ${WebAppUrl}/auth/callback?token=...
 public class GoogleAuthService(
     IConfiguration config,
     IHttpClientFactory httpFactory,
     AppDbContext db) : IGoogleAuthService
 {
+    private static readonly ConfigurationManager<OpenIdConnectConfiguration> _oidcConfig =
+        new("https://accounts.google.com/.well-known/openid-configuration",
+            new OpenIdConnectConfigurationRetriever(),
+            new HttpDocumentRetriever { RequireHttps = true });
+
     public string GetAuthorizationUrl(string? state = null)
     {
         var clientId = config["Google:ClientId"]!;
@@ -49,6 +55,7 @@ public class GoogleAuthService(
 
         using var http = httpFactory.CreateClient();
 
+        // Exchange auth code for tokens
         var tokenResp = await http.PostAsync(
             "https://oauth2.googleapis.com/token",
             new FormUrlEncodedContent(new Dictionary<string, string>
@@ -63,20 +70,31 @@ public class GoogleAuthService(
         tokenResp.EnsureSuccessStatusCode();
         var tokenJson = await tokenResp.Content.ReadAsStringAsync(ct);
         using var tokenDoc = JsonDocument.Parse(tokenJson);
-        var accessToken = tokenDoc.RootElement.GetProperty("access_token").GetString()!;
 
-        var userResp = await http.GetAsync(
-            $"https://www.googleapis.com/oauth2/v3/userinfo?access_token={Uri.EscapeDataString(accessToken)}", ct);
-        userResp.EnsureSuccessStatusCode();
-        var userJson = await userResp.Content.ReadAsStringAsync(ct);
-        using var userDoc = JsonDocument.Parse(userJson);
+        var idToken = tokenDoc.RootElement.GetProperty("id_token").GetString()!;
 
-        var googleId = userDoc.RootElement.GetProperty("sub").GetString()!;
-        var email = userDoc.RootElement.GetProperty("email").GetString()!;
-        var name = userDoc.RootElement.TryGetProperty("name", out var n) ? n.GetString() : null;
-        var picture = userDoc.RootElement.TryGetProperty("picture", out var p) ? p.GetString() : null;
+        // Validate the OIDC id_token using Google's published JWKS
+        var oidc = await _oidcConfig.GetConfigurationAsync(ct);
+        var validationParams = new TokenValidationParameters
+        {
+            ValidIssuer = "https://accounts.google.com",
+            ValidAudience = clientId,
+            IssuerSigningKeys = oidc.SigningKeys,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(2),
+        };
 
-        // Upsert — try to match by googleId first, then fall back to email
+        var handler = new JwtSecurityTokenHandler();
+        var principal = handler.ValidateToken(idToken, validationParams, out _);
+
+        var googleId = principal.FindFirst("sub")?.Value
+            ?? throw new InvalidOperationException("id_token missing 'sub'");
+        var email = principal.FindFirst("email")?.Value
+            ?? throw new InvalidOperationException("id_token missing 'email'");
+        var name = principal.FindFirst("name")?.Value;
+        var picture = principal.FindFirst("picture")?.Value;
+
+        // Upsert — match by googleId first, fall back to email
         var user = await db.Users.FirstOrDefaultAsync(u => u.GoogleId == googleId, ct);
         user ??= await db.Users.FirstOrDefaultAsync(u => u.Email == email, ct);
 

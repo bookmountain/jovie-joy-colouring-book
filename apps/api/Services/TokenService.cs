@@ -28,6 +28,8 @@ public class TokenService(IConfiguration config) : ITokenService
         };
         if (!string.IsNullOrEmpty(user.Name))
             claims.Add(new Claim("name", user.Name));
+        if (user.IsAdmin)
+            claims.Add(new Claim(ClaimTypes.Role, "admin"));
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

@@ -1,10 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { CartProvider } from '@/components/CartProvider';
-import { TopNav } from '@/components/nav/TopNav';
-import { AnnouncementBar } from '@/components/nav/AnnouncementBar';
-import { Footer } from '@/components/nav/Footer';
-import { MiniCart } from '@/components/nav/MiniCart';
+import { SiteChrome } from '@/components/SiteChrome';
 
 export const metadata: Metadata = {
   title: 'Jovie Joy · Printable Colouring Books for Tiny Hands',
@@ -16,11 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <CartProvider>
-          <AnnouncementBar />
-          <TopNav />
-          <main>{children}</main>
-          <Footer />
-          <MiniCart />
+          <SiteChrome>{children}</SiteChrome>
         </CartProvider>
       </body>
     </html>

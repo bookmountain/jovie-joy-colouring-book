@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useCart } from '../CartProvider';
+import { useEffect, useState } from 'react';
 
 const LINKS = [
   { href: '/', label: 'Home' },
@@ -11,11 +12,32 @@ const LINKS = [
   { href: '/about', label: 'About' },
 ];
 
+const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
+
+interface UserInfo { id: string; email: string; name?: string; avatarUrl?: string }
+
 export function TopNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const { itemCount, setCartOpen } = useCart();
+  const [user, setUser] = useState<UserInfo | null>(null);
 
   const isActive = (href: string) => href === '/' ? pathname === '/' : pathname?.startsWith(href);
+
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('jovie_token') : null;
+    if (!token) return;
+    fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => data && setUser(data))
+      .catch(() => {});
+  }, []);
+
+  function signOut() {
+    localStorage.removeItem('jovie_token');
+    setUser(null);
+    router.push('/');
+  }
 
   return (
     <div className="topnav">
@@ -28,7 +50,16 @@ export function TopNav() {
         ))}
       </div>
       <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-        <Link href="/shop" className="btn sm ghost">Search</Link>
+        {user ? (
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {user.avatarUrl
+              ? <img src={user.avatarUrl} alt={user.name ?? user.email} style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid var(--ink)' }} />
+              : <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--mint)', border: '2px solid var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Sniglet', fontSize: 13 }}>{(user.name ?? user.email)[0].toUpperCase()}</div>}
+            <button className="btn sm ghost" onClick={signOut}>Sign out</button>
+          </div>
+        ) : (
+          <Link href="/login" className="btn sm ghost">Sign in</Link>
+        )}
         <button className="btn sm primary" onClick={() => setCartOpen(true)} style={{ position: 'relative' }}>
           Cart
           {itemCount > 0 && (

@@ -1,20 +1,17 @@
-# Local development docker-compose.
-# In production we reuse the existing `bookcv-db` container on the VM — see docs/SERVER-SETUP.md.
-
 services:
   db:
     image: postgres:17-alpine
     container_name: jovie-joy-db
     ports:
-      - "5433:5432"   # 5433 locally to avoid clashing with any host Postgres on 5432
+      - "5433:5432"
     environment:
-      POSTGRES_USER: jovie
-      POSTGRES_PASSWORD: jovie_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: jovie_joy
     volumes:
       - jovie-joy-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U jovie -d jovie_joy"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d jovie_joy"]
       interval: 5s
       timeout: 5s
       retries: 10

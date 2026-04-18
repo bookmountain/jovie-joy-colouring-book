@@ -64,6 +64,17 @@ export async function createCheckoutSession(body: {
 
 export const apiUrl = API_URL;
 
+export type SiteContentMap = Record<string, string>;
+
+export async function fetchSiteContent(): Promise<SiteContentMap> {
+  try {
+    const res = await fetch(`${API_URL}/api/content`, { next: { revalidate: 60 } });
+    if (!res.ok) return {};
+    const items: { key: string; value: string }[] = await res.json();
+    return Object.fromEntries(items.map(i => [i.key, i.value]));
+  } catch { return {}; }
+}
+
 // Keeps the site functional when the API is unreachable (e.g. static preview).
 // Data matches DbSeeder.cs exactly.
 export const FALLBACK_PRODUCTS: Product[] = [

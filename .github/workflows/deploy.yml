@@ -5,19 +5,56 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: deploy-jovie-joy
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: self-hosted
+    env:
+      APP_DIR: /work/jovie-joy
+      COMPOSE_PROJECT_NAME: jovie-joy
     steps:
-      - uses: actions/checkout@v4
+      - name: Verify app dir
+        run: |
+          if [ ! -d "$APP_DIR/.git" ]; then
+            echo "::error::$APP_DIR is not a git checkout. Run: cd /work && git clone https://github.com/bookmountain/jovie-joy-colouring-book.git jovie-joy"
+            exit 1
+          fi
+          if [ ! -f "$APP_DIR/apps/api/.env" ]; then
+            echo "::error::Missing $APP_DIR/apps/api/.env. Create it before deploying."
+            exit 1
+          fi
+
+      - name: Pull latest
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
 
       - name: Build images
-        working-directory: ${{ github.workspace }}
-        run: docker compose -f docker-compose.prod.yml build
+        working-directory: ${{ env.APP_DIR }}
+        run: docker compose --env-file apps/api/.env -f docker-compose.prod.yml build
 
       - name: Restart stack
-        working-directory: ${{ github.workspace }}
-        run: docker compose -f docker-compose.prod.yml up -d
+        working-directory: ${{ env.APP_DIR }}
+        run: docker compose --env-file apps/api/.env -f docker-compose.prod.yml up -d
+
+      - name: Wait for API health
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:5080/health >/dev/null; then
+              echo "API healthy"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::API failed to become healthy after 60s"
+          docker compose --env-file apps/api/.env -f docker-compose.prod.yml logs api --tail=80
+          exit 1
 
       - name: Prune old images
+        if: success()
         run: docker image prune -f

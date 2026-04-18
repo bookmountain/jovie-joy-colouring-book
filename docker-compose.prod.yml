@@ -1,11 +1,20 @@
-# Production docker-compose — runs on the VM at 192.168.4.106.
-# This file assumes the existing `bookcv-db` postgres container is already running
-# on the default docker network and reachable at `bookcv-db:5432`.
-#
-# Both services connect to the same network as bookcv-db. Adjust the network
-# name below to match what `docker network ls` shows on the VM.
-
 services:
+  db:
+    image: postgres:17-alpine
+    container_name: jovie-joy-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER required in apps/api/.env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required in apps/api/.env}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB required in apps/api/.env}
+    volumes:
+      - jovie-joy-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   api:
     build:
       context: .
@@ -17,9 +26,9 @@ services:
       - ./apps/api/.env
     ports:
       - "5080:8080"
-    networks:
-      - default
-      - bookcv
+    depends_on:
+      db:
+        condition: service_healthy
 
   web:
     build:
@@ -30,14 +39,10 @@ services:
     image: jovie-joy-web:latest
     container_name: jovie-joy-web
     restart: unless-stopped
-    env_file:
-      - ./apps/web/.env.local
     ports:
       - "3080:3000"
     depends_on:
       - api
 
-networks:
-  bookcv:
-    external: true
-    name: book-cv_default
+volumes:
+  jovie-joy-db-data:
