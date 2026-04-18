@@ -1,0 +1,23 @@
+name: Deploy jovie-joy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build images
+        working-directory: ${{ github.workspace }}
+        run: docker compose -f docker-compose.prod.yml build
+
+      - name: Restart stack
+        working-directory: ${{ github.workspace }}
+        run: docker compose -f docker-compose.prod.yml up -d
+
+      - name: Prune old images
+        run: docker image prune -f

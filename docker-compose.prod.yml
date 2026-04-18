@@ -1,0 +1,43 @@
+# Production docker-compose — runs on the VM at 192.168.4.106.
+# This file assumes the existing `bookcv-db` postgres container is already running
+# on the default docker network and reachable at `bookcv-db:5432`.
+#
+# Both services connect to the same network as bookcv-db. Adjust the network
+# name below to match what `docker network ls` shows on the VM.
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: jovie-joy-api:latest
+    container_name: jovie-joy-api
+    restart: unless-stopped
+    env_file:
+      - ./apps/api/.env
+    ports:
+      - "5080:8080"
+    networks:
+      - default
+      - bookcv
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://192.168.4.106:5080}
+    image: jovie-joy-web:latest
+    container_name: jovie-joy-web
+    restart: unless-stopped
+    env_file:
+      - ./apps/web/.env.local
+    ports:
+      - "3080:3000"
+    depends_on:
+      - api
+
+networks:
+  bookcv:
+    external: true
+    name: book-cv_default

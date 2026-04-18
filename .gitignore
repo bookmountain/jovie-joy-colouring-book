@@ -1,0 +1,36 @@
+# Node
+node_modules/
+.next/
+out/
+dist/
+*.log
+.npm/
+.pnpm-debug.log*
+
+# Environment
+.env
+.env.local
+.env*.local
+*.env
+!*.env.example
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.pdb
+.vs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Build artifacts
+coverage/
+*.tsbuildinfo
