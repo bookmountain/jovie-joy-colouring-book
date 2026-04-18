@@ -3,14 +3,23 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import {
+  LayoutDashboard,
+  Package,
+  Receipt,
+  FileText,
+  LogOut,
+  ArrowLeft,
+  type LucideIcon,
+} from 'lucide-react';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 
-const NAV = [
-  { href: '/admin', label: '📊 Analytics', exact: true },
-  { href: '/admin/products', label: '📦 Products' },
-  { href: '/admin/orders', label: '🧾 Orders' },
-  { href: '/admin/content', label: '🎨 Content' },
+const NAV: { href: string; label: string; icon: LucideIcon; exact?: boolean }[] = [
+  { href: '/admin', label: 'Analytics', icon: LayoutDashboard, exact: true },
+  { href: '/admin/products', label: 'Products', icon: Package },
+  { href: '/admin/orders', label: 'Orders', icon: Receipt },
+  { href: '/admin/content', label: 'Content', icon: FileText },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -57,27 +66,41 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div style={{ fontSize: 11, opacity: 0.5, marginTop: 2, fontFamily: 'Sniglet' }}>admin dashboard</div>
         </div>
         <nav style={{ flex: 1, padding: '20px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {NAV.map(n => (
-            <Link key={n.href} href={n.href} style={{
-              display: 'block', padding: '10px 12px', borderRadius: 10,
-              textDecoration: 'none', fontSize: 14, fontFamily: 'Sniglet',
-              background: isActive(n.href, n.exact) ? 'var(--sun)' : 'transparent',
-              color: isActive(n.href, n.exact) ? 'var(--ink)' : 'var(--cream)',
-              fontWeight: isActive(n.href, n.exact) ? 800 : 400,
-            }}>
-              {n.label}
-            </Link>
-          ))}
+          {NAV.map(n => {
+            const Icon = n.icon;
+            const active = isActive(n.href, n.exact);
+            return (
+              <Link key={n.href} href={n.href} style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '10px 12px', borderRadius: 10,
+                textDecoration: 'none', fontSize: 14, fontFamily: 'Sniglet',
+                background: active ? 'var(--sun)' : 'transparent',
+                color: active ? 'var(--ink)' : 'var(--cream)',
+                fontWeight: active ? 800 : 400,
+              }}>
+                <Icon size={18} strokeWidth={active ? 2.4 : 2} />
+                <span>{n.label}</span>
+              </Link>
+            );
+          })}
         </nav>
-        <div style={{ padding: '20px 12px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-          <Link href="/" style={{ display: 'block', padding: '8px 12px', fontSize: 13, color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>
-            ← View site
+        <div style={{ padding: '20px 12px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Link href="/" style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: '8px 12px', fontSize: 13,
+            color: 'rgba(255,255,255,0.55)', textDecoration: 'none',
+          }}>
+            <ArrowLeft size={15} strokeWidth={2} />
+            <span>View site</span>
           </Link>
           <button onClick={signOut} style={{
-            display: 'block', width: '100%', padding: '8px 12px', textAlign: 'left',
-            fontSize: 13, color: 'rgba(255,255,255,0.5)', background: 'none', border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 10,
+            width: '100%', padding: '8px 12px', textAlign: 'left',
+            fontSize: 13, fontFamily: 'inherit',
+            color: 'rgba(255,255,255,0.55)', background: 'none', border: 'none', cursor: 'pointer',
           }}>
-            Sign out
+            <LogOut size={15} strokeWidth={2} />
+            <span>Sign out</span>
           </button>
         </div>
       </aside>
