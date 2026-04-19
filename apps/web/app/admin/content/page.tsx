@@ -12,6 +12,16 @@ function authHeader() {
 
 const SECTIONS = [
   {
+    title: 'Marquee bar',
+    keys: [
+      { key: 'marquee.1', label: 'Item 1', type: 'text' },
+      { key: 'marquee.2', label: 'Item 2', type: 'text' },
+      { key: 'marquee.3', label: 'Item 3', type: 'text' },
+      { key: 'marquee.4', label: 'Item 4', type: 'text' },
+      { key: 'marquee.5', label: 'Item 5', type: 'text' },
+    ],
+  },
+  {
     title: 'Home · Hero',
     keys: [
       { key: 'home.announcement',     label: 'Announcement bar',  type: 'text' },

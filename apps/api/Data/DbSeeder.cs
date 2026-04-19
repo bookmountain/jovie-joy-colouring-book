@@ -59,6 +59,12 @@ public static class DbSeeder
 
         var defaults = new List<SiteContent>
         {
+            // Marquee
+            new() { Key = "marquee.1", Value = "🎨 Instant PDF download", Type = "text", UpdatedAt = now },
+            new() { Key = "marquee.2", Value = "💌 Free colouring pack for signup", Type = "text", UpdatedAt = now },
+            new() { Key = "marquee.3", Value = "🖍 Printed in-home 1000s of times", Type = "text", UpdatedAt = now },
+            new() { Key = "marquee.4", Value = "📦 No shipping — print from anywhere", Type = "text", UpdatedAt = now },
+            new() { Key = "marquee.5", Value = "✨ Made by parents, for parents", Type = "text", UpdatedAt = now },
             // Home — hero
             new() { Key = "home.announcement",         Value = "Leaving Etsy · Lower prices, bigger smiles", Type = "text", UpdatedAt = now },
             new() { Key = "home.hero.tagline",          Value = "Printable\ncolouring\nbooks for\ntiny hands.", Type = "text", UpdatedAt = now },
