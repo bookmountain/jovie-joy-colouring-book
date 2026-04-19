@@ -7,6 +7,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER required in apps/api/.env}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required in apps/api/.env}
       POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB required in apps/api/.env}
+    ports:
+      - "5433:5432"
     volumes:
       - jovie-joy-db-data:/var/lib/postgresql/data
     healthcheck:
