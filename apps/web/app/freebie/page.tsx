@@ -1,48 +1,35 @@
-'use client';
-
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { FALLBACK_PRODUCTS } from '@/lib/api';
-import type { Product } from '@/lib/types';
+import { fetchProducts, fetchSiteContent } from '@/lib/api';
 import { ProductCover } from '@/components/shared/ProductCover';
 import { ProductBlob } from '@/components/shared/ProductBlob';
 import { Star } from '@/components/shared/Star';
+import { FreebieForm } from './FreebieForm';
 
-export default function FreebiePage() {
-  const [products, setProducts] = useState<Product[]>(FALLBACK_PRODUCTS);
-  const [email, setEmail] = useState('');
-  const [submitted, setSubmitted] = useState(false);
+function lines(s: string) {
+  return s.split('\n');
+}
 
-  useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/products`)
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) setProducts(d); })
-      .catch(() => {});
-  }, []);
+export default async function FreebiePage() {
+  const [products, content] = await Promise.all([fetchProducts(), fetchSiteContent()]);
+
+  const tagline = content['freebie.tagline'] ?? 'on the house';
+  const headline = content['freebie.headline'] ?? 'Free\ncolouring\npack ✿';
+  const subtext = content['freebie.subtext'] ?? "5 hand-picked pages from our best-selling books — yours to print as many times as you'd like. Try before you buy, no credit card, no weird catches.";
 
   return (
     <div className="page" style={{ padding: '40px 32px 80px' }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 50, alignItems: 'center' }}>
         <div>
-          <div className="handwritten" style={{ fontSize: 30, color: 'var(--tomato)', marginBottom: -4 }}>on the house</div>
-          <h1 className="display" style={{ fontSize: 84, margin: '0 0 18px', lineHeight: 0.9 }}>Free<br />colouring<br />pack ✿</h1>
+          <div className="handwritten" style={{ fontSize: 30, color: 'var(--tomato)', marginBottom: -4 }}>{tagline}</div>
+          <h1 className="display" style={{ fontSize: 84, margin: '0 0 18px', lineHeight: 0.9 }}>
+            {lines(headline).map((line, i, arr) => (
+              <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+            ))}
+          </h1>
           <p style={{ fontSize: 18, color: 'var(--ink-soft)', marginBottom: 24, maxWidth: 480 }}>
-            5 hand-picked pages from our best-selling books — yours to print as many times as you&rsquo;d like. Try before you buy, no credit card, no weird catches.
+            {subtext}
           </p>
 
-          {submitted ? (
-            <div className="card" style={{ background: 'var(--mint)' }}>
-              <Star size={40} color="var(--sun)" rotate={-10} />
-              <div className="display" style={{ fontSize: 28, margin: '10px 0 6px' }}>Check your inbox!</div>
-              <div style={{ fontSize: 15 }}>We&rsquo;ve sent 5 pages to <b>{email}</b>. Happy colouring! 🎨</div>
-              <Link href="/shop" className="btn primary sm" style={{ marginTop: 14, display: 'inline-block' }}>See the full shop →</Link>
-            </div>
-          ) : (
-            <form onSubmit={(e) => { e.preventDefault(); setSubmitted(true); }} style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <input type="email" required placeholder="your@email.com" value={email} onChange={e => setEmail(e.target.value)} style={{ flex: 1, minWidth: 240 }} />
-              <button type="submit" className="btn primary lg">Send me the pack →</button>
-            </form>
-          )}
+          <FreebieForm />
 
           <div style={{ marginTop: 22, display: 'flex', gap: 20, fontSize: 14, color: 'var(--ink-soft)', flexWrap: 'wrap' }}>
             <span>✓ No spam ever</span><span>✓ Unsubscribe with 1 click</span><span>✓ One email a month, max</span>

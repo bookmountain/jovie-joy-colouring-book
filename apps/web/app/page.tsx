@@ -6,9 +6,33 @@ import { Star } from '@/components/shared/Star';
 import { Squiggle } from '@/components/shared/Squiggle';
 import { HomeFaq } from './_home/HomeFaq';
 
+function lines(s: string) {
+  return s.split('\n');
+}
+
 export default async function HomePage() {
   const [products, content] = await Promise.all([fetchProducts(), fetchSiteContent()]);
   const featured = products.slice(0, 6);
+
+  const tagline = content['home.hero.tagline'] ?? 'Printable\ncolouring\nbooks for\ntiny hands.';
+  const steps = [1, 2, 3].map(n => ({
+    n: String(n).padStart(2, '0'),
+    t: content[`home.steps.${n}.title`] ?? ['Pick a book', 'Pay once', 'Print forever'][n - 1],
+    d: content[`home.steps.${n}.desc`] ?? '',
+    color: ['var(--sun)', 'var(--sky)', 'var(--berry)'][n - 1],
+    rot: [-1.5, 0.5, -0.5][n - 1],
+  }));
+  const testimonials = [1, 2, 3, 4].map((n, i) => ({
+    q: content[`home.testimonial.${n}.quote`] ?? '',
+    a: content[`home.testimonial.${n}.author`] ?? '',
+    color: ['var(--sun)', 'var(--sky)', 'var(--berry)', 'var(--mint)'][i],
+    w: i === 2,
+  }));
+  const freebieCta = {
+    tagline: content['home.freebie.tagline'] ?? 'psst — freebie inside',
+    headline: content['home.freebie.headline'] ?? '5 pages,\non the house.',
+    subtext: content['home.freebie.subtext'] ?? "Pop your email in and we'll send you a sample pack — one from each of our best-selling books. See the quality before you buy.",
+  };
 
   return (
     <>
@@ -26,14 +50,9 @@ export default async function HomePage() {
                 {content['home.announcement'] ?? 'Leaving Etsy · Lower prices, bigger smiles'}
               </div>
               <h1 className="display" style={{ fontSize: 'clamp(48px, 8vw, 96px)', margin: '0 0 20px' }}>
-                Printable<br />
-                <span style={{ position: 'relative', display: 'inline-block' }}>
-                  colouring
-                  <svg style={{ position: 'absolute', bottom: -8, left: 0, width: '100%', height: 16 }} viewBox="0 0 300 16" preserveAspectRatio="none">
-                    <path d="M5 10 Q 75 2, 150 8 T 295 6" stroke="var(--tomato)" strokeWidth="6" fill="none" strokeLinecap="round" />
-                  </svg>
-                </span>
-                <br />books for<br />tiny hands.
+                {lines(tagline).map((line, i, arr) => (
+                  <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+                ))}
               </h1>
               <p style={{ fontSize: 19, maxWidth: 500, marginBottom: 30, color: 'var(--ink-soft)' }}>
                 {content['home.hero.subtext'] ?? 'Instant-download PDFs made by parents who were tired of the algorithm. Print as many times as you like, keep the file forever, and colour quiet rainy afternoons away.'}
@@ -78,11 +97,7 @@ export default async function HomePage() {
             <h2 className="display" style={{ fontSize: 56, margin: 0 }}>Three tiny steps</h2>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 28 }}>
-            {[
-              { n: '01', t: 'Pick a book', d: 'Browse by age, theme, or pure vibes. Every book is 36–52 pages of colour-ready fun.', color: 'var(--sun)', rot: -1.5 },
-              { n: '02', t: 'Pay once', d: 'No subscriptions. No mailing lists unless you ask. $8–11 gets you the whole PDF, forever.', color: 'var(--sky)', rot: 0.5 },
-              { n: '03', t: 'Print forever', d: 'Rainy day? Birthday party? Waiting room? Print fresh pages whenever. The file is yours.', color: 'var(--berry)', rot: -0.5 },
-            ].map(s => (
+            {steps.map(s => (
               <div key={s.n} className="card" style={{ background: s.color, transform: `rotate(${s.rot}deg)` }}>
                 <div className="display" style={{ fontSize: 64, color: 'var(--paper)', WebkitTextStroke: '2.5px var(--ink)', lineHeight: 1, marginBottom: 10 }}>{s.n}</div>
                 <div className="display" style={{ fontSize: 28, marginBottom: 8 }}>{s.t}</div>
@@ -120,12 +135,7 @@ export default async function HomePage() {
             <h2 className="display" style={{ fontSize: 56, margin: 0 }}>Parents who get it</h2>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
-            {[
-              { q: 'My 4yo asked for "the bunny book" every single car ride. Best $8 ever spent.', a: 'Priya · mom of 2', color: 'var(--sun)' },
-              { q: 'Printed Space Cadet Club 11 times for a birthday party. Kids obsessed.', a: 'Marc · dad of 1', color: 'var(--sky)' },
-              { q: 'Honestly the only screen-free activity that lasts longer than 6 minutes.', a: 'Taylor · mom of 3', color: 'var(--berry)', w: true },
-              { q: 'Art teacher here — I use these as warm-ups. Kids love the line quality.', a: 'Ms. Lena · K–2 art', color: 'var(--mint)' },
-            ].map((q, i) => (
+            {testimonials.map((q, i) => (
               <div key={i} style={{ background: q.color, color: q.w ? 'var(--cream)' : 'var(--ink)', border: '2.5px solid var(--cream)', borderRadius: 20, padding: 22, transform: `rotate(${[-2, 1, -1, 2][i]}deg)` }}>
                 <div style={{ fontSize: 32, lineHeight: 0.5, marginBottom: 6, fontFamily: 'Sniglet' }}>&ldquo;</div>
                 <div style={{ fontSize: 16, marginBottom: 16, lineHeight: 1.4 }}>{q.q}</div>
@@ -147,10 +157,14 @@ export default async function HomePage() {
           }}>
             <div style={{ position: 'absolute', top: -30, right: -30, zIndex: 0 }}><Star size={200} color="var(--sun)" rotate={15} /></div>
             <div style={{ position: 'relative', zIndex: 1 }}>
-              <div className="handwritten" style={{ fontSize: 30, color: 'var(--sun)', marginBottom: -4 }}>psst — freebie inside</div>
-              <h2 className="display" style={{ fontSize: 58, margin: '0 0 16px' }}>5 pages,<br />on the house.</h2>
+              <div className="handwritten" style={{ fontSize: 30, color: 'var(--sun)', marginBottom: -4 }}>{freebieCta.tagline}</div>
+              <h2 className="display" style={{ fontSize: 58, margin: '0 0 16px' }}>
+                {lines(freebieCta.headline).map((line, i, arr) => (
+                  <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+                ))}
+              </h2>
               <p style={{ fontSize: 17, maxWidth: 420, marginBottom: 24, opacity: 0.9 }}>
-                Pop your email in and we&rsquo;ll send you a sample pack — one from each of our best-selling books. See the quality before you buy.
+                {freebieCta.subtext}
               </p>
               <Link href="/freebie" className="btn sun lg">Send me the pack →</Link>
             </div>
@@ -162,7 +176,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <HomeFaq />
+      <HomeFaq content={content} />
     </>
   );
 }
