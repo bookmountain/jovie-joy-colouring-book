@@ -1,5 +1,15 @@
 import { Squiggle } from '../shared/Squiggle';
 
+const RAYS = Array.from({ length: 12 }, (_, i) => {
+  const a = (i * 30) * Math.PI / 180;
+  return {
+    x1: +(50 + Math.cos(a) * 32).toFixed(4),
+    y1: +(50 + Math.sin(a) * 32).toFixed(4),
+    x2: +(50 + Math.cos(a) * 42).toFixed(4),
+    y2: +(50 + Math.sin(a) * 42).toFixed(4),
+  };
+});
+
 const COLS = [
   { t: 'Shop', links: ['All books', 'For 3–5', 'For 5–8', 'For 8–12', 'Bundles'] },
   { t: 'Jovie', links: ['Our story', 'FAQ', 'Licensing', 'Affiliates'] },
@@ -41,10 +51,9 @@ export function Footer() {
       </div>
       <svg width="140" height="140" style={{ position: 'absolute', top: 30, right: 40, opacity: 0.15 }} viewBox="0 0 100 100">
         <circle cx="50" cy="50" r="25" fill="var(--sun)"/>
-        {Array.from({ length: 12 }).map((_, i) => {
-          const a = (i * 30) * Math.PI / 180;
-          return <line key={i} x1={50 + Math.cos(a) * 32} y1={50 + Math.sin(a) * 32} x2={50 + Math.cos(a) * 42} y2={50 + Math.sin(a) * 42} stroke="var(--sun)" strokeWidth="4" strokeLinecap="round" />;
-        })}
+        {RAYS.map((r, i) => (
+          <line key={i} x1={r.x1} y1={r.y1} x2={r.x2} y2={r.y2} stroke="var(--sun)" strokeWidth="4" strokeLinecap="round" />
+        ))}
       </svg>
     </footer>
   );

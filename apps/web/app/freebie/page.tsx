@@ -70,7 +70,7 @@ export default function FreebiePage() {
                 <ProductBlob color="transparent" accent="transparent" variant={idx} />
                 <div style={{ position: 'absolute', bottom: 6, right: 10, fontFamily: 'Caveat', fontSize: 12, color: 'var(--ink-soft)' }}>pg. {i + 1}</div>
               </div>
-              <div style={{ fontFamily: 'Sniglet', fontWeight: 800, fontSize: 13 }}>From {products[idx].title}</div>
+              <div style={{ fontFamily: 'Sniglet', fontWeight: 400, fontSize: 13 }}>From {products[idx].title}</div>
             </div>
           ))}
         </div>

@@ -53,7 +53,7 @@ export default function AdminLoginPage() {
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <label style={{ fontFamily: 'Sniglet', fontSize: 13, fontWeight: 800 }}>Email</label>
+            <label style={{ fontFamily: 'Sniglet', fontSize: 13, fontWeight: 400 }}>Email</label>
             <input
               type="email" value={email} onChange={e => setEmail(e.target.value)}
               required autoFocus
@@ -64,7 +64,7 @@ export default function AdminLoginPage() {
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <label style={{ fontFamily: 'Sniglet', fontSize: 13, fontWeight: 800 }}>Password</label>
+            <label style={{ fontFamily: 'Sniglet', fontSize: 13, fontWeight: 400 }}>Password</label>
             <input
               type="password" value={password} onChange={e => setPassword(e.target.value)}
               required

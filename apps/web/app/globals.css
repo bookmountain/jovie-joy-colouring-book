@@ -39,7 +39,7 @@ body { min-height: 100vh; overflow-x: hidden; }
 
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  font-family: 'Sniglet', system-ui, sans-serif; font-weight: 800; font-size: 15px;
+  font-family: 'Sniglet', system-ui, sans-serif; font-weight: 400; font-size: 15px;
   padding: 14px 22px; border-radius: 999px;
   border: var(--stroke) solid var(--ink); background: var(--paper); color: var(--ink);
   cursor: pointer; text-decoration: none;

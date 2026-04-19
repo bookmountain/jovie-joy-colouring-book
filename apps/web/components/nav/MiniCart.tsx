@@ -27,7 +27,7 @@ export function MiniCart() {
           {cart.length === 0 && (
             <div style={{ textAlign: 'center', padding: 60 }}>
               <div style={{ marginBottom: 20 }}><Star size={60} color="var(--sun)" rotate={-15} /></div>
-              <div style={{ fontFamily: 'Sniglet', fontSize: 20, fontWeight: 800, marginBottom: 10 }}>Nothing here yet</div>
+              <div style={{ fontFamily: 'Sniglet', fontSize: 20, fontWeight: 400, marginBottom: 10 }}>Nothing here yet</div>
               <div style={{ color: 'var(--ink-soft)', marginBottom: 20 }}>Let&rsquo;s find a colouring book that makes someone small very happy.</div>
               <Link href="/shop" onClick={() => setCartOpen(false)} className="btn primary">Browse the shop →</Link>
             </div>
@@ -38,15 +38,15 @@ export function MiniCart() {
                 <ProductCover product={item} showBadge={false} />
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: 'Sniglet', fontWeight: 800, fontSize: 16 }}>{item.title}</div>
+                <div style={{ fontFamily: 'Sniglet', fontWeight: 400, fontSize: 16 }}>{item.title}</div>
                 <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginBottom: 8 }}>Digital PDF · {item.pages} pages</div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '2px solid var(--ink)', borderRadius: 999, padding: '2px 4px' }}>
                     <button onClick={() => updateQty(item.id, item.qty - 1)} style={{ width: 24, height: 24, border: 'none', background: 'none', cursor: 'pointer', fontSize: 16 }}>−</button>
-                    <span style={{ minWidth: 20, textAlign: 'center', fontFamily: 'Sniglet', fontWeight: 800 }}>{item.qty}</span>
+                    <span style={{ minWidth: 20, textAlign: 'center', fontFamily: 'Sniglet', fontWeight: 400 }}>{item.qty}</span>
                     <button onClick={() => updateQty(item.id, item.qty + 1)} style={{ width: 24, height: 24, border: 'none', background: 'none', cursor: 'pointer', fontSize: 16 }}>+</button>
                   </div>
-                  <div style={{ fontFamily: 'Sniglet', fontWeight: 800 }}>{dollars(item.priceCents * item.qty)}</div>
+                  <div style={{ fontFamily: 'Sniglet', fontWeight: 400 }}>{dollars(item.priceCents * item.qty)}</div>
                 </div>
               </div>
             </div>

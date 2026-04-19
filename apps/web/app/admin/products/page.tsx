@@ -184,7 +184,7 @@ function Field({ label, value, onChange, type = 'text', placeholder, multiline }
   };
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <label style={{ fontFamily: 'Sniglet', fontSize: 11, fontWeight: 800 }}>{label}</label>
+      <label style={{ fontFamily: 'Sniglet', fontSize: 11, fontWeight: 400 }}>{label}</label>
       {multiline
         ? <textarea value={value} onChange={e => onChange(e.target.value)} rows={3} style={{ ...style, resize: 'vertical' }} />
         : <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={style} />}

@@ -97,7 +97,7 @@ export default function AdminContent() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               {section.keys.map(field => (
                 <div key={field.key}>
-                  <label style={{ fontFamily: 'Sniglet', fontSize: 13, fontWeight: 800, display: 'block', marginBottom: 6 }}>
+                  <label style={{ fontFamily: 'Sniglet', fontSize: 13, fontWeight: 400, display: 'block', marginBottom: 6 }}>
                     {field.label}
                     <span style={{ marginLeft: 8, opacity: 0.4, fontSize: 11, fontWeight: 400 }}>{field.key}</span>
                   </label>

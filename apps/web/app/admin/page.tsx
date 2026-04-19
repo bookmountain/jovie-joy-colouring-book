@@ -55,7 +55,7 @@ export default function AdminDashboard() {
                 background: s.color, border: '2.5px solid var(--ink)', borderRadius: 16,
                 padding: '20px 24px', boxShadow: '4px 4px 0 var(--ink)',
               }}>
-                <div style={{ fontSize: 12, fontFamily: 'Sniglet', fontWeight: 800, opacity: 0.7, marginBottom: 6 }}>{s.label}</div>
+                <div style={{ fontSize: 12, fontFamily: 'Sniglet', fontWeight: 400, opacity: 0.7, marginBottom: 6 }}>{s.label}</div>
                 <div className="display" style={{ fontSize: 32 }}>{s.value}</div>
               </div>
             ))}
@@ -105,7 +105,7 @@ export default function AdminDashboard() {
                   <tr key={p.productId} style={{ borderBottom: '1px solid rgba(0,0,0,0.07)', background: i % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.02)' }}>
                     <td style={{ padding: '10px 12px' }}>{p.title}</td>
                     <td style={{ padding: '10px 12px' }}>{p.unitsSold}</td>
-                    <td style={{ padding: '10px 12px', fontFamily: 'Sniglet', fontWeight: 800 }}>{fmt(p.revenueCents)}</td>
+                    <td style={{ padding: '10px 12px', fontFamily: 'Sniglet', fontWeight: 400 }}>{fmt(p.revenueCents)}</td>
                   </tr>
                 ))}
                 {data.topProducts.length === 0 && (

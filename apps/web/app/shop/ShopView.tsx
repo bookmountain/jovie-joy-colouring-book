@@ -66,7 +66,7 @@ export function ShopView({ products }: { products: Product[] }) {
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {['Under $10', 'Bestsellers', 'Easy', 'New'].map(q => (<div key={q} className="chip">{q}</div>))}
             </div>
-            <div style={{ fontFamily: 'Sniglet', fontWeight: 800, fontSize: 14 }}>
+            <div style={{ fontFamily: 'Sniglet', fontWeight: 400, fontSize: 14 }}>
               {sorted.length} book{sorted.length !== 1 ? 's' : ''} found
             </div>
           </div>

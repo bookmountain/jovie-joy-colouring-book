@@ -82,7 +82,7 @@ export default function AdminOrders() {
                           {o.status}
                         </span>
                       </td>
-                      <td style={{ padding: '10px 14px', fontFamily: 'Sniglet', fontWeight: 800 }}>
+                      <td style={{ padding: '10px 14px', fontFamily: 'Sniglet', fontWeight: 400 }}>
                         ${(o.totalCents / 100).toFixed(2)}
                         {o.discountCents > 0 && <span style={{ fontSize: 11, opacity: 0.6, marginLeft: 4 }}>(-${(o.discountCents / 100).toFixed(2)})</span>}
                       </td>
@@ -93,7 +93,7 @@ export default function AdminOrders() {
                       <tr key={`${o.id}-detail`} style={{ borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
                         <td colSpan={6} style={{ padding: '0 14px 16px 14px' }}>
                           <div style={{ background: 'var(--cream-2)', borderRadius: 10, padding: '12px 16px', fontSize: 13 }}>
-                            <div style={{ fontFamily: 'Sniglet', fontWeight: 800, marginBottom: 8 }}>Order items</div>
+                            <div style={{ fontFamily: 'Sniglet', fontWeight: 400, marginBottom: 8 }}>Order items</div>
                             {o.items.map(item => (
                               <div key={item.productId} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
                                 <span>{item.title}</span>
