@@ -37,7 +37,7 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://192.168.4.106:5080}
+        NEXT_PUBLIC_API_URL: https://jovie-joy-api.bookmountain.work
     image: jovie-joy-web:latest
     container_name: jovie-joy-web
     restart: unless-stopped
