@@ -52,8 +52,13 @@ cd jovie-joy
 ASPNETCORE_ENVIRONMENT=Production
 ASPNETCORE_URLS=http://0.0.0.0:8080
 
-# "db" is the service name in docker-compose.prod.yml
-ConnectionStrings__Default=Host=db;Port=5432;Database=jovie_joy;Username=postgres;Password=postgres
+POSTGRES_USER=jovie
+POSTGRES_PASSWORD=REPLACE_ME
+POSTGRES_DB=jovie_joy
+# Optional; docker-compose.prod.yml defaults to bookcv-db:5432 if omitted.
+POSTGRES_HOST=bookcv-db
+POSTGRES_PORT=5432
+ConnectionStrings__Default=Host=bookcv-db;Port=5432;Database=jovie_joy;Username=jovie;Password=REPLACE_ME
 
 # openssl rand -base64 48
 Jwt__Secret=REPLACE_WITH_32_BYTES_OF_RANDOM
@@ -87,18 +92,19 @@ chmod 600 /work/jovie-joy/apps/api/.env
 Push to `main` (or click "Run workflow" in the Actions tab). The deploy workflow runs on the self-hosted runner and:
 
 1. Verifies `/work/jovie-joy` is a git checkout and the `.env` exists (fails fast otherwise)
-2. `git fetch && git reset --hard origin/main` inside `/work/jovie-joy` (leaves the gitignored `.env` alone)
-3. `docker compose -f docker-compose.prod.yml build && up -d`
-4. Polls `http://localhost:5080/health` for up to 60s
-5. Prunes old images
+2. Verifies the shared `book-cv_default` Docker network exists (fails fast if the Book CV stack is down)
+3. `git fetch && git reset --hard origin/main` inside `/work/jovie-joy` (leaves the gitignored `.env` alone)
+4. `docker compose -f docker-compose.prod.yml build` then `up -d --remove-orphans`
+5. Polls `http://localhost:5080/health` for up to 60s
+6. Prunes old images
 
-This starts three containers: `jovie-joy-db` (Postgres), `jovie-joy-api`, and `jovie-joy-web`. EF Core migrations apply automatically on API startup, seeding the admin user.
+This starts two containers: `jovie-joy-api` and `jovie-joy-web`. The API joins the existing `book-cv_default` Docker network and connects to `bookcv-db`. EF Core migrations apply automatically on API startup, seeding the admin user.
 
 To smoke-test manually:
 
 ```bash
 cd /work/jovie-joy
-docker compose -f docker-compose.prod.yml up -d
+docker compose --env-file apps/api/.env -f docker-compose.prod.yml up -d --remove-orphans
 ```
 
 ## 6. Google OAuth configuration
@@ -135,7 +141,7 @@ docker compose -f docker-compose.prod.yml logs -f api
 docker compose -f docker-compose.prod.yml logs -f web
 
 # Connect to the app DB
-docker exec -it jovie-joy-db psql -U postgres -d jovie_joy
+docker exec -it bookcv-db psql -U postgres -d jovie_joy
 
 # Runner status
 sudo /work/actions-runner/svc.sh status

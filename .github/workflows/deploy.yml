@@ -26,6 +26,10 @@ jobs:
             echo "::error::Missing $APP_DIR/apps/api/.env. Create it before deploying."
             exit 1
           fi
+          if ! docker network inspect book-cv_default >/dev/null 2>&1; then
+            echo "::error::Missing docker network book-cv_default. Ensure the book-cv stack is up before deploying jovie-joy."
+            exit 1
+          fi
 
       - name: Pull latest
         working-directory: ${{ env.APP_DIR }}
@@ -39,7 +43,7 @@ jobs:
 
       - name: Restart stack
         working-directory: ${{ env.APP_DIR }}
-        run: docker compose --env-file apps/api/.env -f docker-compose.prod.yml up -d
+        run: docker compose --env-file apps/api/.env -f docker-compose.prod.yml up -d --remove-orphans
 
       - name: Wait for API health
         working-directory: ${{ env.APP_DIR }}

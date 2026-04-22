@@ -1,22 +1,4 @@
 services:
-  db:
-    image: postgres:17-alpine
-    container_name: jovie-joy-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER required in apps/api/.env}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required in apps/api/.env}
-      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB required in apps/api/.env}
-    ports:
-      - "5433:5432"
-    volumes:
-      - jovie-joy-db-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   api:
     build:
       context: .
@@ -26,11 +8,13 @@ services:
     restart: unless-stopped
     env_file:
       - ./apps/api/.env
+    environment:
+      ConnectionStrings__Default: Host=${POSTGRES_HOST:-bookcv-db};Port=${POSTGRES_PORT:-5432};Database=${POSTGRES_DB:?POSTGRES_DB required in apps/api/.env};Username=${POSTGRES_USER:?POSTGRES_USER required in apps/api/.env};Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required in apps/api/.env}
     ports:
       - "5080:8080"
-    depends_on:
-      db:
-        condition: service_healthy
+    networks:
+      - default
+      - shared-db
 
   web:
     build:
@@ -46,5 +30,7 @@ services:
     depends_on:
       - api
 
-volumes:
-  jovie-joy-db-data:
+networks:
+  shared-db:
+    external: true
+    name: book-cv_default

@@ -7,8 +7,8 @@ This is a partial scaffold. Backend is ~60% complete; frontend and deploy pipeli
 ### Root
 - `README.md`, `.gitignore`
 - `docker-compose.yml` (local dev Postgres on port 5433)
-- `docker-compose.prod.yml` (prod — runs its own `jovie-joy-db` Postgres container)
-- `docs/SERVER-SETUP.md` (one-time VM setup: self-hosted runner, database, env files, Google + Stripe)
+- `docker-compose.prod.yml` (prod — API/web only; joins the existing `book-cv_default` network and uses `bookcv-db`)
+- `docs/SERVER-SETUP.md` (one-time VM setup: self-hosted runner, shared database, env files, Google + Stripe)
 
 ### Backend (`apps/api/`)
 .NET 9 Web API with EF Core + Npgsql + Stripe.net + manual Google OAuth + JWT.
@@ -67,12 +67,12 @@ This is a partial scaffold. Backend is ~60% complete; frontend and deploy pipeli
              cd /work/jovie-joy
              git pull
              docker compose -f docker-compose.prod.yml build
-             docker compose -f docker-compose.prod.yml up -d
+             docker compose -f docker-compose.prod.yml up -d --remove-orphans
    ```
    Keep it minimal. The runner is already on the VM so there's no SSH/image-push ceremony.
 
 6. **Minor cleanups**:
-   - The `api/.env.example` currently points at `localhost:5433` (matches the local `docker-compose.yml`) — fine for dev.
+   - The `api/.env.example` currently points at `localhost:5433` because local dev still uses the local Postgres container on host port `5433`. Production uses `bookcv-db:5432`.
    - `WebhooksController` must be registered for raw request body reading (Stripe signature verification needs the exact bytes).
 
 ## Known caveats
