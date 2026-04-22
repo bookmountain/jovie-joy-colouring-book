@@ -26,8 +26,8 @@ jobs:
             echo "::error::Missing $APP_DIR/apps/api/.env. Create it before deploying."
             exit 1
           fi
-          if ! docker network inspect book-cv_default >/dev/null 2>&1; then
-            echo "::error::Missing docker network book-cv_default. Ensure the book-cv stack is up before deploying jovie-joy."
+          if ! docker network inspect shared-services >/dev/null 2>&1; then
+            echo "::error::Missing docker network shared-services. Ensure the shared database stack is up before deploying jovie-joy."
             exit 1
           fi
 

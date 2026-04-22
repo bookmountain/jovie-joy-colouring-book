@@ -7,7 +7,7 @@ This is a partial scaffold. Backend is ~60% complete; frontend and deploy pipeli
 ### Root
 - `README.md`, `.gitignore`
 - `docker-compose.yml` (local dev Postgres on port 5432)
-- `docker-compose.prod.yml` (prod — API/web only; joins the existing `book-cv_default` network and uses `bookcv-db`)
+- `docker-compose.prod.yml` (prod — API/web only; joins the existing `shared-services` network and uses `shared-postgres`)
 - `docs/SERVER-SETUP.md` (one-time VM setup: self-hosted runner, shared database, env files, Google + Stripe)
 
 ### Backend (`apps/api/`)
@@ -72,7 +72,7 @@ This is a partial scaffold. Backend is ~60% complete; frontend and deploy pipeli
    Keep it minimal. The runner is already on the VM so there's no SSH/image-push ceremony.
 
 6. **Minor cleanups**:
-   - The `api/.env.example` currently points at `localhost:5432` to match the local `docker-compose.yml`. Production uses `bookcv-db:5432`.
+   - The `api/.env.example` currently points at `localhost:5432` to match the local `docker-compose.yml`. Production uses `shared-postgres:5432`.
    - `WebhooksController` must be registered for raw request body reading (Stripe signature verification needs the exact bytes).
 
 ## Known caveats

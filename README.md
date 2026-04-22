@@ -93,7 +93,7 @@ Deploys via a **GitHub Actions self-hosted runner** on the VM at `192.168.4.106`
 One-time server setup:
 
 - Install the self-hosted runner as a systemd service
-- Create DB and user in the existing `bookcv-db` container
+- Create DB and user in the shared `shared-postgres` container
 - Clone the repo to `/work/jovie-joy`
 - Populate `apps/api/.env` with production secrets (see below)
 
@@ -103,9 +103,9 @@ One-time server setup:
 POSTGRES_USER=jovie
 POSTGRES_PASSWORD=...
 POSTGRES_DB=jovie_joy
-POSTGRES_HOST=bookcv-db
+POSTGRES_HOST=shared-postgres
 POSTGRES_PORT=5432
-ConnectionStrings__Default=Host=bookcv-db;Port=5432;Database=jovie_joy;Username=jovie;Password=...
+ConnectionStrings__Default=Host=shared-postgres;Port=5432;Database=jovie_joy;Username=jovie;Password=...
 Google__ClientId=...
 Google__ClientSecret=...
 Jwt__Secret=<32+ random chars>
