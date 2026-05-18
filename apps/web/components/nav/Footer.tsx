@@ -6,8 +6,7 @@ const RAYS = Array.from({ length: 12 }, (_, i) => {
     x1: +(50 + Math.cos(a) * 32).toFixed(4),
     y1: +(50 + Math.sin(a) * 32).toFixed(4),
     x2: +(50 + Math.cos(a) * 42).toFixed(4),
-    y2: +(50 + Math.sin(a) * 42).toFixed(4),
-  };
+    y2: +(50 + Math.sin(a) * 42).toFixed(4) };
 });
 
 const COLS = [
@@ -23,7 +22,7 @@ export function Footer() {
       <div className="page" style={{ padding: '40px 0 0' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 40, marginBottom: 50 }}>
           <div>
-            <div style={{ fontFamily: 'Sniglet', fontSize: 36, fontWeight: 800, marginBottom: 8 }}>
+            <div className="logo" style={{ color: 'var(--cream)', fontSize: 36, marginBottom: 8 }}>
               jovie joy<span style={{ display: 'inline-block', width: 20, height: 20, background: 'var(--tomato)', border: '2.5px solid var(--cream)', borderRadius: '50%', transform: 'translateY(-8px)', marginLeft: 4 }} />
             </div>
             <div style={{ maxWidth: 340, opacity: 0.8, fontSize: 15 }}>
@@ -31,13 +30,13 @@ export function Footer() {
             </div>
             <div style={{ marginTop: 20, display: 'flex', gap: 10 }}>
               {['IG', 'PT', 'TT', 'YT'].map(s => (
-                <div key={s} style={{ width: 40, height: 40, border: '2.5px solid var(--cream)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Sniglet', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>{s}</div>
+                <div key={s} style={{ width: 40, height: 40, border: '2.5px solid var(--cream)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>{s}</div>
               ))}
             </div>
           </div>
           {COLS.map(col => (
             <div key={col.t}>
-              <div style={{ fontFamily: 'Sniglet', fontWeight: 800, fontSize: 16, marginBottom: 14 }}>{col.t}</div>
+              <div style={{ fontWeight: 800, fontSize: 16, marginBottom: 14 }}>{col.t}</div>
               {col.links.map(l => (
                 <div key={l} style={{ opacity: 0.7, fontSize: 14, padding: '4px 0', cursor: 'pointer' }}>{l}</div>
               ))}

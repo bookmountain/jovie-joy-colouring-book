@@ -37,50 +37,49 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'var(--ink)', padding: 24,
-    }}>
-      <div style={{
-        background: 'var(--cream)', border: '2.5px solid var(--ink)', borderRadius: 24,
-        padding: '48px 40px', width: '100%', maxWidth: 400,
-        boxShadow: '8px 8px 0 0 var(--sun)',
-      }}>
-        <div className="handwritten" style={{ fontSize: 22, color: 'var(--tomato)', marginBottom: -4 }}>
-          admin only
-        </div>
-        <h1 className="display" style={{ fontSize: 48, margin: '0 0 32px' }}>Dashboard</h1>
+    <div className="admin-login-page">
+      <div className="admin-login-card">
+        <h1 style={{ fontSize: 20, fontWeight: 600, margin: '0 0 4px' }}>Sign in to admin</h1>
+        <p style={{ fontSize: 13, color: 'var(--a-muted)', margin: '0 0 24px' }}>
+          Jovie Joy admin dashboard
+        </p>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <label style={{ fontFamily: 'Sniglet', fontSize: 13, fontWeight: 400 }}>Email</label>
+        <form onSubmit={handleSubmit}>
+          <div className="admin-field">
+            <label className="admin-label" htmlFor="admin-email">Email</label>
             <input
-              type="email" value={email} onChange={e => setEmail(e.target.value)}
-              required autoFocus
-              style={{
-                padding: '10px 14px', border: '2px solid var(--ink)', borderRadius: 10,
-                fontFamily: 'inherit', fontSize: 15, background: 'var(--paper)',
-              }}
+              id="admin-email"
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+              autoFocus
+              className="admin-input"
             />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <label style={{ fontFamily: 'Sniglet', fontSize: 13, fontWeight: 400 }}>Password</label>
+          <div className="admin-field">
+            <label className="admin-label" htmlFor="admin-password">Password</label>
             <input
-              type="password" value={password} onChange={e => setPassword(e.target.value)}
+              id="admin-password"
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
               required
-              style={{
-                padding: '10px 14px', border: '2px solid var(--ink)', borderRadius: 10,
-                fontFamily: 'inherit', fontSize: 15, background: 'var(--paper)',
-              }}
+              className="admin-input"
             />
           </div>
           {error && (
-            <div style={{ background: '#fee', border: '1.5px solid var(--tomato)', borderRadius: 8, padding: '8px 12px', fontSize: 14, color: 'var(--tomato)' }}>
-              {error}
+            <div className="admin-toast admin-toast-error" style={{ marginBottom: 16 }}>
+              <span>{error}</span>
             </div>
           )}
-          <button type="submit" disabled={loading} className="btn primary lg" style={{ marginTop: 8 }}>
-            {loading ? 'Signing in…' : 'Sign in →'}
+          <button
+            type="submit"
+            disabled={loading}
+            className="admin-btn admin-btn-primary"
+            style={{ width: '100%', padding: '10px 14px' }}
+          >
+            {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
       </div>

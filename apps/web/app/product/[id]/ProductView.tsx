@@ -37,7 +37,7 @@ export function ProductView({ product, related }: { product: Product; related: P
   return (
     <div style={{ padding: '30px 0 60px' }}>
       <div className="page">
-        <div style={{ fontSize: 14, color: 'var(--ink-soft)', marginBottom: 20, fontFamily: 'Sniglet' }}>
+        <div style={{ fontSize: 14, color: 'var(--ink-soft)', marginBottom: 20}}>
           <Link href="/" style={{ color: 'var(--ink-soft)' }}>Home</Link>
           {' / '}
           <Link href="/shop" style={{ color: 'var(--ink-soft)' }}>Shop</Link>
@@ -73,8 +73,7 @@ export function ProductView({ product, related }: { product: Product; related: P
                   borderRadius: 10, overflow: 'hidden', cursor: 'pointer',
                   background: img.type === 'cover' ? product.color : 'var(--paper)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  padding: img.type === 'cover' ? 8 : 0,
-                }}>
+                  padding: img.type === 'cover' ? 8 : 0 }}>
                   {img.type === 'cover' ? (
                     <div style={{ width: '75%' }}><ProductBlob color={product.color} accent={product.accent} variant={variant} /></div>
                   ) : (<div style={{ fontFamily: 'Caveat', fontSize: 14, color: 'var(--ink-soft)' }}>pg. {img.pageNum}</div>)}
@@ -90,14 +89,14 @@ export function ProductView({ product, related }: { product: Product; related: P
               <span className="chip">Ages {product.age}</span>
               <span className="chip">{product.difficulty}</span>
             </div>
-            <h1 className="display" style={{ fontSize: 64, margin: '0 0 12px', lineHeight: 0.95 }}>{product.title}</h1>
+            <h1 className="heading" style={{ fontSize: 64, margin: '0 0 12px', lineHeight: 0.95 }}>{product.title}</h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
-              <span style={{ color: 'var(--tomato)', fontFamily: 'Sniglet', fontWeight: 800 }}>★★★★★</span>
+              <span style={{ color: 'var(--tomato)', fontWeight: 800 }}>★★★★★</span>
               <span style={{ fontSize: 14, color: 'var(--ink-soft)' }}>184 reviews · 98% would recommend</span>
             </div>
 
             <div style={{ display: 'flex', gap: 14, alignItems: 'baseline', marginBottom: 24 }}>
-              <div className="display" style={{ fontSize: 56 }}>{dollars(product.priceCents)}</div>
+              <div className="heading" style={{ fontSize: 56 }}>{dollars(product.priceCents)}</div>
               <div style={{ fontSize: 15, color: 'var(--ink-soft)' }}>one-time · yours forever</div>
             </div>
 
@@ -114,7 +113,7 @@ export function ProductView({ product, related }: { product: Product; related: P
               ].map(f => (
                 <div key={f.t} style={{ padding: 12, background: 'var(--paper)', border: '2px solid var(--ink)', borderRadius: 14 }}>
                   <div style={{ fontSize: 20, marginBottom: 2 }}>{f.i}</div>
-                  <div style={{ fontFamily: 'Sniglet', fontWeight: 400, fontSize: 14 }}>{f.t}</div>
+                  <div style={{ fontWeight: 400, fontSize: 14 }}>{f.t}</div>
                   <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>{f.d}</div>
                 </div>
               ))}
@@ -123,7 +122,7 @@ export function ProductView({ product, related }: { product: Product; related: P
             <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', border: '2.5px solid var(--ink)', borderRadius: 999, padding: '4px 10px', background: 'var(--paper)', boxShadow: '4px 4px 0 0 var(--ink)' }}>
                 <button onClick={() => setQty(Math.max(1, qty - 1))} style={qtyBtnStyle}>−</button>
-                <span style={{ minWidth: 30, textAlign: 'center', fontFamily: 'Sniglet', fontWeight: 400 }}>{qty}</span>
+                <span style={{ minWidth: 30, textAlign: 'center', fontWeight: 400 }}>{qty}</span>
                 <button onClick={() => setQty(qty + 1)} style={qtyBtnStyle}>+</button>
               </div>
               <button className="btn primary lg" style={{ flex: 1 }} onClick={() => { for (let i = 0; i < qty; i++) addToCart(product, i === qty - 1); }}>
@@ -138,20 +137,18 @@ export function ProductView({ product, related }: { product: Product; related: P
               {(['details', 'printing', 'reviews'] as const).map(t => (
                 <button key={t} onClick={() => setTab(t)} style={{
                   padding: '12px 20px', background: tab === t ? 'var(--sun)' : 'transparent',
-                  border: '2.5px solid var(--ink)', borderBottom: 'none', borderRadius: '14px 14px 0 0',
-                  fontFamily: 'Sniglet', fontWeight: 400, fontSize: 14, cursor: 'pointer',
-                  marginRight: 6, marginBottom: -2.5, textTransform: 'capitalize',
-                }}>{t}</button>
+                  border: '2.5px solid var(--ink)', borderBottom: 'none', borderRadius: '14px 14px 0 0', fontWeight: 400, fontSize: 14, cursor: 'pointer',
+                  marginRight: 6, marginBottom: -2.5, textTransform: 'capitalize' }}>{t}</button>
               ))}
             </div>
             <div style={{ padding: '20px 4px', fontSize: 15, color: 'var(--ink-soft)' }}>
               {tab === 'details' && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '10px 20px' }}>
-                  <span style={{ fontFamily: 'Sniglet', fontWeight: 400, color: 'var(--ink)' }}>Pages</span><span>{product.pages}</span>
-                  <span style={{ fontFamily: 'Sniglet', fontWeight: 400, color: 'var(--ink)' }}>Age range</span><span>{product.age} years</span>
-                  <span style={{ fontFamily: 'Sniglet', fontWeight: 400, color: 'var(--ink)' }}>Difficulty</span><span>{product.difficulty}</span>
-                  <span style={{ fontFamily: 'Sniglet', fontWeight: 400, color: 'var(--ink)' }}>Format</span><span>PDF, US Letter + A4</span>
-                  <span style={{ fontFamily: 'Sniglet', fontWeight: 400, color: 'var(--ink)' }}>License</span><span>Personal + classroom (up to 30)</span>
+                  <span style={{ fontWeight: 400, color: 'var(--ink)' }}>Pages</span><span>{product.pages}</span>
+                  <span style={{ fontWeight: 400, color: 'var(--ink)' }}>Age range</span><span>{product.age} years</span>
+                  <span style={{ fontWeight: 400, color: 'var(--ink)' }}>Difficulty</span><span>{product.difficulty}</span>
+                  <span style={{ fontWeight: 400, color: 'var(--ink)' }}>Format</span><span>PDF, US Letter + A4</span>
+                  <span style={{ fontWeight: 400, color: 'var(--ink)' }}>License</span><span>Personal + classroom (up to 30)</span>
                 </div>
               )}
               {tab === 'printing' && (
@@ -169,7 +166,7 @@ export function ProductView({ product, related }: { product: Product; related: P
                   ].map((r, i) => (
                     <div key={i} style={{ padding: '14px 0', borderBottom: '2px dashed rgba(35,31,26,0.1)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ fontFamily: 'Sniglet', fontWeight: 400, color: 'var(--ink)' }}>{r.n}</span>
+                        <span style={{ fontWeight: 400, color: 'var(--ink)' }}>{r.n}</span>
                         <span style={{ color: 'var(--tomato)' }}>{'★'.repeat(r.s)}{'☆'.repeat(5 - r.s)}</span>
                       </div>
                       <p style={{ margin: '4px 0 0' }}>{r.t}</p>
@@ -182,7 +179,7 @@ export function ProductView({ product, related }: { product: Product; related: P
         </div>
 
         <div style={{ marginTop: 100 }}>
-          <h2 className="display" style={{ fontSize: 42, marginBottom: 28 }}>You might also love</h2>
+          <h2 className="heading" style={{ fontSize: 42, marginBottom: 28 }}>You might also love</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 22 }}>
             {related.map((p, i) => (<ProductCard key={p.id} product={p} rotation={[-1, 1, -0.5, 0.5][i]} />))}
           </div>
@@ -192,12 +189,11 @@ export function ProductView({ product, related }: { product: Product; related: P
   );
 }
 
-const qtyBtnStyle: React.CSSProperties = { width: 30, height: 30, border: 'none', background: 'none', cursor: 'pointer', fontSize: 18, fontFamily: 'Sniglet' };
+const qtyBtnStyle: React.CSSProperties = { width: 30, height: 30, border: 'none', background: 'none', cursor: 'pointer', fontSize: 18};
 function navBtnStyle(side: 'left' | 'right'): React.CSSProperties {
   return {
     position: 'absolute', [side]: 16, top: '50%', transform: 'translateY(-50%)',
     width: 46, height: 46, border: '2.5px solid var(--ink)', borderRadius: '50%',
-    background: 'var(--paper)', cursor: 'pointer', fontFamily: 'Sniglet', fontWeight: 400, fontSize: 20,
-    boxShadow: '3px 3px 0 0 var(--ink)',
-  };
+    background: 'var(--paper)', cursor: 'pointer', fontWeight: 400, fontSize: 20,
+    boxShadow: '3px 3px 0 0 var(--ink)' };
 }

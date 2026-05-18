@@ -31,85 +31,96 @@ export default function AdminDashboard() {
   }, []);
 
   const maxRevenue = data ? Math.max(...data.last30Days.map(d => d.revenueCents), 1) : 1;
+  const today = new Date().toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
   return (
     <div>
-      <h1 className="display" style={{ fontSize: 42, margin: '0 0 8px' }}>Overview</h1>
-      <p style={{ color: 'var(--ink-soft)', marginBottom: 32 }}>
-        {new Date().toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-      </p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 20 }}>
+        <h1>Overview</h1>
+        <span style={{ color: 'var(--a-muted)', fontSize: 13 }}>{today}</span>
+      </div>
 
-      {error && <div style={{ color: 'var(--tomato)', marginBottom: 24 }}>{error}</div>}
+      {error && (
+        <div className="admin-toast admin-toast-error">
+          <span>{error}</span>
+        </div>
+      )}
 
       {data && (
         <>
-          {/* Stat cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 24 }}>
             {[
-              { label: 'Total revenue', value: fmt(data.totalRevenueCents), color: 'var(--sun)' },
-              { label: 'This month', value: fmt(data.revenueThisMonthCents), color: 'var(--mint)' },
-              { label: 'Paid orders', value: data.paidOrders.toString(), color: 'var(--sky)' },
-              { label: 'Orders this month', value: data.ordersThisMonth.toString(), color: 'var(--berry)' },
+              { label: 'Total revenue', value: fmt(data.totalRevenueCents) },
+              { label: 'Revenue this month', value: fmt(data.revenueThisMonthCents) },
+              { label: 'Paid orders', value: data.paidOrders.toString() },
+              { label: 'Orders this month', value: data.ordersThisMonth.toString() },
             ].map(s => (
-              <div key={s.label} style={{
-                background: s.color, border: '2.5px solid var(--ink)', borderRadius: 16,
-                padding: '20px 24px', boxShadow: '4px 4px 0 var(--ink)',
-              }}>
-                <div style={{ fontSize: 12, fontFamily: 'Sniglet', fontWeight: 400, opacity: 0.7, marginBottom: 6 }}>{s.label}</div>
-                <div className="display" style={{ fontSize: 32 }}>{s.value}</div>
+              <div key={s.label} className="admin-kpi">
+                <div className="admin-kpi-label">{s.label}</div>
+                <div className="admin-kpi-value">{s.value}</div>
               </div>
             ))}
           </div>
 
-          {/* Revenue chart */}
-          <div style={{
-            background: 'white', border: '2.5px solid var(--ink)', borderRadius: 20,
-            padding: 28, marginBottom: 24, boxShadow: '4px 4px 0 var(--ink)',
-          }}>
-            <h2 className="display" style={{ fontSize: 22, margin: '0 0 20px' }}>Revenue — last 30 days</h2>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 120 }}>
-              {data.last30Days.map(d => (
-                <div key={d.date} title={`${d.date}: ${fmt(d.revenueCents)} (${d.orders} orders)`}
-                  style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
-                  <div style={{
-                    width: '100%', background: d.revenueCents > 0 ? 'var(--tomato)' : 'rgba(0,0,0,0.07)',
-                    border: d.revenueCents > 0 ? '1.5px solid var(--ink)' : 'none',
-                    borderRadius: '4px 4px 0 0',
-                    height: `${Math.max((d.revenueCents / maxRevenue) * 100, d.revenueCents > 0 ? 8 : 2)}%`,
-                  }} />
-                </div>
-              ))}
+          <div className="admin-card" style={{ marginBottom: 24 }}>
+            <div className="admin-card-header">
+              <h2>Revenue — last 30 days</h2>
+              <span style={{ fontSize: 12, color: 'var(--a-muted)' }}>
+                {data.last30Days[0]?.date} → {data.last30Days[data.last30Days.length - 1]?.date}
+              </span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 11, color: 'var(--ink-soft)', fontFamily: 'Sniglet' }}>
-              <span>{data.last30Days[0]?.date}</span>
-              <span>{data.last30Days[data.last30Days.length - 1]?.date}</span>
+            <div className="admin-card-body">
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 160, paddingTop: 8 }}>
+                {data.last30Days.map(d => {
+                  const height = d.revenueCents > 0
+                    ? Math.max((d.revenueCents / maxRevenue) * 100, 6)
+                    : 1;
+                  return (
+                    <div
+                      key={d.date}
+                      title={`${d.date}: ${fmt(d.revenueCents)} (${d.orders} orders)`}
+                      style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', height: '100%' }}
+                    >
+                      <div
+                        className="admin-bar"
+                        style={{
+                          height: `${height}%`,
+                          background: d.revenueCents > 0 ? 'var(--a-accent)' : 'var(--a-border)',
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          {/* Top products */}
-          <div style={{
-            background: 'white', border: '2.5px solid var(--ink)', borderRadius: 20,
-            padding: 28, boxShadow: '4px 4px 0 var(--ink)',
-          }}>
-            <h2 className="display" style={{ fontSize: 22, margin: '0 0 16px' }}>Top products</h2>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+          <div className="admin-card">
+            <div className="admin-card-header">
+              <h2>Top products</h2>
+            </div>
+            <table className="admin-table">
               <thead>
-                <tr style={{ borderBottom: '2px solid var(--ink)' }}>
-                  {['Product', 'Units sold', 'Revenue'].map(h => (
-                    <th key={h} style={{ textAlign: 'left', padding: '6px 12px', fontFamily: 'Sniglet', fontSize: 12 }}>{h}</th>
-                  ))}
+                <tr>
+                  <th>Product</th>
+                  <th style={{ width: 140 }}>Units sold</th>
+                  <th style={{ width: 160 }}>Revenue</th>
                 </tr>
               </thead>
               <tbody>
-                {data.topProducts.map((p, i) => (
-                  <tr key={p.productId} style={{ borderBottom: '1px solid rgba(0,0,0,0.07)', background: i % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.02)' }}>
-                    <td style={{ padding: '10px 12px' }}>{p.title}</td>
-                    <td style={{ padding: '10px 12px' }}>{p.unitsSold}</td>
-                    <td style={{ padding: '10px 12px', fontFamily: 'Sniglet', fontWeight: 400 }}>{fmt(p.revenueCents)}</td>
+                {data.topProducts.map(p => (
+                  <tr key={p.productId}>
+                    <td>{p.title}</td>
+                    <td>{p.unitsSold}</td>
+                    <td>{fmt(p.revenueCents)}</td>
                   </tr>
                 ))}
                 {data.topProducts.length === 0 && (
-                  <tr><td colSpan={3} style={{ padding: '20px 12px', color: 'var(--ink-soft)', textAlign: 'center' }}>No sales yet</td></tr>
+                  <tr>
+                    <td colSpan={3} style={{ textAlign: 'center', color: 'var(--a-muted)', padding: '24px 16px' }}>
+                      No sales yet
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>

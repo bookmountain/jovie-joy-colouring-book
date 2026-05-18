@@ -33,7 +33,7 @@ export function ShopView({ products }: { products: Product[] }) {
       <div className="page">
         <div style={{ marginBottom: 40 }}>
           <div className="handwritten" style={{ fontSize: 28, color: 'var(--tomato)', marginBottom: -4 }}>the whole collection</div>
-          <h1 className="display" style={{ fontSize: 72, margin: 0 }}>Shop all books</h1>
+          <h1 className="heading" style={{ fontSize: 72, margin: 0 }}>Shop all books</h1>
           <p style={{ fontSize: 17, color: 'var(--ink-soft)', maxWidth: 600, marginTop: 8 }}>
             Every book is an instant PDF. Print as many times as you like, forever. $8–11 each, or bundle and save.
           </p>
@@ -66,7 +66,7 @@ export function ShopView({ products }: { products: Product[] }) {
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {['Under $10', 'Bestsellers', 'Easy', 'New'].map(q => (<div key={q} className="chip">{q}</div>))}
             </div>
-            <div style={{ fontFamily: 'Sniglet', fontWeight: 400, fontSize: 14 }}>
+            <div style={{ fontWeight: 400, fontSize: 14 }}>
               {sorted.length} book{sorted.length !== 1 ? 's' : ''} found
             </div>
           </div>
@@ -74,7 +74,7 @@ export function ShopView({ products }: { products: Product[] }) {
 
         {sorted.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 80 }}>
-            <div className="display" style={{ fontSize: 40, marginBottom: 12 }}>No matches 🤔</div>
+            <div className="heading" style={{ fontSize: 40, marginBottom: 12 }}>No matches 🤔</div>
             <div style={{ color: 'var(--ink-soft)', marginBottom: 20 }}>Try loosening your filters.</div>
             <button className="btn" onClick={() => { setAge('All ages'); setTheme('All themes'); setDiff('Any'); setSearch(''); }}>Clear filters</button>
           </div>
@@ -90,11 +90,10 @@ export function ShopView({ products }: { products: Product[] }) {
         <div style={{
           marginTop: 80, padding: '50px 40px', background: 'var(--sky)',
           border: '2.5px solid var(--ink)', borderRadius: 28, boxShadow: '6px 6px 0 0 var(--ink)',
-          display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 30, alignItems: 'center',
-        }}>
+          display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 30, alignItems: 'center' }}>
           <div>
             <div className="handwritten" style={{ fontSize: 28, color: 'var(--tomato)' }}>better together</div>
-            <h2 className="display" style={{ fontSize: 48, margin: '0 0 10px' }}>Buy 3, get 1 free</h2>
+            <h2 className="heading" style={{ fontSize: 48, margin: '0 0 10px' }}>Buy 3, get 1 free</h2>
             <p style={{ fontSize: 16, maxWidth: 500, marginBottom: 20 }}>Build a bundle of any 4 books — the cheapest is on us. Perfect for birthday gifts, summer break, or a long road trip.</p>
             <button className="btn primary">Build a bundle →</button>
           </div>

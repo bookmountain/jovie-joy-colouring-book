@@ -28,18 +28,21 @@ html, body {
   background: var(--cream);
   color: var(--ink);
   font-family: 'DM Sans', system-ui, sans-serif;
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: 17px;
+  line-height: 1.55;
 }
 
 body { min-height: 100vh; overflow-x: hidden; }
 
+/* Bubble display font — reserved for logo + hero. Section headings should use .heading instead. */
 .display { font-family: 'Sniglet', system-ui, sans-serif; font-weight: 800; letter-spacing: -0.015em; line-height: 0.95; }
+/* Readable display headings — DM Sans, used for section titles and most h2/h3. */
+.heading { font-family: 'DM Sans', system-ui, sans-serif; font-weight: 800; letter-spacing: -0.02em; line-height: 1.05; }
 .handwritten { font-family: 'Caveat', cursive; font-weight: 600; }
 
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  font-family: 'Sniglet', system-ui, sans-serif; font-weight: 400; font-size: 15px;
+  font-family: 'DM Sans', system-ui, sans-serif; font-weight: 700; font-size: 15px;
   padding: 14px 22px; border-radius: 999px;
   border: var(--stroke) solid var(--ink); background: var(--paper); color: var(--ink);
   cursor: pointer; text-decoration: none;
@@ -63,7 +66,7 @@ body { min-height: 100vh; overflow-x: hidden; }
   display: inline-flex; align-items: center; gap: 6px;
   padding: 7px 14px; border-radius: 999px;
   border: var(--stroke) solid var(--ink); background: var(--paper);
-  font-family: 'Sniglet', system-ui, sans-serif; font-weight: 400; font-size: 13px;
+  font-family: 'DM Sans', system-ui, sans-serif; font-weight: 600; font-size: 14px;
   cursor: pointer; transition: all .15s;
 }
 .chip.active { background: var(--ink); color: var(--cream); }
@@ -78,7 +81,7 @@ body { min-height: 100vh; overflow-x: hidden; }
 .sticker {
   position: absolute; background: var(--sun);
   border: var(--stroke) solid var(--ink); border-radius: 999px;
-  padding: 8px 14px; font-family: 'Sniglet', system-ui, sans-serif;
+  padding: 8px 14px; font-family: 'DM Sans', system-ui, sans-serif;
   font-weight: 800; font-size: 13px; transform: rotate(-8deg);
   box-shadow: 3px 3px 0 0 var(--ink); z-index: 2;
 }
@@ -92,7 +95,7 @@ body { min-height: 100vh; overflow-x: hidden; }
 
 .nav-links {
   display: flex; gap: 28px;
-  font-family: 'Sniglet', system-ui, sans-serif; font-weight: 400; font-size: 15px;
+  font-family: 'DM Sans', system-ui, sans-serif; font-weight: 600; font-size: 16px;
 }
 .nav-links a { color: var(--ink); text-decoration: none; cursor: pointer; position: relative; padding: 6px 2px; }
 .nav-links a.active::after {
@@ -126,13 +129,13 @@ body { min-height: 100vh; overflow-x: hidden; }
 .fade-up { animation: fadeUp .5s ease-out; }
 
 input[type="text"], input[type="email"], input[type="number"], textarea, select {
-  font-family: 'DM Sans', system-ui, sans-serif; font-size: 15px;
+  font-family: 'DM Sans', system-ui, sans-serif; font-size: 16px;
   padding: 14px 18px; border: var(--stroke) solid var(--ink); border-radius: 16px;
   background: var(--paper); color: var(--ink); width: 100%; outline: none;
   transition: box-shadow .15s;
 }
 input:focus, textarea:focus, select:focus { box-shadow: 4px 4px 0 0 var(--tomato); }
-label { display: block; font-family: 'Sniglet', system-ui, sans-serif; font-size: 13px; margin-bottom: 6px; font-weight: 400; }
+label { display: block; font-family: 'DM Sans', system-ui, sans-serif; font-size: 14px; margin-bottom: 6px; font-weight: 600; }
 
 .product-img {
   width: 100%; aspect-ratio: 3/4;

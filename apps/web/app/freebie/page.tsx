@@ -20,7 +20,7 @@ export default async function FreebiePage() {
       <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 50, alignItems: 'center' }}>
         <div>
           <div className="handwritten" style={{ fontSize: 30, color: 'var(--tomato)', marginBottom: -4 }}>{tagline}</div>
-          <h1 className="display" style={{ fontSize: 84, margin: '0 0 18px', lineHeight: 0.9 }}>
+          <h1 className="heading" style={{ fontSize: 84, margin: '0 0 18px', lineHeight: 0.9 }}>
             {lines(headline).map((line, i, arr) => (
               <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
             ))}
@@ -41,15 +41,14 @@ export default async function FreebiePage() {
             <div key={i} style={{
               position: 'absolute',
               top: [20, 60, 280, 320][i], left: [20, 180, 40, 200][i], width: 200,
-              transform: `rotate(${[-12, 6, -3, 10][i]}deg)`, zIndex: i + 1,
-            }}><ProductCover product={products[idx]} showBadge={false} /></div>
+              transform: `rotate(${[-12, 6, -3, 10][i]}deg)`, zIndex: i + 1 }}><ProductCover product={products[idx]} showBadge={false} /></div>
           ))}
           <div className="wiggle" style={{ position: 'absolute', top: 0, right: 20 }}><Star size={60} color="var(--sun)" rotate={15} /></div>
         </div>
       </div>
 
       <div style={{ marginTop: 80, padding: '50px 40px', background: 'var(--paper)', border: '2.5px solid var(--ink)', borderRadius: 28, boxShadow: '6px 6px 0 0 var(--ink)' }}>
-        <h2 className="display" style={{ fontSize: 42, marginBottom: 24, textAlign: 'center' }}>What&rsquo;s in the free pack</h2>
+        <h2 className="heading" style={{ fontSize: 42, marginBottom: 24, textAlign: 'center' }}>What&rsquo;s in the free pack</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14 }}>
           {[0, 1, 3, 5, 11].map((idx, i) => products[idx] && (
             <div key={i} style={{ textAlign: 'center' }}>
@@ -57,7 +56,7 @@ export default async function FreebiePage() {
                 <ProductBlob color="transparent" accent="transparent" variant={idx} />
                 <div style={{ position: 'absolute', bottom: 6, right: 10, fontFamily: 'Caveat', fontSize: 12, color: 'var(--ink-soft)' }}>pg. {i + 1}</div>
               </div>
-              <div style={{ fontFamily: 'Sniglet', fontWeight: 400, fontSize: 13 }}>From {products[idx].title}</div>
+              <div style={{ fontWeight: 400, fontSize: 13 }}>From {products[idx].title}</div>
             </div>
           ))}
         </div>

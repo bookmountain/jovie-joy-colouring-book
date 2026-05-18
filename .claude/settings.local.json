@@ -7,7 +7,26 @@
       "Bash(gunzip -k bundle.gz)",
       "Bash(unzip -l /Users/book/Projects/jovie-free-colouring-book/jovie-free-colouring-book-handoff.zip)",
       "Bash(unzip -o jovie-free-colouring-book-handoff.zip -d .)",
-      "mcp__Claude_Preview__preview_start"
+      "mcp__Claude_Preview__preview_start",
+      "Skill(superpowers:brainstorming)",
+      "Bash(unzip -o \"website check.docx\" -d /tmp/docx_extract/)",
+      "Bash(grep -v '^$')",
+      "Bash(python3)",
+      "Skill(superpowers:verification-before-completion)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"tsc exit: $?\")",
+      "Bash(npm run *)",
+      "Bash(dotnet build *)",
+      "Read(//usr/share/**)",
+      "Read(//home/book/.dotnet/**)",
+      "Bash(find / -maxdepth 5 -name \"dotnet\" -type f)",
+      "Bash(docker run *)",
+      "Read(//home/book/**)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(env)",
+      "Bash(docker compose *)",
+      "Bash(docker exec *)"
     ]
   }
 }

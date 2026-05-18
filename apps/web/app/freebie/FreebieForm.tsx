@@ -12,7 +12,7 @@ export function FreebieForm() {
     return (
       <div className="card" style={{ background: 'var(--mint)' }}>
         <Star size={40} color="var(--sun)" rotate={-10} />
-        <div className="display" style={{ fontSize: 28, margin: '10px 0 6px' }}>Check your inbox!</div>
+        <div className="heading" style={{ fontSize: 28, margin: '10px 0 6px' }}>Check your inbox!</div>
         <div style={{ fontSize: 15 }}>We&rsquo;ve sent 5 pages to <b>{email}</b>. Happy colouring! 🎨</div>
         <Link href="/shop" className="btn primary sm" style={{ marginTop: 14, display: 'inline-block' }}>See the full shop →</Link>
       </div>

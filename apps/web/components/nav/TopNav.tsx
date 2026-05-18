@@ -54,7 +54,7 @@ export function TopNav() {
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {user.avatarUrl
               ? <img src={user.avatarUrl} alt={user.name ?? user.email} style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid var(--ink)' }} />
-              : <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--mint)', border: '2px solid var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Sniglet', fontSize: 13 }}>{(user.name ?? user.email)[0].toUpperCase()}</div>}
+              : <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--mint)', border: '2px solid var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>{(user.name ?? user.email)[0].toUpperCase()}</div>}
             <button className="btn sm ghost" onClick={signOut}>Sign out</button>
           </div>
         ) : (
@@ -66,8 +66,7 @@ export function TopNav() {
             <span style={{
               background: 'var(--ink)', color: 'var(--sun)',
               borderRadius: 999, padding: '2px 7px', fontSize: 12, marginLeft: 4, minWidth: 22,
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            }}>{itemCount}</span>
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{itemCount}</span>
           )}
         </button>
       </div>

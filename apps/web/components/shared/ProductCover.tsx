@@ -12,7 +12,7 @@ export function ProductCover({ product, showBadge = true, rotation = 0 }: { prod
         </div>
       </div>
       <div style={{ position: 'absolute', top: 14, left: 14, right: 14, textAlign: 'center' }}>
-        <div style={{ fontFamily: 'Sniglet, sans-serif', fontWeight: 800, fontSize: 16, lineHeight: 1, color: 'var(--ink)' }}>
+        <div style={{ fontWeight: 800, fontSize: 16, lineHeight: 1, color: 'var(--ink)' }}>
           {product.title}
         </div>
       </div>

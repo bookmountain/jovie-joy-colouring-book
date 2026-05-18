@@ -32,7 +32,7 @@ export function AnnouncementBar() {
   const all = [...items, ...items, ...items];
   return (
     <div style={{ background: 'var(--ink)', color: 'var(--cream)', padding: '10px 0', overflow: 'hidden', borderBottom: '2.5px solid var(--ink)' }}>
-      <div className="marquee" style={{ fontFamily: 'Sniglet, sans-serif', fontSize: 14 }}>
+      <div className="marquee" style={{ fontSize: 14 }}>
         {all.map((t, i) => (
           <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 40 }}>
             {t}<span style={{ color: 'var(--sun)' }}>✦</span>
