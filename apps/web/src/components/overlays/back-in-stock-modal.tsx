@@ -2,14 +2,36 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
+import { apiNotifyMe } from "@/lib/api";
 import { useSite } from "@/state/site-store";
+
+type Status = "idle" | "submitting" | "ok" | "error";
 
 export function BackInStockModal() {
   const { state, dispatch } = useSite();
-  const [submitted, setSubmitted] = useState(false);
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<Status>("idle");
+  const productSlug = state.recentlyViewed[0];
 
   if (state.activeModal !== "back-in-stock") {
     return null;
+  }
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!productSlug) return;
+    if (!email.includes("@")) {
+      setStatus("error");
+      return;
+    }
+    setStatus("submitting");
+    try {
+      await apiNotifyMe(email, productSlug);
+      setStatus("ok");
+      setTimeout(() => dispatch({ type: "modal/close" }), 1200);
+    } catch {
+      setStatus("error");
+    }
   }
 
   return (
@@ -27,30 +49,33 @@ export function BackInStockModal() {
           </button>
         </div>
         <p className="text-sm leading-6 text-cocoa-text">
-          Leave your email and we will notify you when this product is back in
-          stock.
+          Leave your email and we will notify you when this product is back in stock.
         </p>
-        <form
-          className="mt-5 grid gap-3"
-          onSubmit={(event) => {
-            event.preventDefault();
-            setSubmitted(true);
-          }}
-        >
+        <form className="mt-5 grid gap-3" onSubmit={handleSubmit}>
           <input
             className="coco-input"
+            disabled={status === "submitting"}
+            onChange={(event) => setEmail(event.target.value)}
             placeholder="Your email"
+            required
             type="email"
+            value={email}
           />
           <button
-            className="coco-button-primary"
+            className="coco-button-primary disabled:opacity-60"
+            disabled={status === "submitting" || !productSlug}
             type="submit"
           >
-            Notify me
+            {status === "submitting" ? "Sending…" : "Notify me"}
           </button>
         </form>
-        {submitted ? (
+        {status === "ok" ? (
           <p className="mt-4 text-sm font-extrabold">We will keep you posted.</p>
+        ) : null}
+        {status === "error" ? (
+          <p className="mt-4 text-sm font-extrabold text-cocoa-coral">
+            Could not save. Check your email and try again.
+          </p>
         ) : null}
       </section>
     </div>

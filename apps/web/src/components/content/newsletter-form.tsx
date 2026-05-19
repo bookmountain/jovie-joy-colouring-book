@@ -1,34 +1,39 @@
 "use client";
 
 import { useState } from "react";
-import { subscribeEmail, type NewsletterStatus } from "@/lib/newsletter";
-import { useSite } from "@/state/site-store";
+import { apiNewsletterSignup } from "@/lib/api";
+
+type Status = "idle" | "submitting" | "ok" | "invalid" | "error";
 
 export function NewsletterForm() {
-  const { state, dispatch } = useSite();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<NewsletterStatus | null>(null);
+  const [status, setStatus] = useState<Status>("idle");
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!email.includes("@")) {
+      setStatus("invalid");
+      return;
+    }
+    setStatus("submitting");
+    try {
+      await apiNewsletterSignup(email);
+      setStatus("ok");
+      setName("");
+      setEmail("");
+    } catch {
+      setStatus("error");
+    }
+  }
 
   return (
     <section className="bg-white py-10 lg:py-12">
       <form
         className="mx-auto grid max-w-4xl gap-4 px-4 text-center lg:px-8"
-        onSubmit={(event) => {
-          event.preventDefault();
-          const result = subscribeEmail(state.newsletterEmails, email);
-          setStatus(result.status);
-
-          if (result.status === "subscribed") {
-            dispatch({ type: "newsletter/add", email });
-            setName("");
-            setEmail("");
-          }
-        }}
+        onSubmit={handleSubmit}
       >
-        <h2 className="coco-heading">
-          Subscribe for Updates
-        </h2>
+        <h2 className="coco-heading">Subscribe for Updates</h2>
         <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
           <input
             aria-label="Name"
@@ -46,25 +51,26 @@ export function NewsletterForm() {
             value={email}
           />
           <button
-            className="inline-flex min-h-12 items-center justify-center rounded-[15px] bg-cocoa-ink px-7 text-sm font-bold text-white transition hover:bg-[#2f1010] focus:outline-none focus:ring-2 focus:ring-cocoa-honey focus:ring-offset-2"
+            className="inline-flex min-h-12 items-center justify-center rounded-[15px] bg-cocoa-ink px-7 text-sm font-bold text-white transition hover:bg-[#2f1010] focus:outline-none focus:ring-2 focus:ring-cocoa-honey focus:ring-offset-2 disabled:opacity-60"
+            disabled={status === "submitting"}
             type="submit"
           >
-            Subscribe
+            {status === "submitting" ? "Sending…" : "Subscribe"}
           </button>
         </div>
-        {status === "subscribed" ? (
+        {status === "ok" ? (
           <p className="text-sm font-extrabold text-cocoa-ink">
             Thanks for subscribing!
-          </p>
-        ) : null}
-        {status === "duplicate" ? (
-          <p className="text-sm font-extrabold text-cocoa-ink">
-            This email has been registered!
           </p>
         ) : null}
         {status === "invalid" ? (
           <p className="text-sm font-extrabold text-cocoa-ink">
             Please enter a valid email address.
+          </p>
+        ) : null}
+        {status === "error" ? (
+          <p className="text-sm font-extrabold text-cocoa-coral">
+            Could not subscribe. Try again.
           </p>
         ) : null}
       </form>
