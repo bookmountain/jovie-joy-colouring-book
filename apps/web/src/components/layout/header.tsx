@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Heart, Menu, Search, ShoppingBag, UserRound } from "lucide-react";
+import { UserMenu } from "@/components/auth/UserMenu";
 import { useBundle } from "@/state/catalog-provider";
 import { useSite } from "@/state/site-store";
 import { MegaMenu } from "./mega-menu";
@@ -65,6 +66,7 @@ export function Header() {
               Zoe&amp;Book
             </Link>
             <div className="flex items-center justify-end gap-5 text-cocoa-ink">
+              <UserMenu />
               <button
                 aria-label="Sign in"
                 className="grid h-11 w-11 place-items-center rounded-full transition hover:bg-cocoa-cream"
