@@ -67,7 +67,7 @@ public static class SeedProducts
                     "https://cocowyo.com/cdn/shop/files/4-cozy-christmas-coloring-book.png?v=1751517594&width=800",
                 },
                 Tags = new List<string> { "christmas", "cozy", "holiday", "penguin" },
-                PublishedAt = DateTime.Parse("2026-03-01"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2026-03-01"), DateTimeKind.Utc),
             },
             // 2
             new Product
@@ -98,7 +98,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "comfy", "corner", "calm", "penguin" },
-                PublishedAt = DateTime.Parse("2026-03-27"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2026-03-27"), DateTimeKind.Utc),
             },
             // 3
             new Product
@@ -124,7 +124,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "little cuddles", "spiral", "sticker", "animal" },
-                PublishedAt = DateTime.Parse("2026-02-12"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2026-02-12"), DateTimeKind.Utc),
             },
             // 4
             new Product
@@ -150,7 +150,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "sticker", "cozy friends", "vinyl", "sale" },
-                PublishedAt = DateTime.Parse("2026-05-01"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2026-05-01"), DateTimeKind.Utc),
             },
             // 5
             new Product
@@ -175,7 +175,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "sticker", "cute things", "vinyl", "sale" },
-                PublishedAt = DateTime.Parse("2026-05-01"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2026-05-01"), DateTimeKind.Utc),
             },
             // 6
             new Product
@@ -200,7 +200,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "cozy friends", "animal", "cute", "bestseller" },
-                PublishedAt = DateTime.Parse("2024-09-01"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2024-09-01"), DateTimeKind.Utc),
             },
             // 7
             new Product
@@ -225,7 +225,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "girl moments", "daily", "classic", "bestseller" },
-                PublishedAt = DateTime.Parse("2024-08-01"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2024-08-01"), DateTimeKind.Utc),
             },
             // 8
             new Product
@@ -250,7 +250,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "girl moments", "vol 2", "classic", "cozy" },
-                PublishedAt = DateTime.Parse("2025-02-01"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2025-02-01"), DateTimeKind.Utc),
             },
             // 9
             new Product
@@ -275,7 +275,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "ocean", "scene", "classic", "bold easy" },
-                PublishedAt = DateTime.Parse("2024-03-01"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2024-03-01"), DateTimeKind.Utc),
             },
             // 10
             new Product
@@ -300,7 +300,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "little corner", "room", "interior", "bestseller" },
-                PublishedAt = DateTime.Parse("2024-06-01"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2024-06-01"), DateTimeKind.Utc),
             },
             // 11
             new Product
@@ -325,7 +325,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "cozy days", "cute", "daily", "beach" },
-                PublishedAt = DateTime.Parse("2024-10-01"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2024-10-01"), DateTimeKind.Utc),
             },
             // 12
             new Product
@@ -350,7 +350,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "cozy cuties", "cute", "collab", "spring" },
-                PublishedAt = DateTime.Parse("2025-09-01"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2025-09-01"), DateTimeKind.Utc),
             },
             // 13
             new Product
@@ -375,7 +375,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "cozy corner", "little corner", "collab", "rooms" },
-                PublishedAt = DateTime.Parse("2025-08-01"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2025-08-01"), DateTimeKind.Utc),
             },
             // 14
             new Product
@@ -400,7 +400,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "spooky cuties", "spooky", "seasonal", "halloween" },
-                PublishedAt = DateTime.Parse("2024-10-15"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2024-10-15"), DateTimeKind.Utc),
             },
             // 15
             new Product
@@ -425,7 +425,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "spooky cuties", "vol 2", "seasonal", "halloween" },
-                PublishedAt = DateTime.Parse("2025-10-01"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2025-10-01"), DateTimeKind.Utc),
             },
             // 16
             new Product
@@ -450,7 +450,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "comfy days", "spiral", "sticker", "sale" },
-                PublishedAt = DateTime.Parse("2026-02-01"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2026-02-01"), DateTimeKind.Utc),
             },
             // 17
             new Product
@@ -475,7 +475,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "girl moments", "spiral", "sticker", "sale" },
-                PublishedAt = DateTime.Parse("2026-02-10"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2026-02-10"), DateTimeKind.Utc),
             },
             // 18
             new Product
@@ -503,7 +503,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "digital", "little cuddles", "combo" },
-                PublishedAt = DateTime.Parse("2025-04-09"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2025-04-09"), DateTimeKind.Utc),
             },
             // 19
             new Product
@@ -531,7 +531,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "digital", "little cuddles", "combo" },
-                PublishedAt = DateTime.Parse("2025-04-09"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2025-04-09"), DateTimeKind.Utc),
             },
             // 20
             new Product
@@ -559,7 +559,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "digital", "little cuddles", "combo" },
-                PublishedAt = DateTime.Parse("2025-04-09"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2025-04-09"), DateTimeKind.Utc),
             },
             // 21
             new Product
@@ -587,7 +587,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "digital", "little cuddles", "combo" },
-                PublishedAt = DateTime.Parse("2025-04-09"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2025-04-09"), DateTimeKind.Utc),
             },
             // 22
             new Product
@@ -615,7 +615,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "digital", "cozy friends", "printable" },
-                PublishedAt = DateTime.Parse("2025-04-10"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2025-04-10"), DateTimeKind.Utc),
             },
             // 23
             new Product
@@ -643,7 +643,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "digital", "spooky cuties", "seasonal" },
-                PublishedAt = DateTime.Parse("2025-04-10"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2025-04-10"), DateTimeKind.Utc),
             },
             // 24
             new Product
@@ -668,7 +668,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "patterns", "bold easy", "comfy" },
-                PublishedAt = DateTime.Parse("2024-05-01"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2024-05-01"), DateTimeKind.Utc),
             },
             // 25
             new Product
@@ -693,7 +693,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "groovy", "patterns", "bold easy" },
-                PublishedAt = DateTime.Parse("2024-05-15"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2024-05-15"), DateTimeKind.Utc),
             },
             // 26
             new Product
@@ -718,7 +718,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "food", "drink", "sweets", "bold easy" },
-                PublishedAt = DateTime.Parse("2024-02-01"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2024-02-01"), DateTimeKind.Utc),
             },
             // 27
             new Product
@@ -743,7 +743,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "freebie", "mini", "digital" },
-                PublishedAt = DateTime.Parse("2026-04-01"),
+                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2026-04-01"), DateTimeKind.Utc),
             }
         );
         await db.SaveChangesAsync();
