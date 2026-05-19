@@ -56,6 +56,7 @@ builder.Services.AddAuthorization(opts =>
 
 // ----- App services -----
 builder.Services.AddScoped<ITokenService, JovieJoy.Api.Services.TokenService>();
+builder.Services.AddScoped<IUploadService, UploadService>();
 builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
 builder.Services.AddScoped<IStripeService, StripeService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
