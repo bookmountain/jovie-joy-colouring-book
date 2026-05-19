@@ -2,6 +2,7 @@
 
 import { Heart } from "lucide-react";
 import { useSite } from "@/state/site-store";
+import { syncWishlistToggle } from "@/state/wishlist-sync";
 
 export function WishlistButton({
   productSlug,
@@ -12,6 +13,12 @@ export function WishlistButton({
 }) {
   const { state, dispatch } = useSite();
   const active = state.wishlist.includes(productSlug);
+
+  function handleToggle() {
+    const willBeInList = !state.wishlist.includes(productSlug);
+    dispatch({ type: "wishlist/toggle", productSlug });
+    void syncWishlistToggle(productSlug, willBeInList);
+  }
 
   return (
     <button
@@ -24,7 +31,7 @@ export function WishlistButton({
           ? "border-cocoa-ink bg-cocoa-ink text-white"
           : "border-cocoa-line bg-white/95 text-[#6c6155] hover:border-cocoa-coral hover:text-cocoa-coral"
       }`}
-      onClick={() => dispatch({ type: "wishlist/toggle", productSlug })}
+      onClick={handleToggle}
       type="button"
     >
       <Heart
