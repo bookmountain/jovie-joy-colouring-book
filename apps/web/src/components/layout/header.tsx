@@ -3,20 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Heart, Menu, Search, ShoppingBag, UserRound } from "lucide-react";
-import { apiGetContent, type NavLink } from "@/lib/api";
+import { useBundle } from "@/state/catalog-provider";
 import { useSite } from "@/state/site-store";
 import { MegaMenu } from "./mega-menu";
 import { MobileMenu } from "./mobile-menu";
 
 export function Header() {
   const { cartCount, state, dispatch } = useSite();
+  const bundle = useBundle();
+  const primaryNavigation = bundle.navigation;
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
-  const [primaryNavigation, setPrimaryNavigation] = useState<NavLink[]>([]);
   const closeMenuTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    apiGetContent().then((b) => setPrimaryNavigation(b.navigation)).catch(() => setPrimaryNavigation([]));
-  }, []);
 
   const clearMenuCloseTimer = () => {
     if (closeMenuTimer.current) {

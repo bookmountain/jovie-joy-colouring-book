@@ -1,11 +1,12 @@
-import Link from "next/link";
-import { getFooterGroups, getSocialLinks } from "@/data/navigation";
+"use client";
 
-export async function Footer() {
-  const [footerGroups, socialLinks] = await Promise.all([
-    getFooterGroups(),
-    getSocialLinks(),
-  ]);
+import Link from "next/link";
+import { useBundle } from "@/state/catalog-provider";
+
+export function Footer() {
+  const bundle = useBundle();
+  const footerGroups = bundle.footerLinks;
+  const socialLinks = bundle.socialLinks;
 
   return (
     <footer className="mt-0 bg-[#f8edff]">

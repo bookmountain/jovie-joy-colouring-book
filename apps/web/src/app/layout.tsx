@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { apiGetContent } from "@/lib/api";
 import { AnnouncementBar } from "@/components/layout/announcement-bar";
 import { CartDrawer } from "@/components/commerce/cart-drawer";
 import { Footer } from "@/components/layout/footer";
@@ -12,19 +13,21 @@ import { TermsModal } from "@/components/overlays/terms-modal";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Zoe&Book Learning Clone",
-  description: "A clean-room learning clone of a cozy coloring storefront.",
+  title: "Zoe&Book",
+  description: "Cozy coloring books, comics, and printable pages.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const bundle = await apiGetContent();
+
   return (
     <html lang="en">
       <body>
-        <SiteProviders>
+        <SiteProviders bundle={bundle}>
           <AnnouncementBar />
           <Header />
           {children}
