@@ -24,7 +24,7 @@ public class StripeService(IConfiguration config) : IStripeService
                 ProductData = new SessionLineItemPriceDataProductDataOptions
                 {
                     Name = i.TitleAtPurchase,
-                    Metadata = new Dictionary<string, string> { ["product_id"] = i.ProductId },
+                    Metadata = new Dictionary<string, string> { ["product_slug"] = i.ProductSlug },
                 },
             },
             Quantity = i.Quantity,
