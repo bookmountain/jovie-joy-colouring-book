@@ -1,6 +1,8 @@
+using System.Text.Json;
 using JovieJoy.Api.Contracts;
 using JovieJoy.Api.Data;
 using JovieJoy.Api.Data.Entities;
+using JovieJoy.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,88 +10,68 @@ using Microsoft.EntityFrameworkCore;
 namespace JovieJoy.Api.Controllers;
 
 [ApiController]
-public class AdminContentController(AppDbContext db, IWebHostEnvironment env) : ControllerBase
+[Route("api/admin/content")]
+[Authorize(Policy = "AdminOnly")]
+public class AdminContentController(AppDbContext db, IUploadService uploads) : ControllerBase
 {
-    // Public: frontend reads site content at build/render time
-    [HttpGet("api/content")]
-    public async Task<ActionResult<IEnumerable<SiteContentDto>>> GetAll(CancellationToken ct)
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<ContentBlockDto>>> List(CancellationToken ct)
     {
-        var items = await db.SiteContents.AsNoTracking().ToListAsync(ct);
-        return Ok(items.Select(SiteContentDto.From));
+        var blocks = await db.ContentBlocks.AsNoTracking().OrderBy(b => b.Type).ThenBy(b => b.SortIndex).ToListAsync(ct);
+        return Ok(blocks.Select(ContentBlockDto.From));
     }
 
-    [HttpGet("api/content/{key}")]
-    public async Task<ActionResult<SiteContentDto>> Get(string key, CancellationToken ct)
+    [HttpGet("{key}")]
+    public async Task<ActionResult<ContentBlockDto>> Get(string key, CancellationToken ct)
     {
-        var item = await db.SiteContents.AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Key == key, ct);
-        return item is null ? NotFound() : Ok(SiteContentDto.From(item));
+        var b = await db.ContentBlocks.AsNoTracking().FirstOrDefaultAsync(b => b.Key == key, ct);
+        return b is null ? NotFound() : Ok(ContentBlockDto.From(b));
     }
 
-    // Admin-only write endpoints
-    [HttpPut("api/admin/content/{key}")]
-    [Authorize(Policy = "AdminOnly")]
-    public async Task<ActionResult<SiteContentDto>> Upsert(
-        string key, [FromBody] UpsertContentRequest req, CancellationToken ct)
+    [HttpPut("{key}")]
+    public async Task<ActionResult<ContentBlockDto>> Upsert(string key, [FromBody] UpsertContentBlockRequest req, CancellationToken ct)
     {
-        var item = await db.SiteContents.FirstOrDefaultAsync(c => c.Key == key, ct);
-        if (item is null)
+        if (!Enum.TryParse<ContentBlockType>(req.Type, ignoreCase: true, out var type))
+            return BadRequest(new { error = $"Unknown content block type '{req.Type}'" });
+
+        var existing = await db.ContentBlocks.FirstOrDefaultAsync(b => b.Key == key, ct);
+        var json = JsonDocument.Parse(req.Data.GetRawText());
+        if (existing is null)
         {
-            item = new SiteContent { Key = key, Value = req.Value, UpdatedAt = DateTime.UtcNow };
-            db.SiteContents.Add(item);
+            db.ContentBlocks.Add(new ContentBlock { Key = key, Type = type, Data = json, SortIndex = req.SortIndex });
         }
         else
         {
-            item.Value = req.Value;
-            item.UpdatedAt = DateTime.UtcNow;
+            existing.Type = type;
+            existing.Data = json;
+            existing.SortIndex = req.SortIndex;
+            existing.UpdatedAt = DateTime.UtcNow;
         }
         await db.SaveChangesAsync(ct);
-        return Ok(SiteContentDto.From(item));
+
+        var saved = await db.ContentBlocks.AsNoTracking().FirstAsync(b => b.Key == key, ct);
+        return Ok(ContentBlockDto.From(saved));
     }
 
-    [HttpPost("api/admin/content/{key}/image")]
-    [Authorize(Policy = "AdminOnly")]
-    [RequestSizeLimit(10 * 1024 * 1024)] // 10 MB
-    public async Task<ActionResult<SiteContentDto>> UploadImage(
-        string key, IFormFile file, CancellationToken ct)
+    [HttpDelete("{key}")]
+    public async Task<IActionResult> Delete(string key, CancellationToken ct)
     {
-        var allowed = new[] { "image/jpeg", "image/png", "image/webp", "image/gif" };
-        if (!allowed.Contains(file.ContentType))
-            return BadRequest(new { message = "Only JPEG, PNG, WebP, or GIF images are accepted" });
-
-        var dir = Path.Combine(env.ContentRootPath, "uploads", "images");
-        Directory.CreateDirectory(dir);
-
-        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-        var fileName = $"{key.Replace('.', '-')}_{Path.GetRandomFileName()}{ext}";
-        var filePath = Path.Combine(dir, fileName);
-
-        await using (var stream = System.IO.File.Create(filePath))
-            await file.CopyToAsync(stream, ct);
-
-        var imageUrl = $"/uploads/images/{fileName}";
-
-        var item = await db.SiteContents.FirstOrDefaultAsync(c => c.Key == key, ct);
-        if (item is null)
-        {
-            item = new SiteContent { Key = key, Value = imageUrl, Type = "image", UpdatedAt = DateTime.UtcNow };
-            db.SiteContents.Add(item);
-        }
-        else
-        {
-            // Delete old image file if it was a local upload
-            if (!string.IsNullOrEmpty(item.Value) && item.Value.StartsWith("/uploads/images/"))
-            {
-                var oldFile = Path.Combine(env.ContentRootPath, "uploads", "images",
-                    Path.GetFileName(item.Value));
-                if (System.IO.File.Exists(oldFile)) System.IO.File.Delete(oldFile);
-            }
-            item.Value = imageUrl;
-            item.Type = "image";
-            item.UpdatedAt = DateTime.UtcNow;
-        }
-
+        var b = await db.ContentBlocks.FirstOrDefaultAsync(b => b.Key == key, ct);
+        if (b is null) return NotFound();
+        db.ContentBlocks.Remove(b);
         await db.SaveChangesAsync(ct);
-        return Ok(SiteContentDto.From(item));
+        return NoContent();
+    }
+
+    [HttpPost("{key}/image")]
+    [RequestSizeLimit(20 * 1024 * 1024)]
+    public async Task<ActionResult<UploadResponse>> UploadImage(string key, IFormFile file, CancellationToken ct)
+    {
+        try
+        {
+            var url = await uploads.SaveImageAsync(file, "content", key.Replace('.', '-'), ct);
+            return Ok(new UploadResponse(url));
+        }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
     }
 }

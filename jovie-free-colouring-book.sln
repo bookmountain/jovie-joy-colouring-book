@@ -1,4 +1,4 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -7,6 +7,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "api", "api", "{BC2D172B-13BC-136C-CDB1-4B1A687208C4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JovieJoy.Api", "apps\api\JovieJoy.Api.csproj", "{A3ED35E7-A755-F5B5-DE81-AD688CEE822E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JovieJoy.Api.Tests", "apps\api.Tests\JovieJoy.Api.Tests.csproj", "{26B71457-4B6D-4A2E-B7F6-51E9197C1737}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -18,6 +20,10 @@ Global
 		{A3ED35E7-A755-F5B5-DE81-AD688CEE822E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A3ED35E7-A755-F5B5-DE81-AD688CEE822E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A3ED35E7-A755-F5B5-DE81-AD688CEE822E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{26B71457-4B6D-4A2E-B7F6-51E9197C1737}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26B71457-4B6D-4A2E-B7F6-51E9197C1737}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26B71457-4B6D-4A2E-B7F6-51E9197C1737}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26B71457-4B6D-4A2E-B7F6-51E9197C1737}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -25,6 +31,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{BC2D172B-13BC-136C-CDB1-4B1A687208C4} = {1787FE1D-075E-9E68-7218-25F1BD1BBEAB}
 		{A3ED35E7-A755-F5B5-DE81-AD688CEE822E} = {BC2D172B-13BC-136C-CDB1-4B1A687208C4}
+		{26B71457-4B6D-4A2E-B7F6-51E9197C1737} = {1787FE1D-075E-9E68-7218-25F1BD1BBEAB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B9C725D3-59D0-4B2C-8522-E884D1FE8591}

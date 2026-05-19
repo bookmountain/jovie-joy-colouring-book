@@ -1,6 +1,7 @@
 using JovieJoy.Api.Contracts;
 using JovieJoy.Api.Data;
 using JovieJoy.Api.Data.Entities;
+using JovieJoy.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,108 +11,145 @@ namespace JovieJoy.Api.Controllers;
 [ApiController]
 [Route("api/admin/products")]
 [Authorize(Policy = "AdminOnly")]
-public class AdminProductsController(AppDbContext db, IWebHostEnvironment env) : ControllerBase
+public class AdminProductsController(AppDbContext db, IUploadService uploads) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ProductDto>>> List(CancellationToken ct)
     {
-        var products = await db.Products
-            .AsNoTracking()
-            .OrderBy(p => p.Id)
+        var products = await db.Products.AsNoTracking()
+            .Include(p => p.ProductCollections).ThenInclude(pc => pc.Collection)
+            .OrderBy(p => p.Title)
             .ToListAsync(ct);
-        return Ok(products.Select(ProductDto.From));
+        return Ok(products.Select(p => ProductDto.From(p)));
+    }
+
+    [HttpGet("{slug}")]
+    public async Task<ActionResult<ProductDto>> Get(string slug, CancellationToken ct)
+    {
+        var p = await db.Products.AsNoTracking()
+            .Include(p => p.ProductCollections).ThenInclude(pc => pc.Collection)
+            .FirstOrDefaultAsync(p => p.Slug == slug, ct);
+        return p is null ? NotFound() : Ok(ProductDto.From(p));
     }
 
     [HttpPost]
-    public async Task<ActionResult<ProductDto>> Create(
-        [FromBody] CreateProductRequest req, CancellationToken ct)
+    public async Task<ActionResult<ProductDto>> Create([FromBody] CreateProductRequest req, CancellationToken ct)
     {
-        if (await db.Products.AnyAsync(p => p.Id == req.Id, ct))
-            return Conflict(new { message = $"Product '{req.Id}' already exists" });
+        if (await db.Products.AnyAsync(p => p.Slug == req.Slug, ct))
+            return Conflict(new { error = $"Slug '{req.Slug}' already in use" });
+
+        if (!Enum.TryParse<ProductType>(req.ProductType, ignoreCase: true, out var pt))
+            return BadRequest(new { error = $"Unknown productType '{req.ProductType}'" });
 
         var product = new Product
         {
-            Id = req.Id,
-            Title = req.Title,
-            PriceCents = req.PriceCents,
-            Pages = req.Pages,
-            AgeRange = req.AgeRange,
-            Theme = req.Theme,
-            Difficulty = req.Difficulty,
-            Color = req.Color,
-            Accent = req.Accent,
-            Badge = req.Badge,
-            Description = req.Description,
+            Slug = req.Slug, Title = req.Title, Excerpt = req.Excerpt,
+            Description = req.Description, PriceCents = req.PriceCents,
+            CompareAtPriceCents = req.CompareAtPriceCents, Available = req.Available,
+            ProductType = pt, Images = req.Images, Options = req.Options,
+            SourceLinks = req.SourceLinks, ReviewImages = req.ReviewImages,
+            InspirationImages = req.InspirationImages, Tags = req.Tags,
+            PublishedAt = req.PublishedAt ?? DateTime.UtcNow,
         };
         db.Products.Add(product);
         await db.SaveChangesAsync(ct);
-        return CreatedAtAction(nameof(List), ProductDto.From(product));
+
+        await SyncCollectionsAsync(product, req.CollectionSlugs, ct);
+        return CreatedAtAction(nameof(Get), new { slug = product.Slug }, ProductDto.From(product));
     }
 
-    [HttpPut("{id}")]
-    public async Task<ActionResult<ProductDto>> Update(
-        string id, [FromBody] UpdateProductRequest req, CancellationToken ct)
+    [HttpPut("{slug}")]
+    public async Task<ActionResult<ProductDto>> Update(string slug, [FromBody] UpdateProductRequest req, CancellationToken ct)
     {
-        var product = await db.Products.FirstOrDefaultAsync(p => p.Id == id, ct);
+        var product = await db.Products
+            .Include(p => p.ProductCollections)
+            .FirstOrDefaultAsync(p => p.Slug == slug, ct);
         if (product is null) return NotFound();
 
-        product.Title = req.Title;
-        product.PriceCents = req.PriceCents;
-        product.Pages = req.Pages;
-        product.AgeRange = req.AgeRange;
-        product.Theme = req.Theme;
-        product.Difficulty = req.Difficulty;
-        product.Color = req.Color;
-        product.Accent = req.Accent;
-        product.Badge = req.Badge;
-        product.Description = req.Description;
-        product.IsActive = req.IsActive;
+        if (!Enum.TryParse<ProductType>(req.ProductType, ignoreCase: true, out var pt))
+            return BadRequest(new { error = $"Unknown productType '{req.ProductType}'" });
 
+        product.Title = req.Title;
+        product.Excerpt = req.Excerpt;
+        product.Description = req.Description;
+        product.PriceCents = req.PriceCents;
+        product.CompareAtPriceCents = req.CompareAtPriceCents;
+        product.Available = req.Available;
+        product.ProductType = pt;
+        product.Images = req.Images;
+        product.Options = req.Options;
+        product.SourceLinks = req.SourceLinks;
+        product.ReviewImages = req.ReviewImages;
+        product.InspirationImages = req.InspirationImages;
+        product.Tags = req.Tags;
+        product.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
+
+        await SyncCollectionsAsync(product, req.CollectionSlugs, ct);
         return Ok(ProductDto.From(product));
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(string id, CancellationToken ct)
+    [HttpDelete("{slug}")]
+    public async Task<IActionResult> Delete(string slug, CancellationToken ct)
     {
-        var product = await db.Products.FirstOrDefaultAsync(p => p.Id == id, ct);
+        var product = await db.Products.FirstOrDefaultAsync(p => p.Slug == slug, ct);
         if (product is null) return NotFound();
-        // Soft-delete: deactivate rather than remove (preserves order history)
-        product.IsActive = false;
+        product.Available = false;
         await db.SaveChangesAsync(ct);
         return NoContent();
     }
 
-    [HttpPost("{id}/pdf")]
-    [RequestSizeLimit(50 * 1024 * 1024)] // 50 MB
-    public async Task<ActionResult<ProductDto>> UploadPdf(
-        string id, IFormFile file, CancellationToken ct)
+    [HttpPost("{slug}/images")]
+    [RequestSizeLimit(20 * 1024 * 1024)]
+    public async Task<ActionResult<UploadResponse>> UploadImage(string slug, IFormFile file, CancellationToken ct)
     {
-        var product = await db.Products.FirstOrDefaultAsync(p => p.Id == id, ct);
+        var product = await db.Products.FirstOrDefaultAsync(p => p.Slug == slug, ct);
+        if (product is null) return NotFound();
+        try
+        {
+            var url = await uploads.SaveImageAsync(file, "products", slug, ct);
+            product.Images = product.Images.Append(url).ToList();
+            await db.SaveChangesAsync(ct);
+            return Ok(new UploadResponse(url));
+        }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+    }
+
+    [HttpPost("{slug}/pdf")]
+    [RequestSizeLimit(50 * 1024 * 1024)]
+    public async Task<ActionResult<ProductDto>> UploadPdf(string slug, IFormFile file, CancellationToken ct)
+    {
+        var product = await db.Products.FirstOrDefaultAsync(p => p.Slug == slug, ct);
         if (product is null) return NotFound();
 
         if (file.ContentType != "application/pdf" && !file.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
-            return BadRequest(new { message = "Only PDF files are accepted" });
+            return BadRequest(new { error = "Only PDF files are accepted" });
 
-        var dir = Path.Combine(env.ContentRootPath, "uploads", "pdfs");
+        var dir = Path.Combine(Directory.GetCurrentDirectory(), "uploads", "pdfs");
         Directory.CreateDirectory(dir);
-
-        var fileName = $"{id}_{Path.GetRandomFileName()}.pdf";
+        var fileName = $"{slug}_{Path.GetRandomFileName()}.pdf";
         var filePath = Path.Combine(dir, fileName);
-
         await using (var stream = System.IO.File.Create(filePath))
             await file.CopyToAsync(stream, ct);
 
-        // Delete old file if present
-        if (!string.IsNullOrEmpty(product.PdfStorageKey))
+        if (!string.IsNullOrEmpty(product.PdfPath))
         {
-            var oldPath = Path.Combine(env.ContentRootPath, "uploads", "pdfs", product.PdfStorageKey);
-            if (System.IO.File.Exists(oldPath))
-                System.IO.File.Delete(oldPath);
+            var oldPath = Path.Combine(Directory.GetCurrentDirectory(), product.PdfPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            if (System.IO.File.Exists(oldPath)) System.IO.File.Delete(oldPath);
         }
 
-        product.PdfStorageKey = fileName;
+        product.PdfPath = $"/uploads/pdfs/{fileName}";
         await db.SaveChangesAsync(ct);
         return Ok(ProductDto.From(product));
+    }
+
+    private async Task SyncCollectionsAsync(Product product, List<string> collectionSlugs, CancellationToken ct)
+    {
+        var collections = await db.Collections.Where(c => collectionSlugs.Contains(c.Slug)).ToListAsync(ct);
+        var existing = await db.ProductCollections.Where(pc => pc.ProductId == product.Id).ToListAsync(ct);
+        db.ProductCollections.RemoveRange(existing);
+        foreach (var c in collections)
+            db.ProductCollections.Add(new ProductCollection { ProductId = product.Id, CollectionId = c.Id });
+        await db.SaveChangesAsync(ct);
     }
 }

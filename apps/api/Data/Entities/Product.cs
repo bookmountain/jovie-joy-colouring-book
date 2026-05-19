@@ -1,21 +1,32 @@
 namespace JovieJoy.Api.Data.Entities;
 
+public enum ProductType { Physical, Digital, Sticker, Freebie }
+
 public class Product
 {
-    public string Id { get; set; } = null!;        // e.g. "p01"
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public string Slug { get; set; } = null!;            // unique, e.g. "cozy-christmas-coloring-book"
     public string Title { get; set; } = null!;
-    public int PriceCents { get; set; }             // store cents, never doubles
-    public int Pages { get; set; }
-    public string AgeRange { get; set; } = null!;   // "3-5", "5-8", "8-12"
-    public string Theme { get; set; } = null!;
-    public string Difficulty { get; set; } = null!; // Easy, Medium, Hard
-    public string Color { get; set; } = null!;      // hex, drives cover art
-    public string Accent { get; set; } = null!;
-    public string? Badge { get; set; }              // Bestseller, New, null
-    public string Description { get; set; } = null!;
-    public string? PdfStorageKey { get; set; }      // where the real PDF lives (s3, local, etc.)
-    public bool IsActive { get; set; } = true;
+    public string Excerpt { get; set; } = null!;
+    public List<string> Description { get; set; } = new();           // jsonb
+    public int PriceCents { get; set; }
+    public int? CompareAtPriceCents { get; set; }
+    public bool Available { get; set; } = true;
+    public ProductType ProductType { get; set; }
+    public List<string> Images { get; set; } = new();                // jsonb
+    public List<ProductOption> Options { get; set; } = new();        // jsonb
+    public List<SourceLink>? SourceLinks { get; set; }               // jsonb
+    public List<string>? ReviewImages { get; set; }                  // jsonb
+    public List<string>? InspirationImages { get; set; }             // jsonb
+    public List<string> Tags { get; set; } = new();                  // jsonb
+    public DateTime PublishedAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public string? PdfPath { get; set; }                             // retained for digital fulfilment
 
+    public ICollection<ProductCollection> ProductCollections { get; set; } = new List<ProductCollection>();
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 }
+
+public record ProductOption(string Name, List<string> Values);
+public record SourceLink(string Label, string Href, string? Image, string? Alt);

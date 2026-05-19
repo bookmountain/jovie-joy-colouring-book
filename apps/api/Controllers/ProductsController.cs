@@ -10,21 +10,42 @@ namespace JovieJoy.Api.Controllers;
 public class ProductsController(AppDbContext db) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ProductDto>>> List(CancellationToken ct)
+    public async Task<ActionResult<IEnumerable<ProductDto>>> List(
+        [FromQuery] string? collection,
+        [FromQuery] string? sort,
+        CancellationToken ct)
     {
-        var products = await db.Products
+        var query = db.Products
             .AsNoTracking()
-            .Where(p => p.IsActive)
-            .OrderBy(p => p.Id)
-            .ToListAsync(ct);
-        return Ok(products.Select(ProductDto.From));
+            .Include(p => p.ProductCollections).ThenInclude(pc => pc.Collection)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(collection))
+            query = query.Where(p => p.ProductCollections.Any(pc => pc.Collection.Slug == collection));
+
+        query = sort switch
+        {
+            "price-ascending" => query.OrderBy(p => p.PriceCents),
+            "price-descending" => query.OrderByDescending(p => p.PriceCents),
+            "title-ascending" => query.OrderBy(p => p.Title),
+            "title-descending" => query.OrderByDescending(p => p.Title),
+            "created-ascending" => query.OrderBy(p => p.PublishedAt),
+            "created-descending" => query.OrderByDescending(p => p.PublishedAt),
+            _ => query.OrderByDescending(p => p.PublishedAt),
+        };
+
+        var products = await query.ToListAsync(ct);
+        return Ok(products.Select(p => ProductDto.From(p)));
     }
 
-    [HttpGet("{id}")]
-    public async Task<ActionResult<ProductDto>> Get(string id, CancellationToken ct)
+    [HttpGet("{slug}")]
+    public async Task<ActionResult<ProductDto>> Get(string slug, CancellationToken ct)
     {
-        var p = await db.Products.AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == id && x.IsActive, ct);
-        return p is null ? NotFound() : Ok(ProductDto.From(p));
+        var product = await db.Products
+            .AsNoTracking()
+            .Include(p => p.ProductCollections).ThenInclude(pc => pc.Collection)
+            .FirstOrDefaultAsync(p => p.Slug == slug, ct);
+
+        return product is null ? NotFound() : Ok(ProductDto.From(product));
     }
 }

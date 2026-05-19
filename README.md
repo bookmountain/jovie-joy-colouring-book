@@ -67,12 +67,20 @@ The admin panel lives at `/admin`. Visit `/admin/login` to sign in with your adm
 
 **Change the password before going to production.** Update `Admin__Email` and `Admin__Password` in `apps/api/.env` (or environment variables on the server). The API seeds the admin user on startup — if the user already exists the seed is skipped, so you must update the hash in the database directly after first deploy, or set the vars before first run.
 
-### Admin sections
+### Admin sections (post-overhaul, Phase 1 BE only)
 
-- **Analytics** — revenue stats, 30-day chart, top products
-- **Products** — create/edit products, upload PDFs
-- **Orders** — paginated order list with status filter and line-item drill-down
-- **Content** — edit home page text, about page text, and upload photos
+- **Analytics** — revenue stats, 30-day chart, top products (slug-based)
+- **Products** — full CRUD with rich fields (images, options, source links, tags, compareAt, productType); PDF upload; multi-image upload
+- **Collections** — full CRUD with curated product order, hero image, homepage slot
+- **Content** — typed `ContentBlock` entries (hero, about, FAQs, featured-on, video, footer, announcement, hero artwork) with per-key image upload
+- **Orders** — paginated list with status filter
+
+Public endpoints serving the FE:
+`/api/products`, `/api/products/{slug}`,
+`/api/collections`, `/api/collections/{slug}`,
+`/api/content`, `/api/blogs`, `/api/blogs/{slug}`, `/api/blogs/{slug}/articles/{articleSlug}`,
+`/api/comics`, `/api/about`, `/api/gallery`, `/api/pages/{slug}`, `/api/faqs`,
+`/api/newsletter` (POST), `/api/notify-me` (POST), `/api/wishlist` (auth).
 
 ## Google OAuth setup
 

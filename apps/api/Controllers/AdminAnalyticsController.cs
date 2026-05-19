@@ -1,4 +1,3 @@
-using JovieJoy.Api.Contracts;
 using JovieJoy.Api.Data;
 using JovieJoy.Api.Data.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -8,92 +7,72 @@ using Microsoft.EntityFrameworkCore;
 namespace JovieJoy.Api.Controllers;
 
 [ApiController]
-[Route("api/admin")]
+[Route("api/admin/analytics")]
 [Authorize(Policy = "AdminOnly")]
 public class AdminAnalyticsController(AppDbContext db) : ControllerBase
 {
-    [HttpGet("analytics")]
-    public async Task<ActionResult<AnalyticsSummaryDto>> GetAnalytics(CancellationToken ct)
+    [HttpGet("summary")]
+    public async Task<IActionResult> Summary(CancellationToken ct)
     {
         var now = DateTime.UtcNow;
         var monthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-        var thirtyDaysAgo = now.AddDays(-30).Date;
-
-        var paidOrders = await db.Orders
-            .AsNoTracking()
-            .Where(o => o.Status == OrderStatus.Paid)
-            .Include(o => o.Items)
-            .ToListAsync(ct);
+        var thirtyDaysAgo = now.AddDays(-30);
 
         var totalOrders = await db.Orders.CountAsync(ct);
-        var totalRevenue = paidOrders.Sum(o => o.TotalCents);
-        var revenueThisMonth = paidOrders
-            .Where(o => o.PaidAt >= monthStart)
-            .Sum(o => o.TotalCents);
-        var ordersThisMonth = paidOrders.Count(o => o.PaidAt >= monthStart);
+        var paidOrders = await db.Orders.Where(o => o.Status == OrderStatus.Paid).CountAsync(ct);
+        var totalRevenue = await db.Orders.Where(o => o.Status == OrderStatus.Paid).SumAsync(o => (int?)o.TotalCents, ct) ?? 0;
+        var monthRevenue = await db.Orders.Where(o => o.Status == OrderStatus.Paid && o.CreatedAt >= monthStart).SumAsync(o => (int?)o.TotalCents, ct) ?? 0;
+        var monthCount = await db.Orders.Where(o => o.CreatedAt >= monthStart).CountAsync(ct);
 
-        // Last 30 days grouped by date
-        var last30Days = paidOrders
-            .Where(o => o.PaidAt.HasValue && o.PaidAt.Value.Date >= thirtyDaysAgo)
-            .GroupBy(o => o.PaidAt!.Value.Date)
-            .Select(g => new DailyRevenueDto(
-                g.Key.ToString("yyyy-MM-dd"),
-                g.Sum(o => o.TotalCents),
-                g.Count()))
+        var daily = await db.Orders
+            .Where(o => o.Status == OrderStatus.Paid && o.CreatedAt >= thirtyDaysAgo)
+            .GroupBy(o => o.CreatedAt.Date)
+            .Select(g => new { Date = g.Key, Revenue = g.Sum(o => o.TotalCents), Count = g.Count() })
             .OrderBy(d => d.Date)
-            .ToList();
+            .ToListAsync(ct);
 
-        // Fill missing days with zero
-        var filledDays = Enumerable.Range(0, 30)
-            .Select(i => thirtyDaysAgo.AddDays(i).ToString("yyyy-MM-dd"))
-            .Select(date => last30Days.FirstOrDefault(d => d.Date == date)
-                           ?? new DailyRevenueDto(date, 0, 0))
-            .ToList();
-
-        // Top products by revenue
-        var topProducts = paidOrders
-            .SelectMany(o => o.Items)
-            .GroupBy(i => i.ProductId)
-            .Select(g => new TopProductDto(
-                g.Key,
-                g.First().TitleAtPurchase,
-                g.Sum(i => i.Quantity),
-                g.Sum(i => i.UnitPriceCents * i.Quantity)))
-            .OrderByDescending(t => t.RevenueCents)
-            .Take(5)
-            .ToList();
-
-        return Ok(new AnalyticsSummaryDto(
-            totalOrders, paidOrders.Count, totalRevenue,
-            revenueThisMonth, ordersThisMonth,
-            filledDays, topProducts));
-    }
-
-    [HttpGet("orders")]
-    public async Task<ActionResult> GetOrders(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20,
-        [FromQuery] string? status = null,
-        CancellationToken ct = default)
-    {
-        IQueryable<Order> query = db.Orders.AsNoTracking().Include(o => o.Items);
-
-        if (!string.IsNullOrEmpty(status) && Enum.TryParse<OrderStatus>(status, true, out var s))
-            query = query.Where(o => o.Status == s);
-
-        var total = await query.CountAsync(ct);
-        var orders = await query
-            .OrderByDescending(o => o.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+        var top = await db.OrderItems
+            .Include(i => i.Order)
+            .Where(i => i.Order.Status == OrderStatus.Paid)
+            .GroupBy(i => new { i.ProductSlug, i.TitleAtPurchase })
+            .Select(g => new
+            {
+                productSlug = g.Key.ProductSlug,
+                title = g.Key.TitleAtPurchase,
+                unitsSold = g.Sum(x => x.Quantity),
+                revenueCents = g.Sum(x => x.UnitPriceCents * x.Quantity),
+            })
+            .OrderByDescending(t => t.revenueCents)
+            .Take(10)
             .ToListAsync(ct);
 
         return Ok(new
         {
-            total,
-            page,
-            pageSize,
-            items = orders.Select(OrderDto.From),
+            totalOrders, paidOrders, totalRevenueCents = totalRevenue,
+            revenueThisMonthCents = monthRevenue, ordersThisMonth = monthCount,
+            last30Days = daily.Select(d => new { date = d.Date.ToString("yyyy-MM-dd"), revenueCents = d.Revenue, orders = d.Count }),
+            topProducts = top,
         });
+    }
+
+    [HttpGet("orders")]
+    public async Task<IActionResult> Orders([FromQuery] string? status, [FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default)
+    {
+        var q = db.Orders.AsNoTracking().Include(o => o.Items).AsQueryable();
+        if (!string.IsNullOrEmpty(status) && Enum.TryParse<OrderStatus>(status, ignoreCase: true, out var s))
+            q = q.Where(o => o.Status == s);
+
+        var total = await q.CountAsync(ct);
+        var items = await q.OrderByDescending(o => o.CreatedAt)
+            .Skip((page - 1) * pageSize).Take(pageSize)
+            .Select(o => new
+            {
+                id = o.Id, email = o.Email, status = o.Status.ToString(),
+                totalCents = o.TotalCents, createdAt = o.CreatedAt, paidAt = o.PaidAt,
+                items = o.Items.Select(i => new { productSlug = i.ProductSlug, title = i.TitleAtPurchase, qty = i.Quantity, unitPriceCents = i.UnitPriceCents }),
+            })
+            .ToListAsync(ct);
+
+        return Ok(new { items, total, page, pageSize });
     }
 }

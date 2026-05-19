@@ -56,6 +56,7 @@ builder.Services.AddAuthorization(opts =>
 
 // ----- App services -----
 builder.Services.AddScoped<ITokenService, JovieJoy.Api.Services.TokenService>();
+builder.Services.AddScoped<IUploadService, UploadService>();
 builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
 builder.Services.AddScoped<IStripeService, StripeService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
@@ -86,8 +87,12 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var cfg = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-    db.Database.Migrate();
-    await DbSeeder.SeedAsync(db, cfg);
+    if (db.Database.IsRelational())
+        db.Database.Migrate();
+    else
+        await db.Database.EnsureCreatedAsync();
+    if (!app.Environment.IsEnvironment("Test"))
+        await DbSeeder.SeedAsync(db, cfg);
 }
 
 if (app.Environment.IsDevelopment())
@@ -112,3 +117,5 @@ app.MapControllers();
 app.MapGet("/health", () => Results.Ok(new { status = "ok", time = DateTime.UtcNow }));
 
 app.Run();
+
+public partial class Program { }
