@@ -4,7 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace JovieJoy.Api.Controllers;
 
 [ApiController]
+[Authorize(Policy = "AdminOnly")]
 public class AdminContentController : ControllerBase
 {
-    [HttpGet("api/content")] public IActionResult GetAll() => Ok(Array.Empty<object>());
+    // Admin endpoints are implemented in Task 33.
 }
