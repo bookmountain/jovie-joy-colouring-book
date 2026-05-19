@@ -50,9 +50,19 @@ dotnet run                         # http://localhost:8080
 
 # 3. Frontend (new terminal)
 cd apps/web
+cp .env.local.example .env.local   # NEXT_PUBLIC_API_URL=http://localhost:8080
 npm install
-NEXT_PUBLIC_API_URL=http://localhost:8080 npm run dev   # http://localhost:3000
+npm run dev                         # http://localhost:3000
+npm run typecheck                   # tsc --noEmit
+npm test                            # vitest unit tests
+npx playwright test                 # e2e (needs BE running)
 ```
+
+The frontend is the Zoe&Book storefront (cocoa palette, Nunito font,
+rounded-coco design tokens). All content — products, collections, blogs,
+comics, gallery, about, FAQs, navigation, footer groups, announcement bar
+— is served by the Phase 1 BE. Cart + wishlist persist client-side
+(localStorage) with BE sync when signed in via Google OIDC.
 
 ## Admin dashboard
 
