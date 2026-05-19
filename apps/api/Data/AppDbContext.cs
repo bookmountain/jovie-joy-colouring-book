@@ -126,7 +126,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> opts) : DbContext(opts)
             e.HasKey(x => x.Key);
             e.Property(x => x.Key).HasMaxLength(120);
             e.Property(x => x.Type).HasConversion<int>();
-            e.Property(x => x.Data).HasColumnType("jsonb");
+            if (Database.IsRelational())
+            {
+                e.Property(x => x.Data).HasColumnType("jsonb");
+            }
+            else
+            {
+                e.Property(x => x.Data).HasConversion(
+                    d => d.RootElement.GetRawText(),
+                    s => System.Text.Json.JsonDocument.Parse(s, default));
+            }
         });
 
         b.Entity<Wishlist>(e =>
