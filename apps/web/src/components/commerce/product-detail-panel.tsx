@@ -88,7 +88,7 @@ export function ProductDetailPanel({ product }: { product: Product }) {
               item: {
                 productSlug: product.slug,
                 title: product.title,
-                price: product.priceCents / 100,
+                priceCents: product.priceCents,
                 quantity,
                 image: product.images[0],
                 option: product.options[0]?.values[0],

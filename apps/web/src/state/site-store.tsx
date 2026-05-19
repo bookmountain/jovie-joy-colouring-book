@@ -14,7 +14,7 @@ import {
 export type CartItem = {
   productSlug: string;
   title: string;
-  price: number;
+  priceCents: number;
   quantity: number;
   image?: string;
   option?: string;
@@ -237,7 +237,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
       0,
     );
     const cartSubtotal = state.cart.items.reduce(
-      (total, item) => total + item.price * item.quantity,
+      (total, item) => total + item.priceCents * item.quantity,
       0,
     );
 

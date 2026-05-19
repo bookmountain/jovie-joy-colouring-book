@@ -8,7 +8,7 @@ describe("site store reducer", () => {
       item: {
         productSlug: "comfy-corner-coloring-book",
         title: "Comfy Corner Coloring Book",
-        price: 9.99,
+        priceCents: 999,
         quantity: 1,
       },
     });
@@ -17,7 +17,7 @@ describe("site store reducer", () => {
       item: {
         productSlug: "comfy-corner-coloring-book",
         title: "Comfy Corner Coloring Book",
-        price: 9.99,
+        priceCents: 999,
         quantity: 2,
       },
     });

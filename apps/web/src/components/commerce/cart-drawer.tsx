@@ -1,12 +1,46 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
-import { formatPrice } from "@/lib/format";
+import { apiCreateCheckout } from "@/lib/api";
+import { tokenStorage } from "@/lib/auth";
+import { formatCents } from "@/lib/format";
 import { useSite } from "@/state/site-store";
 
 export function CartDrawer() {
   const { state, dispatch, cartCount, cartSubtotal } = useSite();
+  const [email, setEmail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleCheckout() {
+    setError(null);
+    if (!email.trim() || !email.includes("@")) {
+      setError("Please enter a valid email");
+      return;
+    }
+    if (state.cart.items.length === 0) return;
+
+    setSubmitting(true);
+    try {
+      const token = tokenStorage.read() ?? undefined;
+      const resp = await apiCreateCheckout(
+        {
+          email: email.trim(),
+          items: state.cart.items.map((item) => ({
+            productSlug: item.productSlug,
+            quantity: item.quantity,
+          })),
+        },
+        token,
+      );
+      window.location.assign(resp.checkoutUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Checkout failed");
+      setSubmitting(false);
+    }
+  }
 
   if (state.activeDrawer !== "cart") {
     return null;
@@ -59,20 +93,31 @@ export function CartDrawer() {
                     Qty {item.quantity}
                   </p>
                   <p className="mt-2 text-sm font-extrabold text-cocoa-purple">
-                    {formatPrice(item.price * item.quantity)}
+                    {formatCents(item.priceCents * item.quantity)}
                   </p>
                 </div>
               </div>
             ))}
             <div className="flex items-center justify-between pt-2 text-base font-extrabold">
               <span>Subtotal</span>
-              <span>{formatPrice(cartSubtotal)}</span>
+              <span>{formatCents(cartSubtotal)}</span>
             </div>
+            <input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="coco-input w-full"
+              disabled={submitting}
+            />
+            {error && <p className="text-sm text-cocoa-coral">{error}</p>}
             <button
-              className="coco-button-primary w-full"
               type="button"
+              onClick={handleCheckout}
+              disabled={submitting || state.cart.items.length === 0}
+              className="coco-button-primary w-full disabled:opacity-60"
             >
-              Checkout
+              {submitting ? "Redirecting…" : `Checkout · ${formatCents(cartSubtotal)}`}
             </button>
           </div>
         )}
