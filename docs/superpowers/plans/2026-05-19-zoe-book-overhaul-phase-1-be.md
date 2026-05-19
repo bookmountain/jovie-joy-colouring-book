@@ -2790,6 +2790,7 @@ public class ContentController(AppDbContext db) : ControllerBase
         var footer = await db.FooterLinks.AsNoTracking().OrderBy(f => f.SortIndex).ToListAsync(ct);
         var social = await db.SocialLinks.AsNoTracking().OrderBy(s => s.SortIndex).ToListAsync(ct);
         var trending = await db.TrendingTerms.AsNoTracking().OrderBy(t => t.SortIndex).Select(t => t.Term).ToListAsync(ct);
+        var featuredOnRows = await db.FeaturedOnLinks.AsNoTracking().OrderBy(f => f.SortIndex).ToListAsync(ct);
 
         var byType = blocks
             .GroupBy(b => b.Type)
@@ -2804,11 +2805,24 @@ public class ContentController(AppDbContext db) : ControllerBase
                 g.OrderBy(x => x.SortIndex).Select(x => new FooterLinkItemDto(x.Label, x.Href)).ToList()))
             .ToList();
 
+        // FeaturedOnLink rows are surfaced as synthetic FeaturedOn ContentBlockDtos so the FE
+        // sees a uniform shape regardless of whether they're admin-edited blocks (future) or
+        // seed-only rows (today). Key = "featured-on.<slug>".
+        var featuredOnBlocks = featuredOnRows.Select(f => new ContentBlockDto(
+            $"featured-on.{f.Slug}",
+            ContentBlockType.FeaturedOn.ToString(),
+            System.Text.Json.JsonSerializer.SerializeToElement(new
+            {
+                label = f.Label, href = f.Href, image = f.Image, alt = f.Alt,
+            }),
+            f.SortIndex,
+            DateTime.UtcNow)).ToList();
+
         return Ok(new SiteContentBundleDto(
             HomeHero: grab(ContentBlockType.HomeHero),
             AboutSections: grab(ContentBlockType.AboutSection),   // empty in v1; about lives in /api/about
             Faqs: grab(ContentBlockType.FaqEntry),                // empty; FAQs come from /api/faqs
-            FeaturedOn: grab(ContentBlockType.FeaturedOn),        // empty; featured-on lives in seed table; could mirror here later
+            FeaturedOn: featuredOnBlocks,
             HomeVideo: grab(ContentBlockType.HomeVideo),
             FooterGroups: grab(ContentBlockType.FooterGroup),     // not used today; footer groups via FooterLinks
             Announcement: grab(ContentBlockType.Announcement),
