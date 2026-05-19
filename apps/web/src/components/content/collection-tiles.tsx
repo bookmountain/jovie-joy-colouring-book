@@ -4,16 +4,23 @@ import { getCollectionBySlug, getProductsForCollection } from "@/lib/catalog";
 
 const tileSlugs = ["bold-easy", "cute-comfy", "classic", "seasonal"];
 
-export function CollectionTiles() {
+export async function CollectionTiles() {
+  const tiles = await Promise.all(
+    tileSlugs.map(async (slug) => {
+      const [collection, products] = await Promise.all([
+        getCollectionBySlug(slug),
+        getProductsForCollection(slug),
+      ]);
+      return { slug, collection, image: products[0]?.images[0] };
+    }),
+  );
+
   return (
     <section className="bg-white py-12 lg:py-16">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
         <h2 className="coco-heading mb-8">Collection</h2>
         <div className="grid gap-4 md:grid-cols-2">
-          {tileSlugs.map((slug) => {
-            const collection = getCollectionBySlug(slug);
-            const image = getProductsForCollection(slug)[0]?.images[0];
-
+          {tiles.map(({ slug, collection, image }) => {
             if (!collection || !image) {
               return null;
             }

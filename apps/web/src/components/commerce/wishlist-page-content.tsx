@@ -1,15 +1,23 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ProductGrid } from "@/components/commerce/product-grid";
 import type { Product } from "@/data/products";
-import { getProductBySlug } from "@/lib/catalog";
+import { fetchCatalog } from "@/lib/catalog";
 import { useSite } from "@/state/site-store";
 
 export function WishlistPageContent() {
   const { state } = useSite();
+  const [catalog, setCatalog] = useState<Product[]>([]);
+
+  useEffect(() => {
+    fetchCatalog().then(setCatalog).catch(() => setCatalog([]));
+  }, []);
+
+  const bySlug = new Map(catalog.map((p) => [p.slug, p]));
   const products = state.wishlist
-    .map(getProductBySlug)
+    .map((slug) => bySlug.get(slug))
     .filter((product): product is Product => Boolean(product));
 
   return (

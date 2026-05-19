@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { Product } from "@/data/products";
-import { getProductBySlug } from "@/lib/catalog";
+import { fetchCatalog } from "@/lib/catalog";
 import { useSite } from "@/state/site-store";
 import { ProductRail } from "./product-rail";
 
@@ -14,21 +14,29 @@ export function RecentlyViewed({
   product: Product;
 }) {
   const { state, dispatch } = useSite();
+  const [catalog, setCatalog] = useState<Product[]>([]);
+
+  useEffect(() => {
+    fetchCatalog().then(setCatalog).catch(() => setCatalog([]));
+  }, []);
+
+  useEffect(() => {
+    dispatch({ type: "recentlyViewed/add", productSlug: product.slug });
+  }, [dispatch, product.slug]);
+
+  const bySlug = new Map(catalog.map((p) => [p.slug, p]));
   const recent = state.recentlyViewed
     .filter((slug) => slug !== product.slug)
-    .map(getProductBySlug)
+    .map((slug) => bySlug.get(slug))
     .filter((item): item is Product => Boolean(item))
     .slice(0, 4);
+
   const productsToShow =
     recent.length > 0
       ? recent
       : fallbackProducts
           .filter((candidate) => candidate.slug !== product.slug)
           .slice(0, 4);
-
-  useEffect(() => {
-    dispatch({ type: "recentlyViewed/add", productSlug: product.slug });
-  }, [dispatch, product.slug]);
 
   if (productsToShow.length === 0) {
     return null;

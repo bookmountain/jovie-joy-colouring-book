@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { comicWorlds, downloadComicImage } from "@/data/content";
+import { getComicWorlds } from "@/data/content";
 import type { Comic } from "@/data/content";
 
 function getImageGridClass(imageCount: number) {
@@ -28,18 +28,12 @@ function ComicSection({ comic }: { comic: Comic }) {
         </p>
         {comic.hasDownload ? (
           <a
-            className="mt-5 inline-flex transition hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-cocoa-honey focus:ring-offset-4 focus:ring-offset-cocoa-cream"
+            className="mt-5 inline-flex rounded-full border border-cocoa-line bg-cocoa-honey px-5 py-2 text-sm font-extrabold transition hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-cocoa-honey focus:ring-offset-4 focus:ring-offset-cocoa-cream"
             href={downloadHref}
             rel="noreferrer"
             target="_blank"
           >
-            <Image
-              alt="Get Free Comic"
-              className="h-auto w-[176px] drop-shadow-sm md:w-[190px]"
-              height={56}
-              src={downloadComicImage}
-              width={210}
-            />
+            Get Free Comic
           </a>
         ) : null}
       </header>
@@ -72,7 +66,9 @@ function ComicSection({ comic }: { comic: Comic }) {
   );
 }
 
-export function ComicsPage() {
+export async function ComicsPage() {
+  const comicWorlds = await getComicWorlds();
+
   return (
     <div className="space-y-14">
       {comicWorlds.map((world) => (

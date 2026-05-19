@@ -1,6 +1,9 @@
-import { homeVideo } from "@/data/content";
+import { getHomeVideo } from "@/data/content";
 
-export function HomeVideoSection() {
+export async function HomeVideoSection() {
+  const homeVideo = await getHomeVideo();
+  if (!homeVideo) return null;
+
   return (
     <section aria-label="Zoe&Book video showcase" className="bg-white py-0">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">

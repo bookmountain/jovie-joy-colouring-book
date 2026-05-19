@@ -5,6 +5,7 @@ import { ProductRecommendations } from "@/components/commerce/product-recommenda
 import { ProductVisualStory } from "@/components/commerce/product-visual-story";
 import { RecentlyViewed } from "@/components/commerce/recently-viewed";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
+import { getAllProducts } from "@/data/products";
 import {
   getCollectionBySlug,
   getProductBySlug,
@@ -17,8 +18,11 @@ type PageProps = {
 
 export default async function CollectionProductPage({ params }: PageProps) {
   const { slug: collectionSlug, productSlug } = await params;
-  const product = getProductBySlug(productSlug);
-  const collection = getCollectionBySlug(collectionSlug);
+  const [product, collection, allProducts] = await Promise.all([
+    getProductBySlug(productSlug),
+    getCollectionBySlug(collectionSlug),
+    getAllProducts(),
+  ]);
 
   if (!product || !collection) {
     notFound();
@@ -42,7 +46,7 @@ export default async function CollectionProductPage({ params }: PageProps) {
       <ProductVisualStory product={product} />
       <ProductRecommendations product={product} />
       <RecentlyViewed
-        fallbackProducts={getRelatedProducts(product, 4)}
+        fallbackProducts={getRelatedProducts(allProducts, product, 4)}
         product={product}
       />
     </main>

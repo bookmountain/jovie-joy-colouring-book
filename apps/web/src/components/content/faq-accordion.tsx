@@ -1,6 +1,8 @@
-import { faqs } from "@/data/faqs";
+import { getFaqs } from "@/data/faqs";
 
-export function FaqAccordion() {
+export async function FaqAccordion() {
+  const faqs = await getFaqs();
+
   return (
     <div className="divide-y divide-cocoa-line rounded-coco border border-cocoa-line bg-cocoa-cream px-5">
       {faqs.map((faq) => (

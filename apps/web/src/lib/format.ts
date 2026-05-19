@@ -5,6 +5,10 @@ export function formatPrice(value: number): string {
   }).format(value);
 }
 
+export function formatMoney(cents: number): string {
+  return formatPrice(cents / 100);
+}
+
 export function slugify(value: string): string {
   return value
     .toLowerCase()

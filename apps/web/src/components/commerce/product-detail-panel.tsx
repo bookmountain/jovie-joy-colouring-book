@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Minus, Plus } from "lucide-react";
 import type { Product } from "@/data/products";
-import { formatPrice } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import { useSite } from "@/state/site-store";
 import { WishlistButton } from "./wishlist-button";
 
@@ -12,8 +12,8 @@ export function ProductDetailPanel({ product }: { product: Product }) {
   const [quantity, setQuantity] = useState(1);
   const { dispatch } = useSite();
   const onSale =
-    typeof product.compareAtPrice === "number" &&
-    product.compareAtPrice > product.price;
+    typeof product.compareAtPriceCents === "number" &&
+    product.compareAtPriceCents > product.priceCents;
 
   return (
     <section className="lg:sticky lg:top-28">
@@ -28,7 +28,7 @@ export function ProductDetailPanel({ product }: { product: Product }) {
       <div className="mt-4 flex items-baseline gap-3">
         {onSale ? (
           <span className="text-base text-[#969696] line-through">
-            {formatPrice(product.compareAtPrice ?? product.price)}
+            {formatMoney(product.compareAtPriceCents ?? product.priceCents)}
           </span>
         ) : null}
         <span
@@ -36,7 +36,7 @@ export function ProductDetailPanel({ product }: { product: Product }) {
             onSale ? "text-cocoa-purple" : "text-cocoa-text"
           }`}
         >
-          {formatPrice(product.price)}
+          {formatMoney(product.priceCents)}
         </span>
       </div>
       <p className="mt-1 text-sm text-[#777]">Unit price / per</p>
@@ -88,7 +88,7 @@ export function ProductDetailPanel({ product }: { product: Product }) {
               item: {
                 productSlug: product.slug,
                 title: product.title,
-                price: product.price,
+                price: product.priceCents / 100,
                 quantity,
                 image: product.images[0],
                 option: product.options[0]?.values[0],

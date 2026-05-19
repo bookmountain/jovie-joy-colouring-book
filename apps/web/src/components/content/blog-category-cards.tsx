@@ -1,8 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { blogCategories } from "@/data/content";
+import { getBlogCategories } from "@/data/content";
 
-export function BlogCategoryCards() {
+export async function BlogCategoryCards() {
+  const blogCategories = await getBlogCategories();
+
   return (
     <section className="bg-cocoa-cream py-12 lg:py-16">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">

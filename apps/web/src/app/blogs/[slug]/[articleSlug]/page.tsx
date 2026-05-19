@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
-import { articles, blogCategories } from "@/data/content";
+import { getArticle, getBlogCategory } from "@/data/content";
 
 type PageProps = {
   params: Promise<{ slug: string; articleSlug: string }>;
@@ -15,12 +15,15 @@ const blogSlugAliases: Record<string, string> = {
 export default async function ArticlePage({ params }: PageProps) {
   const { slug, articleSlug } = await params;
   const blogSlug = blogSlugAliases[slug] ?? slug;
-  const article = articles.find(
-    (item) => item.blogSlug === blogSlug && item.slug === articleSlug,
-  );
-  const category = blogCategories.find((item) => item.slug === blogSlug);
 
-  if (!article || !category) {
+  let article;
+  let category;
+  try {
+    [article, { category }] = await Promise.all([
+      getArticle(blogSlug, articleSlug),
+      getBlogCategory(blogSlug),
+    ]);
+  } catch {
     notFound();
   }
 

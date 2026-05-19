@@ -3,15 +3,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/data/products";
-import { formatPrice } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import { useSite } from "@/state/site-store";
 import { WishlistButton } from "./wishlist-button";
 
 export function ProductCard({ product }: { product: Product }) {
   const { dispatch } = useSite();
   const onSale =
-    typeof product.compareAtPrice === "number" &&
-    product.compareAtPrice > product.price;
+    typeof product.compareAtPriceCents === "number" &&
+    product.compareAtPriceCents > product.priceCents;
 
   return (
     <article
@@ -54,7 +54,7 @@ export function ProductCard({ product }: { product: Product }) {
           <div className="flex items-baseline justify-center gap-2">
             {onSale ? (
               <span className="text-[15px] text-[#969696] line-through">
-                {formatPrice(product.compareAtPrice ?? product.price)}
+                {formatMoney(product.compareAtPriceCents ?? product.priceCents)}
               </span>
             ) : null}
             <span
@@ -62,7 +62,7 @@ export function ProductCard({ product }: { product: Product }) {
                 onSale ? "text-cocoa-purple" : "text-cocoa-text"
               }`}
             >
-              {formatPrice(product.price)}
+              {formatMoney(product.priceCents)}
             </span>
           </div>
           <p className="mt-0.5 text-xs text-[#777]">Unit price / per</p>

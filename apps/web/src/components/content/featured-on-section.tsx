@@ -1,7 +1,9 @@
 import Image from "next/image";
-import { featuredOnLinks } from "@/data/content";
+import { getFeaturedOnLinks } from "@/data/content";
 
-export function FeaturedOnSection() {
+export async function FeaturedOnSection() {
+  const featuredOnLinks = await getFeaturedOnLinks();
+
   return (
     <section aria-label="Featured On" className="bg-white py-8 lg:py-10">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">

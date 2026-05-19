@@ -29,7 +29,10 @@ export default async function CollectionPage({
 }: PageProps) {
   const { slug } = await params;
   const query = (await searchParams) ?? {};
-  const collection = getCollectionBySlug(slug);
+  const [collection, collectionProducts] = await Promise.all([
+    getCollectionBySlug(slug),
+    getProductsForCollection(slug),
+  ]);
 
   if (!collection) {
     notFound();
@@ -37,7 +40,6 @@ export default async function CollectionPage({
 
   const pageSize = Number(readParam(query, "pageSize") ?? "20");
   const sort = (readParam(query, "sort") ?? collection.defaultSort) as SortKey;
-  const collectionProducts = getProductsForCollection(slug);
   const products = takePageSize(sortProducts(collectionProducts, sort), pageSize);
 
   return (

@@ -1,7 +1,12 @@
 import Link from "next/link";
-import { footerGroups, socialLinks } from "@/data/navigation";
+import { getFooterGroups, getSocialLinks } from "@/data/navigation";
 
-export function Footer() {
+export async function Footer() {
+  const [footerGroups, socialLinks] = await Promise.all([
+    getFooterGroups(),
+    getSocialLinks(),
+  ]);
+
   return (
     <footer className="mt-0 bg-[#f8edff]">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-10 md:grid-cols-[1.2fr_1fr_1fr] lg:px-8">

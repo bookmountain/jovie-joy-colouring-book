@@ -1,14 +1,19 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { X } from "lucide-react";
-import { primaryNavigation } from "@/data/navigation";
+import { apiGetContent, type NavLink } from "@/lib/api";
 import { useSite } from "@/state/site-store";
 
 export function MobileMenu() {
   const { state, dispatch } = useSite();
+  const [primaryNavigation, setPrimaryNavigation] = useState<NavLink[]>([]);
   const open = state.activeDrawer === "mobile-menu";
+
+  useEffect(() => {
+    apiGetContent().then((b) => setPrimaryNavigation(b.navigation)).catch(() => setPrimaryNavigation([]));
+  }, []);
 
   useEffect(() => {
     if (!open) {

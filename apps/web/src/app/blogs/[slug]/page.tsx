@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { BlogCard } from "@/components/content/blog-card";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
-import { articles, blogCategories } from "@/data/content";
+import { getBlogCategory } from "@/data/content";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -15,15 +15,16 @@ const blogSlugAliases: Record<string, string> = {
 export default async function BlogCategoryPage({ params }: PageProps) {
   const { slug } = await params;
   const blogSlug = blogSlugAliases[slug] ?? slug;
-  const category = blogCategories.find((item) => item.slug === blogSlug);
 
-  if (!category) {
+  let category;
+  let categoryArticles;
+  try {
+    const result = await getBlogCategory(blogSlug);
+    category = result.category;
+    categoryArticles = result.articles;
+  } catch {
     notFound();
   }
-
-  const categoryArticles = articles.filter(
-    (article) => article.blogSlug === blogSlug,
-  );
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10 lg:px-8">

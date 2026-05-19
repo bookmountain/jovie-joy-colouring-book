@@ -7,11 +7,23 @@ import { HomeHero } from "@/components/content/home-hero";
 import { HomeSection } from "@/components/content/home-section";
 import { HomeVideoSection } from "@/components/content/home-video-section";
 import { NewsletterForm } from "@/components/content/newsletter-form";
-import { cozyMomentImages } from "@/data/gallery";
+import { getCozyMomentImages } from "@/data/gallery";
 import { getProductsForCollection } from "@/lib/catalog";
 import Image from "next/image";
 
-export default function Home() {
+export default async function Home() {
+  const [
+    newReleaseProducts,
+    bestSellerProducts,
+    digitalProducts,
+    cozyMomentImages,
+  ] = await Promise.all([
+    getProductsForCollection("new-release"),
+    getProductsForCollection("frontpage"),
+    getProductsForCollection("digital"),
+    getCozyMomentImages(),
+  ]);
+
   return (
     <main>
       <HomeHero />
@@ -46,21 +58,21 @@ export default function Home() {
       <HomeSection
         eyebrow="Just landed"
         href="/collections/new-release"
-        products={getProductsForCollection("new-release").slice(0, 4)}
+        products={newReleaseProducts.slice(0, 4)}
         title="New Release"
       />
       <HomeVideoSection />
       <HomeSection
         eyebrow="Popular products"
         href="/collections/frontpage"
-        products={getProductsForCollection("frontpage").slice(0, 4)}
+        products={bestSellerProducts.slice(0, 4)}
         title="Best Seller"
       />
       <CollectionTiles />
       <HomeSection
         eyebrow="Digital books"
         href="/collections/digital"
-        products={getProductsForCollection("digital").slice(0, 4)}
+        products={digitalProducts.slice(0, 4)}
         title="Digital"
       />
       <BlogCategoryCards />

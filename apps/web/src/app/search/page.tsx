@@ -1,12 +1,19 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ProductGrid } from "@/components/commerce/product-grid";
-import { searchCatalog } from "@/lib/catalog";
+import { fetchCatalog, searchCatalog } from "@/lib/catalog";
+import type { Product } from "@/lib/api";
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
-  const results = useMemo(() => searchCatalog(query), [query]);
+  const [catalog, setCatalog] = useState<Product[]>([]);
+
+  useEffect(() => {
+    fetchCatalog().then(setCatalog).catch(() => setCatalog([]));
+  }, []);
+
+  const results = useMemo(() => searchCatalog(catalog, query), [catalog, query]);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10 lg:px-8">

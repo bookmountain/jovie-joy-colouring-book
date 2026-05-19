@@ -1,7 +1,10 @@
 import Image from "next/image";
-import { footerArtwork } from "@/data/content";
+import { getFooterArtwork } from "@/data/content";
 
-export function HomeFooterArt() {
+export async function HomeFooterArt() {
+  const footerArtwork = await getFooterArtwork();
+  if (!footerArtwork) return null;
+
   return (
     <section
       aria-label="Homepage footer art"

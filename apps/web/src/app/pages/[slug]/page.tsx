@@ -5,7 +5,7 @@ import { ComicsPage } from "@/components/content/comics-page";
 import { FaqAccordion } from "@/components/content/faq-accordion";
 import { GalleryGrid } from "@/components/content/gallery-grid";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
-import { staticPages } from "@/data/content";
+import { getStaticPage } from "@/data/content";
 import { getProductsForCollection } from "@/lib/catalog";
 
 type PageProps = {
@@ -19,11 +19,15 @@ const pageSlugAliases: Record<string, string> = {
 export default async function StaticPage({ params }: PageProps) {
   const { slug } = await params;
   const pageSlug = pageSlugAliases[slug] ?? slug;
-  const page = staticPages.find((item) => item.slug === pageSlug);
 
-  if (!page) {
+  let page;
+  try {
+    page = await getStaticPage(pageSlug);
+  } catch {
     notFound();
   }
+
+  const freebies = pageSlug === "freebies" ? await getProductsForCollection("freebies") : [];
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10 lg:px-8">
@@ -38,7 +42,7 @@ export default async function StaticPage({ params }: PageProps) {
         {pageSlug === "gallery" ? <GalleryGrid /> : null}
         {pageSlug === "faq" ? <FaqAccordion /> : null}
         {pageSlug === "freebies" ? (
-          <ProductGrid products={getProductsForCollection("freebies")} />
+          <ProductGrid products={freebies} />
         ) : null}
         {pageSlug !== "about-us" &&
         pageSlug !== "comics" &&

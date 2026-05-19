@@ -1,7 +1,9 @@
 import Image from "next/image";
-import { aboutSections } from "@/data/content";
+import { getAboutSections } from "@/data/content";
 
-export function AboutPage() {
+export async function AboutPage() {
+  const aboutSections = await getAboutSections();
+
   return (
     <section className="space-y-7">
       {aboutSections.map((section, index) => (

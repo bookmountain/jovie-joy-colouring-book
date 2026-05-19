@@ -1,16 +1,26 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { X } from "lucide-react";
-import { trendingTerms } from "@/data/navigation";
-import { getPopularProducts, searchCatalog } from "@/lib/catalog";
-import { formatPrice } from "@/lib/format";
+import { fetchCatalog, getPopularProducts, searchCatalog } from "@/lib/catalog";
+import { formatMoney } from "@/lib/format";
 import { useSite } from "@/state/site-store";
+import type { Product } from "@/lib/api";
+import { apiGetContent } from "@/lib/api";
 
 export function SearchDrawer() {
   const { state, dispatch } = useSite();
+  const [catalog, setCatalog] = useState<Product[]>([]);
+  const [popular, setPopular] = useState<Product[]>([]);
+  const [trendingTerms, setTrendingTerms] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetchCatalog().then(setCatalog).catch(() => setCatalog([]));
+    getPopularProducts().then(setPopular).catch(() => setPopular([]));
+    apiGetContent().then((b) => setTrendingTerms(b.trendingTerms)).catch(() => setTrendingTerms([]));
+  }, []);
 
   useEffect(() => {
     const main = document.querySelector("main");
@@ -31,8 +41,8 @@ export function SearchDrawer() {
   }
 
   const results = state.searchQuery
-    ? searchCatalog(state.searchQuery).slice(0, 6)
-    : getPopularProducts();
+    ? searchCatalog(catalog, state.searchQuery).slice(0, 6)
+    : popular;
 
   return (
     <div className="fixed inset-0 z-50 bg-cocoa-ink/35">
@@ -104,7 +114,7 @@ export function SearchDrawer() {
                       {product.excerpt}
                     </p>
                     <p className="mt-2 text-sm font-extrabold text-cocoa-purple">
-                      {formatPrice(product.price)}
+                      {formatMoney(product.priceCents)}
                     </p>
                   </div>
                 </Link>

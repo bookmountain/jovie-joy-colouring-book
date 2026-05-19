@@ -1,7 +1,9 @@
 import Image from "next/image";
-import { cozyMomentImages } from "@/data/gallery";
+import { getCozyMomentImages } from "@/data/gallery";
 
-export function GalleryGrid() {
+export async function GalleryGrid() {
+  const cozyMomentImages = await getCozyMomentImages();
+
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
       {cozyMomentImages.map((image, index) => (
