@@ -59,7 +59,7 @@ public static class SeedContentBlocks
             {
                 Key = "hero.artwork.footer", Type = ContentBlockType.HeroArtwork, SortIndex = 1, UpdatedAt = now,
                 Data = JsonDocument.Parse("""
-                { "desktop": "/placeholders/footer-characters-desktop.png", "mobile": "/placeholders/footer-characters-mobile.png" }
+                { "desktop": "https://cocowyo.com/cdn/shop/files/Destop-footer.png?v=1777450734&width=3840", "mobile": "/placeholders/footer-characters-mobile.png" }
                 """),
             },
         };
