@@ -6,14 +6,9 @@ import { adminUpsertContent } from "@/lib/adminApi";
 import { ContentBlockEditor } from "@/components/admin/ContentBlockEditor";
 
 const TYPES = [
-  "HomeHero",
-  "Announcement",
-  "HomeVideo",
-  "HeroArtwork",
-  "AboutSection",
-  "FaqEntry",
-  "FooterGroup",
-  "FeaturedOn",
+  "HomeHero", "Announcement", "HomeVideo", "HeroArtwork",
+  "HomeIntro", "HomeCozyMomentsHeader", "FooterContact", "HeaderBrand", "NewsletterCopy",
+  "AboutSection", "FaqEntry", "FooterGroup", "FeaturedOn",
 ];
 
 export default function AdminContentNew() {
