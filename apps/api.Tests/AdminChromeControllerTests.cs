@@ -22,6 +22,14 @@ public class AdminChromeControllerTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task AdminFooterLinks_List_Requires_Admin()
+    {
+        var client = _factory.CreateClient();
+        var resp = await client.GetAsync("/api/admin/footer-links");
+        resp.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
     public async Task StaticPage_Entity_Roundtrips_Through_DbContext()
     {
         using var scope = _factory.Services.CreateScope();
