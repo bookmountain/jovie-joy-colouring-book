@@ -8,21 +8,29 @@ import { HomeSection } from "@/components/content/home-section";
 import { HomeVideoSection } from "@/components/content/home-video-section";
 import { NewsletterForm } from "@/components/content/newsletter-form";
 import { getCozyMomentImages } from "@/data/gallery";
+import { apiGetContent } from "@/lib/api";
 import { getProductsForCollection } from "@/lib/catalog";
 import Image from "next/image";
 
 export default async function Home() {
   const [
+    bundle,
     newReleaseProducts,
     bestSellerProducts,
     digitalProducts,
     cozyMomentImages,
   ] = await Promise.all([
+    apiGetContent(),
     getProductsForCollection("new-release"),
     getProductsForCollection("frontpage"),
     getProductsForCollection("digital"),
     getCozyMomentImages(),
   ]);
+  const intro = bundle.homeIntro[0]?.data ?? {
+    title: "Hi Friend!",
+    body: "We craft these coloring books to offer comfort and relaxation. The smallest creative moments can ground a busy day, and these pages are designed to make that pause feel gentle and easy.",
+  };
+  const cozyHeader = bundle.homeCozyMomentsHeader[0]?.data?.heading ?? "Cozy Moments";
 
   return (
     <main>
@@ -46,11 +54,9 @@ export default async function Home() {
             ))}
           </div>
           <div>
-            <h2 className="coco-heading">Hi Friend!</h2>
+            <h2 className="coco-heading">{intro.title}</h2>
             <p className="mt-4 text-base leading-8 text-cocoa-text">
-              We craft these coloring books to offer comfort and relaxation.
-              The smallest creative moments can ground a busy day, and these
-              pages are designed to make that pause feel gentle and easy.
+              {intro.body}
             </p>
           </div>
         </div>
@@ -80,7 +86,7 @@ export default async function Home() {
       <section className="py-12 lg:py-16">
         <div className="mx-auto max-w-7xl px-4 lg:px-8">
           <h2 className="coco-heading mb-8">
-            Cozy Moments
+            {cozyHeader}
           </h2>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
             {cozyMomentImages.map((image) => (

@@ -59,6 +59,11 @@ public class ContentController(AppDbContext db) : ControllerBase
             Navigation: navRoots.Select(NavLinkDto.From).ToList(),
             FooterLinks: footerGroups,
             SocialLinks: social.Select(s => new SocialLinkDto(s.Label, s.Href)).ToList(),
-            TrendingTerms: trending));
+            TrendingTerms: trending,
+            HomeIntro: grab(ContentBlockType.HomeIntro),
+            HomeCozyMomentsHeader: grab(ContentBlockType.HomeCozyMomentsHeader),
+            FooterContact: grab(ContentBlockType.FooterContact),
+            HeaderBrand: grab(ContentBlockType.HeaderBrand),
+            NewsletterCopy: grab(ContentBlockType.NewsletterCopy)));
     }
 }

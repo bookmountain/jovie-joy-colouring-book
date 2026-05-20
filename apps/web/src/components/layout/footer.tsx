@@ -7,6 +7,13 @@ export function Footer() {
   const bundle = useBundle();
   const footerGroups = bundle.footerLinks;
   const socialLinks = bundle.socialLinks;
+  const contact = bundle.footerContact[0]?.data ?? {
+    customerCareLabel: "Customer Care",
+    customerCareEmail: "hello@zoeandbook.com",
+    licensingLabel: "Licensing Inquiries",
+    licensingEmail: "studio@zoeandbook.com",
+    blurb: "Drop us a note anytime:",
+  };
 
   return (
     <footer className="mt-0 bg-[#f8edff]">
@@ -16,18 +23,18 @@ export function Footer() {
             Zoe&amp;Book
           </p>
           <p className="mt-4 max-w-sm text-sm leading-6 text-cocoa-text">
-            Drop us a note anytime:
+            {contact.blurb}
           </p>
           <div className="mt-4 grid gap-2 text-sm">
             <p>
-              <span className="font-extrabold">Customer Care</span>
+              <span className="font-extrabold">{contact.customerCareLabel}</span>
               <br />
-              hello@zoeandbook.com
+              {contact.customerCareEmail}
             </p>
             <p>
-              <span className="font-extrabold">Licensing Inquiries</span>
+              <span className="font-extrabold">{contact.licensingLabel}</span>
               <br />
-              studio@zoeandbook.com
+              {contact.licensingEmail}
             </p>
           </div>
         </div>

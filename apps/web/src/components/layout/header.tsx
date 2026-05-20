@@ -13,6 +13,7 @@ export function Header() {
   const { cartCount, state, dispatch } = useSite();
   const bundle = useBundle();
   const primaryNavigation = bundle.navigation;
+  const brand = bundle.headerBrand[0]?.data ?? { name: "Zoe&Book", searchPlaceholder: "Search the store" };
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const closeMenuTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -55,7 +56,7 @@ export function Header() {
               onClick={() => dispatch({ type: "drawer/open", drawer: "search" })}
               type="button"
             >
-              <span>Search the store</span>
+              <span>{brand.searchPlaceholder}</span>
               <Search aria-hidden="true" className="h-5 w-5 text-[#727272]" />
             </button>
             <Link
@@ -63,7 +64,7 @@ export function Header() {
               className="justify-self-center font-display text-[31px] font-extrabold leading-none tracking-normal text-cocoa-ink"
               href="/"
             >
-              Zoe&amp;Book
+              {brand.name}
             </Link>
             <div className="flex items-center justify-end gap-5 text-cocoa-ink">
               <UserMenu />
@@ -128,7 +129,7 @@ export function Header() {
             className="flex min-w-28 items-center justify-center font-display text-[27px] font-extrabold leading-none tracking-normal text-cocoa-ink"
             href="/"
           >
-            Zoe&amp;Book
+            {brand.name}
           </Link>
           <div className="flex items-center justify-end gap-1 sm:gap-2">
             <button
