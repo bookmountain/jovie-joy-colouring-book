@@ -22,7 +22,7 @@ public class AdminChromeControllerTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
-    public async Task AdminStaticPages_Upsert_Writes_To_DB()
+    public async Task StaticPage_Entity_Roundtrips_Through_DbContext()
     {
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
