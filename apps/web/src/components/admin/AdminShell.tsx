@@ -4,12 +4,26 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAdminAuth } from "@/state/admin-auth";
 
-const NAV = [
-  { href: "/admin", label: "Dashboard" },
-  { href: "/admin/products", label: "Products" },
-  { href: "/admin/collections", label: "Collections" },
-  { href: "/admin/content", label: "Content" },
-  { href: "/admin/orders", label: "Orders" },
+const NAV: Array<{ group: string; items: { href: string; label: string }[] }> = [
+  { group: "Overview", items: [{ href: "/admin", label: "Dashboard" }] },
+  { group: "Pages", items: [
+    { href: "/admin/pages/home", label: "Home" },
+    { href: "/admin/pages/footer", label: "Footer" },
+    { href: "/admin/pages/header", label: "Header" },
+    { href: "/admin/pages/announcement", label: "Announcement" },
+    { href: "/admin/pages/newsletter", label: "Newsletter copy" },
+    { href: "/admin/static-pages", label: "Static pages" },
+  ]},
+  { group: "Catalog", items: [
+    { href: "/admin/products", label: "Products" },
+    { href: "/admin/collections", label: "Collections" },
+  ]},
+  { group: "Content (raw)", items: [
+    { href: "/admin/content", label: "Content blocks" },
+  ]},
+  { group: "Operations", items: [
+    { href: "/admin/orders", label: "Orders" },
+  ]},
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
@@ -24,21 +38,26 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         <Link className="mb-8 block text-xl font-extrabold text-cocoa-ink" href="/admin">
           Zoe&amp;Book Admin
         </Link>
-        <nav className="space-y-1">
-          {NAV.map((n) => {
-            const active = pathname === n.href || (n.href !== "/admin" && pathname.startsWith(n.href));
-            return (
-              <Link
-                className={`block rounded-coco-sm px-3 py-2 text-sm ${
-                  active ? "bg-cocoa-honey font-bold text-cocoa-ink" : "text-cocoa-text hover:bg-cocoa-cream"
-                }`}
-                href={n.href}
-                key={n.href}
-              >
-                {n.label}
-              </Link>
-            );
-          })}
+        <nav className="space-y-4">
+          {NAV.map((g) => (
+            <div key={g.group}>
+              <div className="mb-1 px-3 text-xs font-bold uppercase tracking-wide text-cocoa-text/70">{g.group}</div>
+              {g.items.map((n) => {
+                const active = pathname === n.href || (n.href !== "/admin" && pathname.startsWith(n.href));
+                return (
+                  <Link
+                    className={`block rounded-coco-sm px-3 py-2 text-sm ${
+                      active ? "bg-cocoa-honey font-bold text-cocoa-ink" : "text-cocoa-text hover:bg-cocoa-cream"
+                    }`}
+                    href={n.href}
+                    key={n.href}
+                  >
+                    {n.label}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
       </aside>
       <div className="flex-1">
