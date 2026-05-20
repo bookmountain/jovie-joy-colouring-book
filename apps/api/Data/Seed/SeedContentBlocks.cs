@@ -62,6 +62,54 @@ public static class SeedContentBlocks
                 { "desktop": "https://cocowyo.com/cdn/shop/files/Destop-footer.png?v=1777450734&width=3840", "mobile": "/placeholders/footer-characters-mobile.png" }
                 """),
             },
+            new()
+            {
+                Key = "home.intro", Type = ContentBlockType.HomeIntro, SortIndex = 0, UpdatedAt = now,
+                Data = JsonDocument.Parse("""
+                {
+                  "title": "Hi Friend!",
+                  "body": "We craft these coloring books to offer comfort and relaxation. The smallest creative moments can ground a busy day, and these pages are designed to make that pause feel gentle and easy."
+                }
+                """),
+            },
+            new()
+            {
+                Key = "home.cozy-moments.header", Type = ContentBlockType.HomeCozyMomentsHeader, SortIndex = 0, UpdatedAt = now,
+                Data = JsonDocument.Parse("""
+                { "heading": "Cozy Moments" }
+                """),
+            },
+            new()
+            {
+                Key = "footer.contact", Type = ContentBlockType.FooterContact, SortIndex = 0, UpdatedAt = now,
+                Data = JsonDocument.Parse("""
+                {
+                  "customerCareLabel": "Customer Care",
+                  "customerCareEmail": "hello@zoeandbook.com",
+                  "licensingLabel": "Licensing Inquiries",
+                  "licensingEmail": "studio@zoeandbook.com",
+                  "blurb": "Drop us a note anytime:"
+                }
+                """),
+            },
+            new()
+            {
+                Key = "header.brand", Type = ContentBlockType.HeaderBrand, SortIndex = 0, UpdatedAt = now,
+                Data = JsonDocument.Parse("""
+                { "name": "Zoe&Book", "searchPlaceholder": "Search the store" }
+                """),
+            },
+            new()
+            {
+                Key = "newsletter.copy", Type = ContentBlockType.NewsletterCopy, SortIndex = 0, UpdatedAt = now,
+                Data = JsonDocument.Parse("""
+                {
+                  "heading": "Subscribe for Updates",
+                  "ctaLabel": "Subscribe",
+                  "successMessage": "Thanks for subscribing!"
+                }
+                """),
+            },
         };
 
         db.ContentBlocks.AddRange(blocks);

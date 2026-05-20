@@ -12,6 +12,11 @@ public enum ContentBlockType
     HomeVideo,
     Announcement,
     HeroArtwork,
+    HomeIntro,
+    HomeCozyMomentsHeader,
+    FooterContact,
+    HeaderBrand,
+    NewsletterCopy,
 }
 
 public class ContentBlock
