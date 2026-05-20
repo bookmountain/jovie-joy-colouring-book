@@ -156,7 +156,7 @@ export const apiRemoveWishlist = async (token: string, slug: string) =>
     cache: "no-store",
   });
 export const apiMergeWishlist = (token: string, productSlugs: string[]) =>
-  post<{}>("/api/wishlist/merge", { productSlugs }, { token });
+  post<void>("/api/wishlist/merge", { productSlugs }, { token });
 
 // Auth
 export const apiMe = (token: string) =>

@@ -10,6 +10,10 @@ import { LoginModal } from "@/components/overlays/login-modal";
 import { SearchDrawer } from "@/components/overlays/search-drawer";
 import { TermsModal } from "@/components/overlays/terms-modal";
 
+// Storefront content is BE-driven; render on each request (skip build-time
+// prerender that would require the API to be up during `next build`).
+export const dynamic = "force-dynamic";
+
 export default async function PublicLayout({
   children,
 }: Readonly<{
