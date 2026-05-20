@@ -66,26 +66,29 @@ comics, gallery, about, FAQs, navigation, footer groups, announcement bar
 
 ## Admin dashboard
 
-The admin panel lives at `/admin`. Visit `/admin/login` to sign in with your admin credentials.
+After Phase 3, the admin panel is the Zoe&Book FE itself at `/admin`. Sign in at `/admin/login` with your admin credentials.
 
 ### Default credentials
 
 | Field    | Value                |
 | -------- | -------------------- |
 | Email    | `admin@joviejoy.com` |
-| Password | `changeme123`        |
+| Password | `change_me`          |
 
-**Change the password before going to production.** Update `Admin__Email` and `Admin__Password` in `apps/api/.env` (or environment variables on the server). The API seeds the admin user on startup — if the user already exists the seed is skipped, so you must update the hash in the database directly after first deploy, or set the vars before first run.
+Override defaults via `Admin__Email` / `Admin__Password` in `apps/api/.env`. The admin user is seeded on first API startup only — if it already exists, you must update the hash in the database directly, or set the vars before the first run.
 
-### Admin sections (post-overhaul, Phase 1 BE only)
+### Admin sections
 
-- **Analytics** — revenue stats, 30-day chart, top products (slug-based)
-- **Products** — full CRUD with rich fields (images, options, source links, tags, compareAt, productType); PDF upload; multi-image upload
-- **Collections** — full CRUD with curated product order, hero image, homepage slot
-- **Content** — typed `ContentBlock` entries (hero, about, FAQs, featured-on, video, footer, announcement, hero artwork) with per-key image upload
-- **Orders** — paginated list with status filter
+- **Dashboard** — revenue summary + last-30-days table + top products
+- **Products** — rich CRUD with multi-image upload, PDF upload, collection tagging
+- **Collections** — CRUD with hero image upload + curated product order
+- **Content** — typed editors for `HomeHero`, `Announcement`, `HomeVideo`, `HeroArtwork`; raw-JSON fallback editor for other block types
+- **Orders** — paginated table with status filter + line-item drill-down
 
-Public endpoints serving the FE:
+All image uploads land under the BE's `/uploads/` static-files folder and are returned as relative URLs (`/uploads/products/...`, `/uploads/collections/...`, `/uploads/content/...`, `/uploads/general/...`). The FE renders them by prepending `NEXT_PUBLIC_API_URL`.
+
+### Public endpoints serving the storefront
+
 `/api/products`, `/api/products/{slug}`,
 `/api/collections`, `/api/collections/{slug}`,
 `/api/content`, `/api/blogs`, `/api/blogs/{slug}`, `/api/blogs/{slug}/articles/{articleSlug}`,

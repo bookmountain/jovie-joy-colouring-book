@@ -37,3 +37,20 @@ export function signOut(redirectTo: string = "/") {
   tokenStorage.clear();
   if (typeof window !== "undefined") window.location.assign(redirectTo);
 }
+
+export async function adminLoginWithPassword(email: string, password: string): Promise<string> {
+  const res = await fetch(`${API_URL}/auth/admin/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(text || `Login failed (${res.status})`);
+  }
+  const json = (await res.json()) as { token: string; user: { isAdmin: boolean } };
+  if (!json.user.isAdmin) throw new Error("Not an admin account");
+  tokenStorage.write(json.token);
+  return json.token;
+}
