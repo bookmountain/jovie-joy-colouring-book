@@ -75,6 +75,11 @@ export type SiteContentBundle = {
   footerLinks: FooterLinkGroup[];
   socialLinks: SocialLink[];
   trendingTerms: string[];
+  homeIntro: ContentBlock<{ title?: string; body?: string }>[];
+  homeCozyMomentsHeader: ContentBlock<{ heading?: string }>[];
+  footerContact: ContentBlock<{ blurb?: string; customerCareLabel?: string; customerCareEmail?: string; licensingLabel?: string; licensingEmail?: string }>[];
+  headerBrand: ContentBlock<{ name?: string; searchPlaceholder?: string }>[];
+  newsletterCopy: ContentBlock<{ heading?: string; ctaLabel?: string; successMessage?: string }>[];
 };
 
 export type UserDto = { id: string; email: string; name: string | null; avatarUrl: string | null; isAdmin: boolean };

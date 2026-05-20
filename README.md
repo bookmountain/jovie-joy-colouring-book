@@ -87,6 +87,19 @@ Override defaults via `Admin__Email` / `Admin__Password` in `apps/api/.env`. The
 
 All image uploads land under the BE's `/uploads/` static-files folder and are returned as relative URLs (`/uploads/products/...`, `/uploads/collections/...`, `/uploads/content/...`, `/uploads/general/...`). The FE renders them by prepending `NEXT_PUBLIC_API_URL`.
 
+#### Editable pages (Phase 4a)
+
+The admin can edit the home page, footer chrome, header chrome, announcement bar, newsletter copy, and any static page:
+
+- `/admin/pages/home` — hero, "Hi Friend!" panel, Cozy Moments heading, home video, footer artwork
+- `/admin/pages/footer` — contact emails, footer link groups, social links, search trending terms
+- `/admin/pages/header` — brand name, search placeholder
+- `/admin/pages/announcement` — announcement bar enable/text/href
+- `/admin/pages/newsletter` — heading, CTA label, success message
+- `/admin/static-pages` — list + create + edit static pages (About, FAQ, etc.)
+
+Storefront components fall back to the original hardcoded strings when a ContentBlock is missing, so partial deploys don't blank out the site.
+
 ### Public endpoints serving the storefront
 
 `/api/products`, `/api/products/{slug}`,

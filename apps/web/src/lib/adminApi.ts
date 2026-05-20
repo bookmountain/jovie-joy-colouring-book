@@ -1,6 +1,6 @@
 "use client";
 
-import { API_URL, type Product, type Collection, type ContentBlock } from "@/lib/api";
+import { API_URL, type Product, type Collection, type ContentBlock, type StaticPage } from "@/lib/api";
 import { tokenStorage } from "@/lib/auth";
 
 function requireToken(): string {
@@ -115,3 +115,55 @@ export type AdminCollectionWriteBody = {
   defaultSort: string; homepageSlot: string | null;
   productOrder: string[]; sortIndex: number;
 };
+
+// ----------------- Phase 4a: chrome admin -----------------
+
+// Static pages
+export type AdminStaticPageWriteBody = {
+  slug?: string; // required on create
+  title: string;
+  intro: string;
+  blocks: string[];
+};
+export const adminListStaticPages = () => adminFetch<StaticPage[]>("/api/admin/static-pages");
+export const adminGetStaticPage = (slug: string) => adminFetch<StaticPage>(`/api/admin/static-pages/${slug}`);
+export const adminCreateStaticPage = (body: AdminStaticPageWriteBody) =>
+  adminFetch<StaticPage>("/api/admin/static-pages", { method: "POST", body: JSON.stringify(body) });
+export const adminUpdateStaticPage = (slug: string, body: AdminStaticPageWriteBody) =>
+  adminFetch<StaticPage>(`/api/admin/static-pages/${slug}`, { method: "PUT", body: JSON.stringify(body) });
+export const adminDeleteStaticPage = (slug: string) =>
+  adminFetch<void>(`/api/admin/static-pages/${slug}`, { method: "DELETE" });
+
+// Footer links
+export type AdminFooterLinkWriteBody = {
+  groupKey: string; groupTitle: string; label: string; href: string; sortIndex: number;
+};
+export type AdminFooterLink = AdminFooterLinkWriteBody & { id: string };
+export const adminListFooterLinks = () => adminFetch<AdminFooterLink[]>("/api/admin/footer-links");
+export const adminCreateFooterLink = (body: AdminFooterLinkWriteBody) =>
+  adminFetch<AdminFooterLink>("/api/admin/footer-links", { method: "POST", body: JSON.stringify(body) });
+export const adminUpdateFooterLink = (id: string, body: AdminFooterLinkWriteBody) =>
+  adminFetch<AdminFooterLink>(`/api/admin/footer-links/${id}`, { method: "PUT", body: JSON.stringify(body) });
+export const adminDeleteFooterLink = (id: string) =>
+  adminFetch<void>(`/api/admin/footer-links/${id}`, { method: "DELETE" });
+
+// Social links
+export type AdminSocialLink = { label: string; href: string; sortIndex: number };
+export type AdminSocialLinkUpdateBody = { href: string; sortIndex: number };
+export const adminListSocialLinks = () => adminFetch<AdminSocialLink[]>("/api/admin/social-links");
+export const adminCreateSocialLink = (body: AdminSocialLink) =>
+  adminFetch<AdminSocialLink>("/api/admin/social-links", { method: "POST", body: JSON.stringify(body) });
+export const adminUpdateSocialLink = (label: string, body: AdminSocialLinkUpdateBody) =>
+  adminFetch<AdminSocialLink>(`/api/admin/social-links/${encodeURIComponent(label)}`, { method: "PUT", body: JSON.stringify(body) });
+export const adminDeleteSocialLink = (label: string) =>
+  adminFetch<void>(`/api/admin/social-links/${encodeURIComponent(label)}`, { method: "DELETE" });
+
+// Trending terms
+export type AdminTrendingTerm = { term: string; sortIndex: number };
+export const adminListTrendingTerms = () => adminFetch<AdminTrendingTerm[]>("/api/admin/trending-terms");
+export const adminCreateTrendingTerm = (body: AdminTrendingTerm) =>
+  adminFetch<AdminTrendingTerm>("/api/admin/trending-terms", { method: "POST", body: JSON.stringify(body) });
+export const adminUpdateTrendingTerm = (term: string, body: { sortIndex: number }) =>
+  adminFetch<AdminTrendingTerm>(`/api/admin/trending-terms/${encodeURIComponent(term)}`, { method: "PUT", body: JSON.stringify(body) });
+export const adminDeleteTrendingTerm = (term: string) =>
+  adminFetch<void>(`/api/admin/trending-terms/${encodeURIComponent(term)}`, { method: "DELETE" });

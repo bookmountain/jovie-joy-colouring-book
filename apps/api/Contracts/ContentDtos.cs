@@ -21,7 +21,12 @@ public record SiteContentBundleDto(
     List<NavLinkDto> Navigation,
     List<FooterLinkGroupDto> FooterLinks,
     List<SocialLinkDto> SocialLinks,
-    List<string> TrendingTerms);
+    List<string> TrendingTerms,
+    List<ContentBlockDto> HomeIntro,
+    List<ContentBlockDto> HomeCozyMomentsHeader,
+    List<ContentBlockDto> FooterContact,
+    List<ContentBlockDto> HeaderBrand,
+    List<ContentBlockDto> NewsletterCopy);
 
 public record NavLinkDto(Guid Id, string Label, string Href, List<NavLinkDto> Children)
 {

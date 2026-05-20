@@ -2,10 +2,17 @@
 
 import { useState } from "react";
 import { apiNewsletterSignup } from "@/lib/api";
+import { useBundle } from "@/state/catalog-provider";
 
 type Status = "idle" | "submitting" | "ok" | "invalid" | "error";
 
 export function NewsletterForm() {
+  const bundle = useBundle();
+  const copy = bundle.newsletterCopy[0]?.data ?? {
+    heading: "Subscribe for Updates",
+    ctaLabel: "Subscribe",
+    successMessage: "Thanks for subscribing!",
+  };
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<Status>("idle");
@@ -33,7 +40,7 @@ export function NewsletterForm() {
         className="mx-auto grid max-w-4xl gap-4 px-4 text-center lg:px-8"
         onSubmit={handleSubmit}
       >
-        <h2 className="coco-heading">Subscribe for Updates</h2>
+        <h2 className="coco-heading">{copy.heading}</h2>
         <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
           <input
             aria-label="Name"
@@ -55,12 +62,12 @@ export function NewsletterForm() {
             disabled={status === "submitting"}
             type="submit"
           >
-            {status === "submitting" ? "Sending…" : "Subscribe"}
+            {status === "submitting" ? "Sending…" : copy.ctaLabel}
           </button>
         </div>
         {status === "ok" ? (
           <p className="text-sm font-extrabold text-cocoa-ink">
-            Thanks for subscribing!
+            {copy.successMessage}
           </p>
         ) : null}
         {status === "invalid" ? (
