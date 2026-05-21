@@ -179,7 +179,7 @@ export function ImageUpload({
 
       <div
         aria-disabled={busy}
-        className={`group relative w-full overflow-hidden rounded-coco-sm border bg-white transition ${
+        className={`group relative overflow-hidden rounded-coco-sm border bg-white transition ${
           dragOver
             ? "border-cocoa-purple ring-2 ring-cocoa-purple/30"
             : hasValue
@@ -191,7 +191,10 @@ export function ImageUpload({
         onDragOver={onDragOver}
         onDrop={onDrop}
         role="button"
-        style={{ aspectRatio: aspect }}
+        // Cap preview height (not width), so width derives from the configured
+        // aspect ratio. 1:1 → 180×180, 2:1 → 360×180, 16:9 → 320×180. Big enough
+        // to read at a glance, small enough not to dominate the form.
+        style={{ aspectRatio: aspect, height: "180px", width: "auto", maxWidth: "100%" }}
         tabIndex={0}
         onKeyDown={(e) => { if (!busy && (e.key === "Enter" || e.key === " ")) inputRef.current?.click(); }}
       >
