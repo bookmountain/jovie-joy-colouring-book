@@ -89,6 +89,7 @@ export function CollectionForm({ initial, onSubmit, submitLabel }: Props) {
       await onSubmit(body);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
+    } finally {
       setSubmitting(false);
     }
   }

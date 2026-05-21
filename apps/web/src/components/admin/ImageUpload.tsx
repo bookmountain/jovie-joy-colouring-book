@@ -177,28 +177,36 @@ export function ImageUpload({
       {viewing && resolved ? (
         <div
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6"
+          className="fixed inset-0 z-50 overflow-auto bg-black/80"
           onClick={() => setViewing(false)}
           role="dialog"
         >
-          <div
-            className="relative max-h-full max-w-5xl rounded-coco-sm bg-white p-4 shadow-soft"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-black/40 bg-black/60 px-4 py-2 text-sm text-white">
+            <a
+              className="underline"
+              href={resolved}
+              onClick={(e) => e.stopPropagation()}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              Open original in new tab
+            </a>
             <button
               aria-label="Close preview"
-              className="absolute right-3 top-3 z-10 grid h-8 w-8 place-items-center rounded-full bg-cocoa-cream text-lg leading-none text-cocoa-ink"
+              className="grid h-8 w-8 place-items-center rounded-full bg-white/15 text-lg leading-none hover:bg-white/30"
               onClick={() => setViewing(false)}
               type="button"
             >
               ×
             </button>
+          </div>
+          <div
+            className="flex min-h-[calc(100vh-44px)] w-full items-start justify-center p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Render at the image's natural pixel size — the container scrolls if needed. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              alt="Full-size preview"
-              className="max-h-[80vh] max-w-full object-contain"
-              src={resolved}
-            />
+            <img alt="Full-size preview" className="h-auto w-auto max-w-none" src={resolved} />
           </div>
         </div>
       ) : null}
