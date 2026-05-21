@@ -43,7 +43,7 @@ export default async function Home() {
   if (introTiles.length < 2) {
     for (const fallback of cozyMomentImages) {
       if (introTiles.length >= 2) break;
-      introTiles.push({ src: fallback.src, alt: fallback.alt });
+      introTiles.push({ src: resolveAssetUrl(fallback.src), alt: fallback.alt });
     }
   }
 
@@ -114,7 +114,7 @@ export default async function Home() {
                   className="h-full w-full object-cover"
                   fill
                   sizes="(min-width: 1024px) 16vw, (min-width: 768px) 33vw, 50vw"
-                  src={image.src}
+                  src={resolveAssetUrl(image.src)}
                 />
               </div>
             ))}

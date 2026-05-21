@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { getCozyMomentImages } from "@/data/gallery";
+import { resolveAssetUrl } from "@/lib/api";
 
 export async function GalleryGrid() {
   const cozyMomentImages = await getCozyMomentImages();
@@ -16,7 +17,7 @@ export async function GalleryGrid() {
             className="h-full w-full object-cover"
             fill
             sizes="(min-width: 768px) 33vw, 50vw"
-            src={image.src}
+            src={resolveAssetUrl(image.src)}
           />
         </div>
       ))}

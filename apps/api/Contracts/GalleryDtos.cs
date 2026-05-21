@@ -6,3 +6,6 @@ public record GalleryImageDto(Guid Id, string Src, string Alt, int SortIndex)
 {
     public static GalleryImageDto From(GalleryImage g) => new(g.Id, g.Src, g.Alt, g.SortIndex);
 }
+
+public record CreateGalleryImageRequest(string Src, string Alt, int SortIndex);
+public record UpdateGalleryImageRequest(string Src, string Alt, int SortIndex);

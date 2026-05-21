@@ -225,6 +225,21 @@ export const adminUpdateSocialLink = (label: string, body: AdminSocialLinkUpdate
 export const adminDeleteSocialLink = (label: string) =>
   adminFetch<void>(`/api/admin/social-links/${encodeURIComponent(label)}`, { method: "DELETE" });
 
+// Gallery
+export type AdminGalleryImage = { id: string; src: string; alt: string; sortIndex: number };
+export type AdminGalleryWriteBody = { src: string; alt: string; sortIndex: number };
+export const adminListGallery = () => adminFetch<AdminGalleryImage[]>("/api/admin/gallery");
+export const adminCreateGalleryImage = (body: AdminGalleryWriteBody) =>
+  adminFetch<AdminGalleryImage>("/api/admin/gallery", { method: "POST", body: JSON.stringify(body) });
+export const adminUpdateGalleryImage = (id: string, body: AdminGalleryWriteBody) =>
+  adminFetch<AdminGalleryImage>(`/api/admin/gallery/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(body) });
+export const adminDeleteGalleryImage = (id: string) =>
+  adminFetch<void>(`/api/admin/gallery/${encodeURIComponent(id)}`, { method: "DELETE" });
+export const adminUploadGalleryImage = (file: File) => {
+  const fd = new FormData(); fd.append("file", file);
+  return adminFetch<{ url: string }>("/api/admin/gallery/upload", { method: "POST", body: fd });
+};
+
 // FAQs
 export type AdminFaq = { slug: string; question: string; answer: string; group: string | null; sortIndex: number };
 export type AdminFaqUpdateBody = { question: string; answer: string; group: string | null; sortIndex: number };

@@ -10,7 +10,7 @@ const SECTIONS: { key: string; type: string; label: string; help?: string }[] = 
   { key: "home.hero.slides", type: "HomeHeroSlides", label: "Hero carousel", help: "Top-of-page rotating banner. Each slide needs desktop + mobile images." },
   { key: "home.intro", type: "HomeIntro", label: "Hi Friend! panel" },
   { key: "home.video", type: "HomeVideo", label: "Home video" },
-  { key: "home.cozy-moments.header", type: "HomeCozyMomentsHeader", label: "Cozy Moments heading", help: "Images for the grid are managed in /admin/gallery (coming soon)." },
+  { key: "home.cozy-moments.header", type: "HomeCozyMomentsHeader", label: "Cozy Moments heading", help: "Images for the grid are managed in /admin/gallery." },
   { key: "hero.artwork.footer", type: "HeroArtwork", label: "Footer artwork (homepage)" },
 ];
 
