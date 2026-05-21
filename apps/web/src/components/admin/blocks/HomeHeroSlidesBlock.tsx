@@ -134,6 +134,7 @@ export function HomeHeroSlidesBlock({ blockKey, data, onChange }: ContentBlockEd
             onChange={(url) => setSlide(idx, { image: url ?? "" })}
             upload={(f) => adminUploadContentImage(blockKey, f)}
             value={slide.image || null}
+            variant="banner"
           />
         </AdminPanel>
       ))}
