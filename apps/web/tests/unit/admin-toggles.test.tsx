@@ -14,6 +14,20 @@ describe("AdminSwitch", () => {
     rerender(<AdminSwitch checked={true} onChange={onChange} aria-label="t" />);
     expect(screen.getByRole("switch").getAttribute("data-state")).toBe("on");
   });
+
+  test("aria-checked reflects checked prop", () => {
+    const { rerender } = render(<AdminSwitch checked={false} onChange={() => {}} aria-label="t" />);
+    expect(screen.getByRole("switch").getAttribute("aria-checked")).toBe("false");
+    rerender(<AdminSwitch checked={true} onChange={() => {}} aria-label="t" />);
+    expect(screen.getByRole("switch").getAttribute("aria-checked")).toBe("true");
+  });
+
+  test("disabled switch does not fire onChange when clicked", () => {
+    const onChange = vi.fn();
+    render(<AdminSwitch checked={false} onChange={onChange} disabled aria-label="t" />);
+    fireEvent.click(screen.getByRole("switch"));
+    expect(onChange).not.toHaveBeenCalled();
+  });
 });
 
 describe("AdminCheckbox", () => {
@@ -26,5 +40,19 @@ describe("AdminCheckbox", () => {
     expect(onChange).toHaveBeenCalledWith(true);
     rerender(<AdminCheckbox checked={true} onChange={onChange} aria-label="t" />);
     expect(screen.getByRole("checkbox").getAttribute("data-state")).toBe("on");
+  });
+
+  test("aria-checked reflects checked prop", () => {
+    const { rerender } = render(<AdminCheckbox checked={false} onChange={() => {}} aria-label="t" />);
+    expect(screen.getByRole("checkbox").getAttribute("aria-checked")).toBe("false");
+    rerender(<AdminCheckbox checked={true} onChange={() => {}} aria-label="t" />);
+    expect(screen.getByRole("checkbox").getAttribute("aria-checked")).toBe("true");
+  });
+
+  test("disabled checkbox does not fire onChange when clicked", () => {
+    const onChange = vi.fn();
+    render(<AdminCheckbox checked={false} onChange={onChange} disabled aria-label="t" />);
+    fireEvent.click(screen.getByRole("checkbox"));
+    expect(onChange).not.toHaveBeenCalled();
   });
 });
