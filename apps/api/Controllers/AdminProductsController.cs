@@ -14,13 +14,110 @@ namespace JovieJoy.Api.Controllers;
 public class AdminProductsController(AppDbContext db, IUploadService uploads) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ProductDto>>> List(CancellationToken ct)
+    public async Task<ActionResult<AdminProductListResponse>> List(
+        [FromQuery] string? q,
+        [FromQuery] string? format,
+        [FromQuery] string? status,
+        [FromQuery] string? collection,
+        [FromQuery] string? tag,
+        [FromQuery] string? sort,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 25,
+        CancellationToken ct = default)
     {
-        var products = await db.Products.AsNoTracking()
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
+        var query = db.Products.AsNoTracking()
             .Include(p => p.ProductCollections).ThenInclude(pc => pc.Collection)
-            .OrderBy(p => p.Title)
-            .ToListAsync(ct);
-        return Ok(products.Select(p => ProductDto.From(p)));
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(format))
+        {
+            var formats = format.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(f => Enum.TryParse<ProductType>(f, ignoreCase: true, out var pt) ? (ProductType?)pt : null)
+                .Where(pt => pt.HasValue).Select(pt => pt!.Value).ToList();
+            if (formats.Count > 0) query = query.Where(p => formats.Contains(p.ProductType));
+        }
+
+        if (!string.IsNullOrWhiteSpace(collection))
+        {
+            var slugs = collection.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+            query = query.Where(p => p.ProductCollections.Any(pc => slugs.Contains(pc.Collection.Slug)));
+        }
+
+        query = sort switch
+        {
+            "title_asc" => query.OrderBy(p => p.Title),
+            "title_desc" => query.OrderByDescending(p => p.Title),
+            "price_asc" => query.OrderBy(p => p.PriceCents),
+            "price_desc" => query.OrderByDescending(p => p.PriceCents),
+            "updated_asc" => query.OrderBy(p => p.UpdatedAt),
+            _ => query.OrderByDescending(p => p.UpdatedAt),
+        };
+
+        // Materialize before client-side filters (q, tag, status) that cannot
+        // be translated by the EF in-memory provider when acting on JSON columns.
+        var materialized = await query.ToListAsync(ct);
+
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var needle = q.ToLowerInvariant();
+            materialized = materialized.Where(p =>
+                p.Title.Contains(needle, StringComparison.OrdinalIgnoreCase) ||
+                p.Slug.Contains(needle, StringComparison.OrdinalIgnoreCase) ||
+                p.Tags.Any(t => t.Contains(needle, StringComparison.OrdinalIgnoreCase))).ToList();
+        }
+
+        if (!string.IsNullOrWhiteSpace(tag))
+        {
+            var tags = tag.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(t => t.ToLowerInvariant()).ToHashSet();
+            materialized = materialized.Where(p =>
+                p.Tags.Any(t => tags.Contains(t.ToLowerInvariant()))).ToList();
+        }
+
+        List<Product> pageItems;
+        int totalForResponse;
+
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            // Status is derived — filter client-side.
+            var statuses = status.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(s => s.ToLowerInvariant()).ToHashSet();
+            var now = DateTime.UtcNow;
+            materialized = materialized.Where(p => statuses.Contains(DeriveStatus(p, now))).ToList();
+        }
+
+        totalForResponse = materialized.Count;
+        pageItems = materialized.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+        var now2 = DateTime.UtcNow;
+        var items = pageItems.Select(p => new AdminProductListItem(
+            p.Slug,
+            p.Title,
+            p.Excerpt,
+            p.PriceCents,
+            p.CompareAtPriceCents,
+            p.Available,
+            p.ProductType.ToString().ToLowerInvariant(),
+            DeriveStatus(p, now2),
+            p.Tags.ToList(),
+            p.ProductCollections.Select(pc => pc.Collection.Slug).ToList(),
+            p.Images.FirstOrDefault(),
+            p.PublishedAt,
+            p.UpdatedAt
+        )).ToList();
+
+        return Ok(new AdminProductListResponse(items, totalForResponse, page, pageSize));
+    }
+
+    private static string DeriveStatus(Product p, DateTime now)
+    {
+        if (!p.Available) return "out_of_stock";
+        if (p.PublishedAt is null) return "draft";
+        if (p.PublishedAt.Value > now) return "scheduled";
+        return "published";
     }
 
     [HttpGet("{slug}")]
@@ -52,7 +149,7 @@ public class AdminProductsController(AppDbContext db, IUploadService uploads) : 
                 : new List<ProductOption> { new("Format", new List<string> { "Default Title" }) },
             SourceLinks = req.SourceLinks, ReviewImages = req.ReviewImages,
             InspirationImages = req.InspirationImages, Tags = req.Tags,
-            PublishedAt = req.PublishedAt ?? DateTime.UtcNow,
+            PublishedAt = req.PublishedAt,
         };
         db.Products.Add(product);
         await db.SaveChangesAsync(ct);

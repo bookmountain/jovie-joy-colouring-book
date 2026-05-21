@@ -19,7 +19,7 @@ public class Product
     public List<string>? ReviewImages { get; set; }                  // jsonb
     public List<string>? InspirationImages { get; set; }             // jsonb
     public List<string> Tags { get; set; } = new();                  // jsonb
-    public DateTime PublishedAt { get; set; }
+    public DateTime? PublishedAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     public string? PdfPath { get; set; }                             // retained for digital fulfilment

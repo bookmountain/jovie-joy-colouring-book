@@ -19,7 +19,7 @@ public record ProductDto(
     List<string>? InspirationImages,
     List<string> Tags,
     List<string> Collections,
-    DateTime PublishedAt,
+    DateTime? PublishedAt,
     string? PdfPath)
 {
     public static ProductDto From(Product p, IEnumerable<string>? collectionSlugs = null) => new(
