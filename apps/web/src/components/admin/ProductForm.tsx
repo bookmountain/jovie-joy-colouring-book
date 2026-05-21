@@ -21,13 +21,15 @@ import {
   type ProductFormat,
 } from "@/components/admin/product/AdminFormatPicker";
 import { AdminGalleryUploader } from "@/components/admin/product/AdminGalleryUploader";
-import { adminUploadGeneral, adminUploadProductImage } from "@/lib/adminApi";
+import { AdminSourceLinksEditor, type SourceLinkValue } from "@/components/admin/product/AdminSourceLinksEditor";
+import { adminUploadGeneral, adminUploadProductImage, adminUploadProductPdf } from "@/lib/adminApi";
 
 export type ProductFormProps = {
   initial?: Product;
   onSubmit: (body: AdminProductWriteBody) => Promise<void>;
   submitLabel: string;
   onDiscard?: () => void;
+  onDelete?: () => Promise<void> | void;
 };
 
 type Status = "published" | "draft" | "scheduled" | "out_of_stock";
@@ -69,7 +71,7 @@ function centsToDollars(cents: number | null | undefined): string {
   return (cents / 100).toFixed(2);
 }
 
-export function ProductForm({ initial, onSubmit, submitLabel, onDiscard }: ProductFormProps) {
+export function ProductForm({ initial, onSubmit, submitLabel, onDiscard, onDelete }: ProductFormProps) {
   const [slug, setSlug] = useState(initial?.slug ?? "");
   const [title, setTitle] = useState(initial?.title ?? "");
   const [excerpt, setExcerpt] = useState(initial?.excerpt ?? "");
@@ -86,6 +88,9 @@ export function ProductForm({ initial, onSubmit, submitLabel, onDiscard }: Produ
   const [images, setImages] = useState<string[]>(initial?.images ?? []);
   const [inspirationImages, setInspirationImages] = useState<string[]>(initial?.inspirationImages ?? []);
   const [reviewImages, setReviewImages] = useState<string[]>(initial?.reviewImages ?? []);
+  const [sourceLinks, setSourceLinks] = useState<SourceLinkValue[]>(initial?.sourceLinks ?? []);
+  const [pdfPath, setPdfPath] = useState<string | null>(initial?.pdfPath ?? null);
+  const [pdfBusy, setPdfBusy] = useState(false);
 
   const [allCollections, setAllCollections] = useState<{ slug: string; title: string }[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -126,7 +131,7 @@ export function ProductForm({ initial, onSubmit, submitLabel, onDiscard }: Produ
         available,
         productType: productFormat,
         images,
-        sourceLinks: initial?.sourceLinks ?? null,
+        sourceLinks: sourceLinks.length > 0 ? sourceLinks : null,
         reviewImages: reviewImages.length > 0 ? reviewImages : null,
         inspirationImages: inspirationImages.length > 0 ? inspirationImages : null,
         tags,
@@ -200,7 +205,80 @@ export function ProductForm({ initial, onSubmit, submitLabel, onDiscard }: Produ
             <AdminGalleryUploader value={reviewImages} onChange={setReviewImages} upload={uploadImage} emptyHint="Optional — appears in the 'Real cozy moments' section." />
           </AdminPanel>
 
-          {/* Source links + digital fulfillment + danger zone — added in Task B7 */}
+          <AdminPanel sectionTag={`Source links — "Buy from publisher" buttons`} hint="External retailer / language-edition links rendered as image buttons on the PDP.">
+            <AdminSourceLinksEditor value={sourceLinks} onChange={setSourceLinks} upload={uploadImage} />
+          </AdminPanel>
+
+          {productFormat === "digital" ? (
+            <AdminPanel variant="dashed" sectionTag="Digital fulfillment" hint="The uploaded PDF is what the customer receives by email after Stripe payment succeeds.">
+              {pdfPath ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "8px 0" }}>
+                  <div style={{ fontSize: 28 }}>📄</div>
+                  <div style={{ flex: 1 }}>
+                    <strong style={{ fontSize: 13 }}>{pdfPath.split("/").pop()}</strong>
+                    <div style={{ fontSize: 11, color: "var(--admin-muted)" }}>{pdfPath}</div>
+                  </div>
+                  <AdminButton
+                    variant="ghost"
+                    size="sm"
+                    disabled={pdfBusy || !initial}
+                    onClick={() => document.getElementById("pf-pdf-input")?.click()}
+                  >
+                    {pdfBusy ? "Uploading…" : "Replace"}
+                  </AdminButton>
+                </div>
+              ) : (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <strong style={{ fontSize: 13 }}>No PDF uploaded yet</strong>
+                  <AdminButton
+                    variant="ghost"
+                    size="sm"
+                    disabled={pdfBusy || !initial}
+                    onClick={() => document.getElementById("pf-pdf-input")?.click()}
+                  >
+                    {pdfBusy ? "Uploading…" : "Upload PDF"}
+                  </AdminButton>
+                </div>
+              )}
+              {!initial ? <p className="panel-hint" style={{ marginTop: 8 }}>Save the product first, then upload its PDF here.</p> : null}
+              <input
+                id="pf-pdf-input"
+                type="file"
+                accept="application/pdf"
+                style={{ display: "none" }}
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (!f || !initial) return;
+                  setPdfBusy(true);
+                  try {
+                    const res = await adminUploadProductPdf(initial.slug, f);
+                    setPdfPath((res as { pdfPath: string | null }).pdfPath ?? null);
+                  } finally {
+                    setPdfBusy(false);
+                  }
+                }}
+              />
+            </AdminPanel>
+          ) : null}
+
+          {initial && onDelete ? (
+            <AdminPanel variant="danger" sectionTag="Danger zone">
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <strong style={{ fontSize: 13 }}>Delete this product</strong>
+                  <div style={{ fontSize: 11, color: "var(--admin-muted)" }}>Removes it from every collection. Past orders keep the original title and price.</div>
+                </div>
+                <AdminButton
+                  variant="danger"
+                  size="sm"
+                  onClick={() => { if (window.confirm(`Delete "${title || initial.slug}" permanently?`)) void onDelete(); }}
+                >
+                  Delete product
+                </AdminButton>
+              </div>
+            </AdminPanel>
+          ) : null}
         </div>
 
         {/* RIGHT COLUMN — Sidebar */}
