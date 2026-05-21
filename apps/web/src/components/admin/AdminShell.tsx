@@ -1,77 +1,91 @@
 "use client";
 
-import Link from "next/link";
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useAdminAuth } from "@/state/admin-auth";
+import { AdminSidebar, type AdminUser } from "./AdminSidebar";
+import { AdminTopbar } from "./AdminTopbar";
 
-const NAV: Array<{ group: string; items: { href: string; label: string }[] }> = [
-  { group: "Overview", items: [{ href: "/admin", label: "Dashboard" }] },
-  { group: "Pages", items: [
-    { href: "/admin/pages/home", label: "Home" },
-    { href: "/admin/pages/footer", label: "Footer" },
-    { href: "/admin/pages/header", label: "Header" },
-    { href: "/admin/pages/announcement", label: "Announcement" },
-    { href: "/admin/pages/newsletter", label: "Newsletter copy" },
-    { href: "/admin/static-pages", label: "Static pages" },
-  ]},
-  { group: "Catalog", items: [
-    { href: "/admin/products", label: "Products" },
-    { href: "/admin/collections", label: "Collections" },
-  ]},
-  { group: "Content (raw)", items: [
-    { href: "/admin/content", label: "Content blocks" },
-  ]},
-  { group: "Operations", items: [
-    { href: "/admin/orders", label: "Orders" },
-  ]},
-];
+type AdminShellInternalProps = {
+  children: React.ReactNode;
+  /** Inject for testing; production passes nothing and uses hooks. */
+  pathname?: string;
+  user?: AdminUser | null;
+  onSignOut?: () => void;
+};
 
-export function AdminShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname() ?? "";
-  const { user, signOut } = useAdminAuth();
+/** Inner shell — always used when inside AdminAuthProvider (production). */
+function AdminShellConnected({
+  children,
+  pathname: pathnameProp,
+  user: userProp,
+  onSignOut: onSignOutProp,
+}: AdminShellInternalProps) {
+  const hookPathname = usePathname() ?? "";
+  const { user: hookUser, signOut: hookSignOut } = useAdminAuth();
+  const pathname = pathnameProp ?? hookPathname;
+  const user = userProp !== undefined ? userProp : (hookUser ? { email: hookUser.email, role: "Owner" } : null);
+  const onSignOut = onSignOutProp ?? hookSignOut;
+
+  useEffect(() => {
+    if (pathname === "/admin/login") return;
+    document.body.classList.add("admin-route");
+    return () => { document.body.classList.remove("admin-route"); };
+  }, [pathname]);
 
   if (pathname === "/admin/login") return <>{children}</>;
 
   return (
-    <div className="flex min-h-screen bg-cocoa-cream">
-      <aside className="hidden w-60 shrink-0 border-r border-cocoa-line bg-white px-5 py-6 lg:block">
-        <Link className="mb-8 block text-xl font-extrabold text-cocoa-ink" href="/admin">
-          Zoe&amp;Book Admin
-        </Link>
-        <nav className="space-y-4">
-          {NAV.map((g) => (
-            <div key={g.group}>
-              <div className="mb-1 px-3 text-xs font-bold uppercase tracking-wide text-cocoa-text/70">{g.group}</div>
-              {g.items.map((n) => {
-                const active = pathname === n.href || (n.href !== "/admin" && pathname.startsWith(n.href));
-                return (
-                  <Link
-                    className={`block rounded-coco-sm px-3 py-2 text-sm ${
-                      active ? "bg-cocoa-honey font-bold text-cocoa-ink" : "text-cocoa-text hover:bg-cocoa-cream"
-                    }`}
-                    href={n.href}
-                    key={n.href}
-                  >
-                    {n.label}
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
-        </nav>
-      </aside>
-      <div className="flex-1">
-        <header className="flex items-center justify-between border-b border-cocoa-line bg-white px-6 py-3">
-          <div className="text-lg font-bold lg:hidden">Zoe&amp;Book Admin</div>
-          <div className="ml-auto flex items-center gap-4 text-sm">
-            <span className="text-cocoa-text">{user?.email}</span>
-            <button className="text-cocoa-coral underline" onClick={signOut} type="button">
-              Sign out
-            </button>
-          </div>
-        </header>
-        <main className="p-6 lg:p-10">{children}</main>
-      </div>
+    <div className="admin-app">
+      <AdminSidebar pathname={pathname} user={user} onSignOut={onSignOut} />
+      <main className="admin-main">
+        <AdminTopbar />
+        <div className="admin-body">{children}</div>
+      </main>
     </div>
+  );
+}
+
+/** Standalone shell for tests — no provider needed when all props are injected. */
+function AdminShellStandalone({
+  children,
+  pathname,
+  user,
+  onSignOut,
+}: Required<AdminShellInternalProps>) {
+  useEffect(() => {
+    if (pathname === "/admin/login") return;
+    document.body.classList.add("admin-route");
+    return () => { document.body.classList.remove("admin-route"); };
+  }, [pathname]);
+
+  if (pathname === "/admin/login") return <>{children}</>;
+
+  return (
+    <div className="admin-app">
+      <AdminSidebar pathname={pathname} user={user} onSignOut={onSignOut} />
+      <main className="admin-main">
+        <AdminTopbar />
+        <div className="admin-body">{children}</div>
+      </main>
+    </div>
+  );
+}
+
+export function AdminShell({ children, pathname, user, onSignOut }: AdminShellInternalProps) {
+  // When all injectable props are provided (test mode), use the standalone variant
+  // that doesn't call useAdminAuth (which requires AdminAuthProvider).
+  if (pathname !== undefined && user !== undefined && onSignOut !== undefined) {
+    return (
+      <AdminShellStandalone pathname={pathname} user={user} onSignOut={onSignOut}>
+        {children}
+      </AdminShellStandalone>
+    );
+  }
+
+  return (
+    <AdminShellConnected pathname={pathname} user={user} onSignOut={onSignOut}>
+      {children}
+    </AdminShellConnected>
   );
 }
