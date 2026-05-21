@@ -66,6 +66,10 @@ body.admin-route [tabindex]:focus-visible {
 
 .admin-field { display: flex; flex-direction: column; gap: 5px; }
 .admin-field + .admin-field { margin-top: 12px; }
+/* When admin-field siblings live in a grid/flex row layout, drop the
+   stacked-field margin so the columns align at the top edge. */
+.grid > .admin-field + .admin-field,
+.flex > .admin-field + .admin-field { margin-top: 0; }
 
 .admin-switch { width: 42px; height: 24px; background: #d6c79e; border-radius: 999px; position: relative; cursor: pointer; transition: background 0.15s; border: none; padding: 0; flex-shrink: 0; }
 .admin-switch[data-state="on"] { background: var(--admin-leaf); }
