@@ -68,3 +68,17 @@ body.admin-route [tabindex]:focus-visible {
   .admin-field { display: flex; flex-direction: column; gap: 5px; }
   .admin-field + .admin-field { margin-top: 12px; }
 }
+
+@layer components {
+  .admin-switch { width: 42px; height: 24px; background: #d6c79e; border-radius: 999px; position: relative; cursor: pointer; transition: background 0.15s; border: none; padding: 0; flex-shrink: 0; }
+  .admin-switch[data-state="on"] { background: var(--admin-leaf); }
+  .admin-switch[disabled] { cursor: not-allowed; opacity: 0.5; }
+  .admin-switch .knob { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.18); transition: left 0.15s; }
+  .admin-switch[data-state="on"] .knob { left: 20px; }
+
+  .admin-checkbox { width: 16px; height: 16px; border: 1.5px solid var(--admin-line); border-radius: 4px; background: #fffdf6; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+  .admin-checkbox[data-state="on"] { background: var(--admin-coral); border-color: var(--admin-coral); color: #fff; }
+  .admin-checkbox[disabled] { cursor: not-allowed; opacity: 0.5; }
+  .admin-checkbox .check { display: none; font-size: 11px; font-weight: 900; line-height: 1; color: #fff; }
+  .admin-checkbox[data-state="on"] .check { display: inline; }
+}
