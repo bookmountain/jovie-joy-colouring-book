@@ -246,6 +246,58 @@ public class AdminProductsController(AppDbContext db, IUploadService uploads) : 
         return Ok(ProductDto.From(product));
     }
 
+    [HttpPost("bulk")]
+    public async Task<ActionResult<object>> Bulk([FromBody] AdminProductBulkRequest req, CancellationToken ct)
+    {
+        if (req.Slugs is null || req.Slugs.Count == 0)
+            return BadRequest(new { error = "slugs required" });
+
+        var products = await db.Products
+            .Include(p => p.ProductCollections)
+            .Where(p => req.Slugs.Contains(p.Slug))
+            .ToListAsync(ct);
+        if (products.Count == 0) return Ok(new { updated = 0 });
+
+        var now = DateTime.UtcNow;
+        switch (req.Action)
+        {
+            case "publish":
+                foreach (var p in products) { p.PublishedAt = p.PublishedAt ?? now; p.UpdatedAt = now; }
+                break;
+            case "unpublish":
+                foreach (var p in products) { p.PublishedAt = null; p.UpdatedAt = now; }
+                break;
+            case "delete":
+                foreach (var p in products) { p.Available = false; p.UpdatedAt = now; }
+                break;
+            case "add-to-collection":
+            case "remove-from-collection":
+            {
+                var slug = req.Payload?.CollectionSlug;
+                if (string.IsNullOrWhiteSpace(slug))
+                    return BadRequest(new { error = "payload.collectionSlug required" });
+                var collection = await db.Collections.FirstOrDefaultAsync(c => c.Slug == slug, ct);
+                if (collection is null) return NotFound(new { error = $"collection '{slug}' not found" });
+
+                foreach (var p in products)
+                {
+                    var exists = p.ProductCollections.Any(pc => pc.CollectionId == collection.Id);
+                    if (req.Action == "add-to-collection" && !exists)
+                        db.ProductCollections.Add(new ProductCollection { ProductId = p.Id, CollectionId = collection.Id });
+                    if (req.Action == "remove-from-collection" && exists)
+                        db.ProductCollections.RemoveRange(p.ProductCollections.Where(pc => pc.CollectionId == collection.Id));
+                    p.UpdatedAt = now;
+                }
+                break;
+            }
+            default:
+                return BadRequest(new { error = $"unknown action '{req.Action}'" });
+        }
+
+        await db.SaveChangesAsync(ct);
+        return Ok(new { updated = products.Count });
+    }
+
     private async Task SyncCollectionsAsync(Product product, List<string> collectionSlugs, CancellationToken ct)
     {
         var collections = await db.Collections.Where(c => collectionSlugs.Contains(c.Slug)).ToListAsync(ct);
