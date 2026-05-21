@@ -225,6 +225,21 @@ export const adminUpdateSocialLink = (label: string, body: AdminSocialLinkUpdate
 export const adminDeleteSocialLink = (label: string) =>
   adminFetch<void>(`/api/admin/social-links/${encodeURIComponent(label)}`, { method: "DELETE" });
 
+// Featured On
+export type AdminFeaturedOn = { slug: string; label: string; href: string; image: string; alt: string; sortIndex: number };
+export type AdminFeaturedOnUpdateBody = { label: string; href: string; image: string; alt: string; sortIndex: number };
+export const adminListFeaturedOn = () => adminFetch<AdminFeaturedOn[]>("/api/admin/featured-on");
+export const adminCreateFeaturedOn = (body: AdminFeaturedOn) =>
+  adminFetch<AdminFeaturedOn>("/api/admin/featured-on", { method: "POST", body: JSON.stringify(body) });
+export const adminUpdateFeaturedOn = (slug: string, body: AdminFeaturedOnUpdateBody) =>
+  adminFetch<AdminFeaturedOn>(`/api/admin/featured-on/${encodeURIComponent(slug)}`, { method: "PUT", body: JSON.stringify(body) });
+export const adminDeleteFeaturedOn = (slug: string) =>
+  adminFetch<void>(`/api/admin/featured-on/${encodeURIComponent(slug)}`, { method: "DELETE" });
+export const adminUploadFeaturedOnImage = (slug: string, file: File) => {
+  const fd = new FormData(); fd.append("file", file);
+  return adminFetch<{ url: string }>(`/api/admin/featured-on/${encodeURIComponent(slug)}/image`, { method: "POST", body: fd });
+};
+
 // Trending terms
 export type AdminTrendingTerm = { term: string; sortIndex: number };
 export const adminListTrendingTerms = () => adminFetch<AdminTrendingTerm[]>("/api/admin/trending-terms");

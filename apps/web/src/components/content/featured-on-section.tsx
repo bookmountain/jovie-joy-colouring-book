@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { getFeaturedOnLinks } from "@/data/content";
+import { resolveAssetUrl } from "@/lib/api";
 
 export async function FeaturedOnSection() {
   const featuredOnLinks = await getFeaturedOnLinks();
@@ -23,7 +24,7 @@ export async function FeaturedOnSection() {
                 className="h-auto w-full transition duration-300 group-hover:scale-[1.03]"
                 height={378}
                 sizes="(min-width: 1024px) 25vw, 50vw"
-                src={feature.image}
+                src={resolveAssetUrl(feature.image)}
                 width={500}
               />
             </a>

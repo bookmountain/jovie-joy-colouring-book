@@ -17,3 +17,7 @@ public record UpdateSocialLinkRequest(string Href, int SortIndex);
 
 public record CreateTrendingTermRequest(string Term, int SortIndex);
 public record UpdateTrendingTermRequest(int SortIndex);
+
+public record CreateFeaturedOnRequest(string Slug, string Label, string Href, string Image, string Alt, int SortIndex);
+public record UpdateFeaturedOnRequest(string Label, string Href, string Image, string Alt, int SortIndex);
+public record FeaturedOnDto(string Slug, string Label, string Href, string Image, string Alt, int SortIndex);
