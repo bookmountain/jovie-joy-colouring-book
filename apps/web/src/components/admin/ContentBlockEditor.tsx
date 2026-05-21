@@ -2,6 +2,7 @@
 
 import { HomeHeroBlock } from "@/components/admin/blocks/HomeHeroBlock";
 import { HomeHeroSlidesBlock } from "@/components/admin/blocks/HomeHeroSlidesBlock";
+import { HomeProductRowBlock } from "@/components/admin/blocks/HomeProductRowBlock";
 import { AnnouncementBlock } from "@/components/admin/blocks/AnnouncementBlock";
 import { HomeVideoBlock } from "@/components/admin/blocks/HomeVideoBlock";
 import { HeroArtworkBlock } from "@/components/admin/blocks/HeroArtworkBlock";
@@ -23,6 +24,7 @@ export function ContentBlockEditor(props: ContentBlockEditorProps) {
   switch (props.type) {
     case "HomeHero":              return <HomeHeroBlock {...props} />;
     case "HomeHeroSlides":        return <HomeHeroSlidesBlock {...props} />;
+    case "HomeProductRow":        return <HomeProductRowBlock {...props} />;
     case "Announcement":          return <AnnouncementBlock {...props} />;
     case "HomeVideo":             return <HomeVideoBlock {...props} />;
     case "HeroArtwork":           return <HeroArtworkBlock {...props} />;

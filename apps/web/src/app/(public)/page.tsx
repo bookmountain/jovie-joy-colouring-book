@@ -12,20 +12,42 @@ import { apiGetContent, resolveAssetUrl } from "@/lib/api";
 import { getProductsForCollection } from "@/lib/catalog";
 import Image from "next/image";
 
+type RowData = {
+  eyebrow?: string;
+  title?: string;
+  href?: string;
+  collectionSlug?: string;
+  itemCount?: number;
+};
+
+const ROW_FALLBACKS: Record<string, RowData> = {
+  "home.row.new-release": { eyebrow: "Just landed", title: "New Release", href: "/collections/new-release", collectionSlug: "new-release", itemCount: 4 },
+  "home.row.best-seller": { eyebrow: "Popular products", title: "Best Seller", href: "/collections/frontpage", collectionSlug: "frontpage", itemCount: 4 },
+  "home.row.digital":     { eyebrow: "Digital books", title: "Digital", href: "/collections/digital", collectionSlug: "digital", itemCount: 4 },
+};
+
 export default async function Home() {
+  const bundle = await apiGetContent();
+
+  function getRow(key: string): RowData {
+    return (bundle.homeProductRows.find((b) => b.key === key)?.data ?? ROW_FALLBACKS[key]) as RowData;
+  }
+  const rowNewRelease = getRow("home.row.new-release");
+  const rowBestSeller = getRow("home.row.best-seller");
+  const rowDigital = getRow("home.row.digital");
+
   const [
-    bundle,
     newReleaseProducts,
     bestSellerProducts,
     digitalProducts,
     cozyMomentImages,
   ] = await Promise.all([
-    apiGetContent(),
-    getProductsForCollection("new-release"),
-    getProductsForCollection("frontpage"),
-    getProductsForCollection("digital"),
+    rowNewRelease.collectionSlug ? getProductsForCollection(rowNewRelease.collectionSlug) : Promise.resolve([]),
+    rowBestSeller.collectionSlug ? getProductsForCollection(rowBestSeller.collectionSlug) : Promise.resolve([]),
+    rowDigital.collectionSlug ? getProductsForCollection(rowDigital.collectionSlug) : Promise.resolve([]),
     getCozyMomentImages(),
   ]);
+
   const intro = bundle.homeIntro[0]?.data ?? {
     title: "Hi Friend!",
     body: "We craft these coloring books to offer comfort and relaxation. The smallest creative moments can ground a busy day, and these pages are designed to make that pause feel gentle and easy.",
@@ -35,8 +57,6 @@ export default async function Home() {
   const heroSlides = heroSlidesData?.slides ?? [];
   const heroIntervalMs = heroSlidesData?.intervalMs ?? 5000;
 
-  // Hi Friend! tiles prefer admin-uploaded images on the intro block, then fall
-  // back to the first two gallery images so the section never renders empty.
   const introTiles: { src: string; alt: string }[] = [];
   if (intro.image1) introTiles.push({ src: resolveAssetUrl(intro.image1), alt: intro.title ?? "Hi Friend" });
   if (intro.image2) introTiles.push({ src: resolveAssetUrl(intro.image2), alt: intro.title ?? "Hi Friend" });
@@ -77,24 +97,24 @@ export default async function Home() {
         </div>
       </section>
       <HomeSection
-        eyebrow="Just landed"
-        href="/collections/new-release"
-        products={newReleaseProducts.slice(0, 4)}
-        title="New Release"
+        eyebrow={rowNewRelease.eyebrow ?? ""}
+        href={rowNewRelease.href ?? "#"}
+        products={newReleaseProducts.slice(0, rowNewRelease.itemCount ?? 4)}
+        title={rowNewRelease.title ?? ""}
       />
       <HomeVideoSection />
       <HomeSection
-        eyebrow="Popular products"
-        href="/collections/frontpage"
-        products={bestSellerProducts.slice(0, 4)}
-        title="Best Seller"
+        eyebrow={rowBestSeller.eyebrow ?? ""}
+        href={rowBestSeller.href ?? "#"}
+        products={bestSellerProducts.slice(0, rowBestSeller.itemCount ?? 4)}
+        title={rowBestSeller.title ?? ""}
       />
       <CollectionTiles />
       <HomeSection
-        eyebrow="Digital books"
-        href="/collections/digital"
-        products={digitalProducts.slice(0, 4)}
-        title="Digital"
+        eyebrow={rowDigital.eyebrow ?? ""}
+        href={rowDigital.href ?? "#"}
+        products={digitalProducts.slice(0, rowDigital.itemCount ?? 4)}
+        title={rowDigital.title ?? ""}
       />
       <BlogCategoryCards />
       <FeaturedOnSection />

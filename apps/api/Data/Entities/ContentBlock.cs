@@ -18,6 +18,7 @@ public enum ContentBlockType
     HeaderBrand,
     NewsletterCopy,
     HomeHeroSlides,
+    HomeProductRow,
 }
 
 public class ContentBlock

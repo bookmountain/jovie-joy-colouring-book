@@ -156,6 +156,27 @@ public static class SeedContentBlocks
                 }
                 """),
             },
+            new()
+            {
+                Key = "home.row.new-release", Type = ContentBlockType.HomeProductRow, SortIndex = 0, UpdatedAt = now,
+                Data = JsonDocument.Parse("""
+                { "eyebrow": "Just landed", "title": "New Release", "href": "/collections/new-release", "collectionSlug": "new-release", "itemCount": 4 }
+                """),
+            },
+            new()
+            {
+                Key = "home.row.best-seller", Type = ContentBlockType.HomeProductRow, SortIndex = 1, UpdatedAt = now,
+                Data = JsonDocument.Parse("""
+                { "eyebrow": "Popular products", "title": "Best Seller", "href": "/collections/frontpage", "collectionSlug": "frontpage", "itemCount": 4 }
+                """),
+            },
+            new()
+            {
+                Key = "home.row.digital", Type = ContentBlockType.HomeProductRow, SortIndex = 2, UpdatedAt = now,
+                Data = JsonDocument.Parse("""
+                { "eyebrow": "Digital books", "title": "Digital", "href": "/collections/digital", "collectionSlug": "digital", "itemCount": 4 }
+                """),
+            },
         };
 
         var existingKeys = await db.ContentBlocks.Select(b => b.Key).ToListAsync();
