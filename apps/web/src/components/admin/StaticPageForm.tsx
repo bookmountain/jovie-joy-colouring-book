@@ -3,6 +3,14 @@
 import { useState } from "react";
 import type { StaticPage } from "@/lib/api";
 import type { AdminStaticPageWriteBody } from "@/lib/adminApi";
+import {
+  AdminButton,
+  AdminField,
+  AdminInput,
+  AdminLabel,
+  AdminPanel,
+  AdminTextarea,
+} from "@/components/admin/ui";
 
 type Props = {
   initial?: StaticPage;
@@ -37,29 +45,31 @@ export function StaticPageForm({ initial, onSubmit, submitLabel }: Props) {
   }
 
   return (
-    <form className="coco-panel space-y-4 p-6" onSubmit={handleSubmit}>
-      {!initial ? (
-        <label className="block">
-          <span className="mb-1 block text-sm font-semibold">Slug</span>
-          <input className="coco-input w-full" onChange={(e) => setSlug(e.target.value)} required value={slug} />
-        </label>
-      ) : null}
-      <label className="block">
-        <span className="mb-1 block text-sm font-semibold">Title</span>
-        <input className="coco-input w-full" onChange={(e) => setTitle(e.target.value)} required value={title} />
-      </label>
-      <label className="block">
-        <span className="mb-1 block text-sm font-semibold">Intro</span>
-        <textarea className="coco-input w-full" onChange={(e) => setIntro(e.target.value)} required rows={2} value={intro} />
-      </label>
-      <label className="block">
-        <span className="mb-1 block text-sm font-semibold">Blocks (separate paragraphs with blank lines)</span>
-        <textarea className="coco-input w-full" onChange={(e) => setBlocks(e.target.value)} rows={10} value={blocks} />
-      </label>
+    <form className="space-y-4" onSubmit={handleSubmit}>
+      <AdminPanel className="space-y-4">
+        {!initial ? (
+          <AdminField>
+            <AdminLabel htmlFor="sp-slug">Slug</AdminLabel>
+            <AdminInput id="sp-slug" onChange={(e) => setSlug(e.target.value)} required value={slug} />
+          </AdminField>
+        ) : null}
+        <AdminField>
+          <AdminLabel htmlFor="sp-title">Title</AdminLabel>
+          <AdminInput id="sp-title" onChange={(e) => setTitle(e.target.value)} required value={title} />
+        </AdminField>
+        <AdminField>
+          <AdminLabel htmlFor="sp-intro">Intro</AdminLabel>
+          <AdminTextarea id="sp-intro" onChange={(e) => setIntro(e.target.value)} required rows={2} value={intro} />
+        </AdminField>
+        <AdminField>
+          <AdminLabel htmlFor="sp-blocks">Blocks (separate paragraphs with blank lines)</AdminLabel>
+          <AdminTextarea id="sp-blocks" onChange={(e) => setBlocks(e.target.value)} rows={10} value={blocks} />
+        </AdminField>
+      </AdminPanel>
       {error ? <p className="text-sm text-cocoa-coral">{error}</p> : null}
-      <button className="coco-button-primary disabled:opacity-60" disabled={submitting} type="submit">
+      <AdminButton className="disabled:opacity-60" disabled={submitting} type="submit" variant="primary">
         {submitting ? "Saving…" : submitLabel}
-      </button>
+      </AdminButton>
     </form>
   );
 }

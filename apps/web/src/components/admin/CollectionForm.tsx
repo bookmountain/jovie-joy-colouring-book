@@ -9,6 +9,15 @@ import {
   type AdminCollectionWriteBody,
 } from "@/lib/adminApi";
 import { ImageUpload } from "@/components/admin/ImageUpload";
+import {
+  AdminButton,
+  AdminField,
+  AdminInput,
+  AdminLabel,
+  AdminPanel,
+  AdminSelect,
+  AdminTextarea,
+} from "@/components/admin/ui";
 
 const SORT_KEYS = [
   "featured", "relevance", "bestselling",
@@ -81,54 +90,54 @@ export function CollectionForm({ initial, onSubmit, submitLabel }: Props) {
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
-      <div className="coco-panel space-y-4 p-6">
+      <AdminPanel className="space-y-4">
         {!initial ? (
-          <label className="block">
-            <span className="mb-1 block text-sm font-semibold">Slug</span>
-            <input
-              className="coco-input w-full"
+          <AdminField>
+            <AdminLabel htmlFor="col-slug">Slug</AdminLabel>
+            <AdminInput
+              id="col-slug"
               onChange={(e) => setSlug(e.target.value)}
               required
               value={slug}
             />
-          </label>
+          </AdminField>
         ) : null}
-        <label className="block">
-          <span className="mb-1 block text-sm font-semibold">Title</span>
-          <input
-            className="coco-input w-full"
+        <AdminField>
+          <AdminLabel htmlFor="col-title">Title</AdminLabel>
+          <AdminInput
+            id="col-title"
             onChange={(e) => setTitle(e.target.value)}
             required
             value={title}
           />
-        </label>
-        <label className="block">
-          <span className="mb-1 block text-sm font-semibold">Excerpt</span>
-          <textarea
-            className="coco-input w-full"
+        </AdminField>
+        <AdminField>
+          <AdminLabel htmlFor="col-excerpt">Excerpt</AdminLabel>
+          <AdminTextarea
+            id="col-excerpt"
             onChange={(e) => setExcerpt(e.target.value)}
             required
             rows={2}
             value={excerpt}
           />
-        </label>
+        </AdminField>
         <div className="grid gap-4 sm:grid-cols-3">
-          <label>
-            <span className="mb-1 block text-sm font-semibold">Default sort</span>
-            <select
-              className="coco-input w-full"
+          <AdminField>
+            <AdminLabel htmlFor="col-sort">Default sort</AdminLabel>
+            <AdminSelect
+              id="col-sort"
               onChange={(e) => setDefaultSort(e.target.value)}
               value={defaultSort}
             >
               {SORT_KEYS.map((k) => (
                 <option key={k}>{k}</option>
               ))}
-            </select>
-          </label>
-          <label>
-            <span className="mb-1 block text-sm font-semibold">Homepage slot</span>
-            <select
-              className="coco-input w-full"
+            </AdminSelect>
+          </AdminField>
+          <AdminField>
+            <AdminLabel htmlFor="col-slot">Homepage slot</AdminLabel>
+            <AdminSelect
+              id="col-slot"
               onChange={(e) => setHomepageSlot(e.target.value)}
               value={homepageSlot}
             >
@@ -137,25 +146,25 @@ export function CollectionForm({ initial, onSubmit, submitLabel }: Props) {
                   {s || "none"}
                 </option>
               ))}
-            </select>
-          </label>
-          <label>
-            <span className="mb-1 block text-sm font-semibold">Sort index</span>
-            <input
-              className="coco-input w-full"
+            </AdminSelect>
+          </AdminField>
+          <AdminField>
+            <AdminLabel htmlFor="col-sortindex">Sort index</AdminLabel>
+            <AdminInput
+              id="col-sortindex"
               onChange={(e) => setSortIndex(Number(e.target.value))}
               type="number"
               value={sortIndex}
             />
-          </label>
+          </AdminField>
         </div>
-      </div>
+      </AdminPanel>
 
-      <div className="coco-panel p-6">
+      <AdminPanel>
         <ImageUpload label="Hero image" onChange={setHeroImage} upload={uploadHero} value={heroImage} />
-      </div>
+      </AdminPanel>
 
-      <div className="coco-panel space-y-3 p-6">
+      <AdminPanel className="space-y-3">
         <span className="block text-sm font-semibold">
           Products in this collection (in order)
         </span>
@@ -203,16 +212,17 @@ export function CollectionForm({ initial, onSubmit, submitLabel }: Props) {
               ))}
           </div>
         </details>
-      </div>
+      </AdminPanel>
 
       {error ? <p className="text-sm text-cocoa-coral">{error}</p> : null}
-      <button
-        className="coco-button-primary disabled:opacity-60"
+      <AdminButton
+        className="disabled:opacity-60"
         disabled={submitting}
         type="submit"
+        variant="primary"
       >
         {submitting ? "Saving…" : submitLabel}
-      </button>
+      </AdminButton>
     </form>
   );
 }

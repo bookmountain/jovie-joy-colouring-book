@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { adminGetContent, adminUpsertContent } from "@/lib/adminApi";
 import { ContentBlockEditor } from "@/components/admin/ContentBlockEditor";
+import { AdminButton, AdminPanel, AdminPageHeader } from "@/components/admin/ui";
 
 export default function AdminHeaderPage() {
   const [draft, setDraft] = useState<unknown>({});
@@ -26,24 +27,26 @@ export default function AdminHeaderPage() {
 
   return (
     <div className="space-y-8">
-      <header>
-        <h1 className="coco-heading">Header</h1>
-        <p className="mt-1 text-sm text-cocoa-text">
-          Brand text + search placeholder. Navigation tree is edited under{" "}
-          <Link className="text-cocoa-purple underline" href="/admin/navigation">/admin/navigation</Link> (Phase 4c).
-        </p>
-      </header>
+      <AdminPageHeader
+        title="Header"
+        subtitle={
+          <>
+            Brand text + search placeholder. Navigation tree is edited under{" "}
+            <Link className="text-cocoa-purple underline" href="/admin/navigation">/admin/navigation</Link> (Phase 4c).
+          </>
+        }
+      />
 
-      <section className="coco-panel space-y-3 p-6">
+      <AdminPanel className="space-y-3">
         <h2 className="text-lg font-bold">Brand</h2>
         <ContentBlockEditor blockKey="header.brand" type="HeaderBrand" data={draft} onChange={setDraft} />
         <div className="flex items-center gap-3">
-          <button className="coco-button-primary disabled:opacity-60" disabled={saving} onClick={save} type="button">
+          <AdminButton className="disabled:opacity-60" disabled={saving} onClick={save} type="button" variant="primary">
             {saving ? "Saving…" : "Save"}
-          </button>
+          </AdminButton>
           {savedAt ? <span className="text-xs text-cocoa-mint">Saved at {savedAt}</span> : null}
         </div>
-      </section>
+      </AdminPanel>
     </div>
   );
 }

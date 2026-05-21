@@ -2,6 +2,14 @@
 
 import { useState } from "react";
 import { adminLoginWithPassword } from "@/lib/auth";
+import {
+  AdminButton,
+  AdminField,
+  AdminInput,
+  AdminLabel,
+  AdminPanel,
+  AdminPageHeader,
+} from "@/components/admin/ui";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -24,33 +32,35 @@ export default function AdminLoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-cocoa-cream">
-      <form className="coco-panel w-full max-w-sm p-8" onSubmit={handleSubmit}>
-        <h1 className="coco-heading mb-6">Admin sign in</h1>
-        <label className="mb-3 block">
-          <span className="mb-1 block text-sm font-semibold">Email</span>
-          <input
-            className="coco-input w-full"
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            type="email"
-            value={email}
-          />
-        </label>
-        <label className="mb-4 block">
-          <span className="mb-1 block text-sm font-semibold">Password</span>
-          <input
-            className="coco-input w-full"
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            type="password"
-            value={password}
-          />
-        </label>
-        {error ? <p className="mb-3 text-sm text-cocoa-coral">{error}</p> : null}
-        <button className="coco-button-primary w-full disabled:opacity-60" disabled={submitting} type="submit">
-          {submitting ? "Signing in…" : "Sign in"}
-        </button>
-      </form>
+      <AdminPanel className="w-full max-w-sm">
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <AdminPageHeader title="Admin sign in" />
+          <AdminField>
+            <AdminLabel htmlFor="login-email">Email</AdminLabel>
+            <AdminInput
+              id="login-email"
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              type="email"
+              value={email}
+            />
+          </AdminField>
+          <AdminField>
+            <AdminLabel htmlFor="login-password">Password</AdminLabel>
+            <AdminInput
+              id="login-password"
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              type="password"
+              value={password}
+            />
+          </AdminField>
+          {error ? <p className="text-sm text-cocoa-coral">{error}</p> : null}
+          <AdminButton className="w-full disabled:opacity-60" disabled={submitting} type="submit" variant="primary">
+            {submitting ? "Signing in…" : "Sign in"}
+          </AdminButton>
+        </form>
+      </AdminPanel>
     </main>
   );
 }

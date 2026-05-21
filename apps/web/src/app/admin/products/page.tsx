@@ -7,6 +7,7 @@ import { adminCreateProduct, adminDeleteProduct, adminListProducts } from "@/lib
 import type { Product } from "@/lib/api";
 import { formatCents } from "@/lib/format";
 import { ProductForm } from "@/components/admin/ProductForm";
+import { AdminButton, AdminPageHeader } from "@/components/admin/ui";
 
 export default function AdminProductsList() {
   const router = useRouter();
@@ -27,16 +28,18 @@ export default function AdminProductsList() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h1 className="coco-heading">Products</h1>
-        <button
-          className="coco-button-primary"
-          onClick={() => setShowCreate(!showCreate)}
-          type="button"
-        >
-          {showCreate ? "Cancel" : "+ New product"}
-        </button>
-      </div>
+      <AdminPageHeader
+        title="Products"
+        actions={
+          <AdminButton
+            onClick={() => setShowCreate(!showCreate)}
+            type="button"
+            variant="primary"
+          >
+            {showCreate ? "Cancel" : "+ New product"}
+          </AdminButton>
+        }
+      />
 
       {error ? <p className="mt-3 text-cocoa-coral">{error}</p> : null}
 

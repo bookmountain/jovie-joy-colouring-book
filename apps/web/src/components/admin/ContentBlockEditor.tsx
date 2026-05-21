@@ -9,6 +9,7 @@ import { HomeCozyMomentsHeaderBlock } from "@/components/admin/blocks/HomeCozyMo
 import { FooterContactBlock } from "@/components/admin/blocks/FooterContactBlock";
 import { HeaderBrandBlock } from "@/components/admin/blocks/HeaderBrandBlock";
 import { NewsletterCopyBlock } from "@/components/admin/blocks/NewsletterCopyBlock";
+import { AdminTextarea } from "@/components/admin/ui";
 
 export type ContentBlockEditorProps = {
   blockKey: string;
@@ -30,8 +31,8 @@ export function ContentBlockEditor(props: ContentBlockEditorProps) {
     case "NewsletterCopy":        return <NewsletterCopyBlock {...props} />;
     default:
       return (
-        <textarea
-          className="coco-input w-full font-mono text-xs"
+        <AdminTextarea
+          className="font-mono text-xs"
           defaultValue={JSON.stringify(props.data, null, 2)}
           onChange={(e) => {
             try { props.onChange(JSON.parse(e.target.value)); } catch { /* mid-edit */ }

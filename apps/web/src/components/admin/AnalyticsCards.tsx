@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { adminAnalyticsSummary } from "@/lib/adminApi";
 import { formatCents } from "@/lib/format";
+import { AdminPanel } from "@/components/admin/ui";
 
 type Summary = Awaited<ReturnType<typeof adminAnalyticsSummary>>;
 
@@ -28,14 +29,14 @@ export function AnalyticsCards() {
     <div className="space-y-8">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((c) => (
-          <div className="coco-panel p-5" key={c.label}>
+          <AdminPanel className="p-5" key={c.label}>
             <div className="text-sm text-cocoa-text">{c.label}</div>
             <div className="mt-1 text-2xl font-extrabold text-cocoa-ink">{c.value}</div>
-          </div>
+          </AdminPanel>
         ))}
       </div>
 
-      <div className="coco-panel p-6">
+      <AdminPanel className="p-6">
         <h2 className="mb-4 text-lg font-bold">Last 30 days</h2>
         {data.last30Days.length === 0 ? (
           <p className="text-cocoa-text">No paid orders in the last 30 days.</p>
@@ -59,9 +60,9 @@ export function AnalyticsCards() {
             </tbody>
           </table>
         )}
-      </div>
+      </AdminPanel>
 
-      <div className="coco-panel p-6">
+      <AdminPanel className="p-6">
         <h2 className="mb-4 text-lg font-bold">Top products</h2>
         {data.topProducts.length === 0 ? (
           <p className="text-cocoa-text">No sales yet.</p>
@@ -85,7 +86,7 @@ export function AnalyticsCards() {
             </tbody>
           </table>
         )}
-      </div>
+      </AdminPanel>
     </div>
   );
 }

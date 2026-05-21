@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { adminGetContent, adminUpsertContent } from "@/lib/adminApi";
 import { ContentBlockEditor } from "@/components/admin/ContentBlockEditor";
+import { AdminButton, AdminPanel, AdminPageHeader } from "@/components/admin/ui";
 
 export default function AdminAnnouncementPage() {
   const [draft, setDraft] = useState<unknown>({});
@@ -25,19 +26,19 @@ export default function AdminAnnouncementPage() {
 
   return (
     <div className="space-y-8">
-      <header>
-        <h1 className="coco-heading">Announcement bar</h1>
-        <p className="mt-1 text-sm text-cocoa-text">The thin lavender bar at the top of every storefront page.</p>
-      </header>
-      <section className="coco-panel space-y-3 p-6">
+      <AdminPageHeader
+        title="Announcement bar"
+        subtitle="The thin lavender bar at the top of every storefront page."
+      />
+      <AdminPanel className="space-y-3">
         <ContentBlockEditor blockKey="announcement.bar" type="Announcement" data={draft} onChange={setDraft} />
         <div className="flex items-center gap-3">
-          <button className="coco-button-primary disabled:opacity-60" disabled={saving} onClick={save} type="button">
+          <AdminButton className="disabled:opacity-60" disabled={saving} onClick={save} type="button" variant="primary">
             {saving ? "Saving…" : "Save"}
-          </button>
+          </AdminButton>
           {savedAt ? <span className="text-xs text-cocoa-mint">Saved at {savedAt}</span> : null}
         </div>
-      </section>
+      </AdminPanel>
     </div>
   );
 }

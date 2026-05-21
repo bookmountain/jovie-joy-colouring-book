@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { adminGetContent, adminUpsertContent } from "@/lib/adminApi";
 import { ContentBlockEditor } from "@/components/admin/ContentBlockEditor";
 import type { ContentBlock } from "@/lib/api";
+import { AdminButton, AdminPanel, AdminPageHeader } from "@/components/admin/ui";
 
 const SECTIONS: { key: string; type: string; label: string }[] = [
   { key: "home.hero", type: "HomeHero", label: "Hero" },
@@ -45,19 +46,21 @@ export default function AdminHomePage() {
 
   return (
     <div className="space-y-8">
-      <header>
-        <h1 className="coco-heading">Home page</h1>
-        <p className="mt-1 text-sm text-cocoa-text">
-          Edit the home page sections. Cozy Moments images come from{" "}
-          <a className="text-cocoa-purple underline" href="/admin/gallery">/admin/gallery</a> (Phase 4b).
-        </p>
-      </header>
+      <AdminPageHeader
+        title="Home page"
+        subtitle={
+          <>
+            Edit the home page sections. Cozy Moments images come from{" "}
+            <a className="text-cocoa-purple underline" href="/admin/gallery">/admin/gallery</a> (Phase 4b).
+          </>
+        }
+      />
 
       {SECTIONS.map((s) => {
         const item = state[s.key];
-        if (!item) return <p key={s.key} className="coco-panel p-6">Loading {s.label}…</p>;
+        if (!item) return <AdminPanel key={s.key}>Loading {s.label}…</AdminPanel>;
         return (
-          <section key={s.key} className="coco-panel space-y-3 p-6">
+          <AdminPanel key={s.key} className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold">{s.label}</h2>
               <code className="text-xs text-cocoa-text">{s.key}</code>
@@ -70,17 +73,18 @@ export default function AdminHomePage() {
             />
             {item.error ? <p className="text-sm text-cocoa-coral">{item.error}</p> : null}
             <div className="flex items-center gap-3">
-              <button
-                className="coco-button-primary disabled:opacity-60"
+              <AdminButton
+                className="disabled:opacity-60"
                 disabled={item.saving}
                 onClick={() => save(s)}
                 type="button"
+                variant="primary"
               >
                 {item.saving ? "Saving…" : "Save"}
-              </button>
+              </AdminButton>
               {item.savedAt ? <span className="text-xs text-cocoa-mint">Saved at {item.savedAt}</span> : null}
             </div>
-          </section>
+          </AdminPanel>
         );
       })}
     </div>

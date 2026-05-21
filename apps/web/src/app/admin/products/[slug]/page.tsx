@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { adminGetProduct, adminUpdateProduct, adminUploadProductPdf } from "@/lib/adminApi";
 import type { Product } from "@/lib/api";
 import { ProductForm } from "@/components/admin/ProductForm";
+import { AdminButton, AdminPanel, AdminPageHeader } from "@/components/admin/ui";
 
 export default function AdminProductEdit() {
   const params = useParams<{ slug: string }>();
@@ -39,21 +40,23 @@ export default function AdminProductEdit() {
 
   return (
     <div>
-      <h1 className="coco-heading mb-6">{product.title}</h1>
+      <AdminPageHeader title={product.title} />
 
-      <ProductForm
-        initial={product}
-        onSubmit={async (body) => {
-          const updated = await adminUpdateProduct(product.slug, body);
-          setProduct(updated);
-          setSavedAt(new Date().toLocaleTimeString());
-        }}
-        submitLabel="Save changes"
-      />
+      <div className="mt-6">
+        <ProductForm
+          initial={product}
+          onSubmit={async (body) => {
+            const updated = await adminUpdateProduct(product.slug, body);
+            setProduct(updated);
+            setSavedAt(new Date().toLocaleTimeString());
+          }}
+          submitLabel="Save changes"
+        />
+      </div>
 
       {savedAt ? <p className="mt-3 text-sm text-cocoa-mint">Saved at {savedAt}</p> : null}
 
-      <div className="coco-panel mt-8 p-6">
+      <AdminPanel className="mt-8">
         <h2 className="mb-3 text-lg font-bold">PDF (digital fulfilment)</h2>
         {product.pdfPath ? (
           <p className="mb-3 text-sm">
@@ -65,15 +68,16 @@ export default function AdminProductEdit() {
           onChange={(e) => setPdfFile(e.target.files?.[0] ?? null)}
           type="file"
         />
-        <button
-          className="coco-button-secondary ml-3 disabled:opacity-50"
+        <AdminButton
+          className="ml-3 disabled:opacity-50"
           disabled={!pdfFile || pdfBusy}
           onClick={handlePdfUpload}
           type="button"
+          variant="ghost"
         >
           {pdfBusy ? "Uploading…" : "Upload PDF"}
-        </button>
-      </div>
+        </AdminButton>
+      </AdminPanel>
 
       <button
         className="mt-8 text-sm underline"
