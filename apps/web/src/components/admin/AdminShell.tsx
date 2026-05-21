@@ -28,7 +28,6 @@ function AdminShellConnected({
   const onSignOut = onSignOutProp ?? hookSignOut;
 
   useEffect(() => {
-    if (pathname === "/admin/login") return;
     document.body.classList.add("admin-route");
     return () => { document.body.classList.remove("admin-route"); };
   }, [pathname]);
@@ -54,7 +53,6 @@ function AdminShellStandalone({
   onSignOut,
 }: Required<AdminShellInternalProps>) {
   useEffect(() => {
-    if (pathname === "/admin/login") return;
     document.body.classList.add("admin-route");
     return () => { document.body.classList.remove("admin-route"); };
   }, [pathname]);

@@ -71,6 +71,17 @@ function centsToDollars(cents: number | null | undefined): string {
   return (cents / 100).toFixed(2);
 }
 
+/** Convert a free-form title into a URL-safe slug (lowercase, dashes, alphanumerics). */
+function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")  // strip combining diacritics
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/[\s-]+/g, "-");
+}
+
 export function ProductForm({ initial, onSubmit, submitLabel, onDiscard, onDelete }: ProductFormProps) {
   const [slug, setSlug] = useState(initial?.slug ?? "");
   const [title, setTitle] = useState(initial?.title ?? "");
@@ -173,15 +184,24 @@ export function ProductForm({ initial, onSubmit, submitLabel, onDiscard, onDelet
         {/* LEFT COLUMN — Basics */}
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <AdminPanel sectionTag="Basics">
-            {!initial ? (
-              <AdminField>
-                <AdminLabel htmlFor="pf-slug">Slug</AdminLabel>
-                <AdminInput id="pf-slug" value={slug} onChange={(e) => setSlug(e.target.value)} required />
-              </AdminField>
-            ) : null}
             <AdminField>
               <AdminLabel htmlFor="pf-title">Title</AdminLabel>
-              <AdminInput id="pf-title" size="lg" value={title} onChange={(e) => setTitle(e.target.value)} required />
+              <AdminInput
+                id="pf-title"
+                size="lg"
+                value={title}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setTitle(next);
+                  if (!initial) setSlug(slugify(next));
+                }}
+                required
+              />
+              {!initial ? (
+                <div style={{ fontSize: 11, color: "var(--admin-muted)", marginTop: 4 }}>
+                  Permalink: <code style={{ fontFamily: "ui-monospace, monospace" }}>/products/{slug || "your-product-title"}</code>
+                </div>
+              ) : null}
             </AdminField>
             <AdminField>
               <AdminLabel htmlFor="pf-excerpt">Excerpt</AdminLabel>

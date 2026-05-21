@@ -15,11 +15,10 @@ vi.mock("@/lib/adminApi", () => ({
 beforeEach(() => { vi.clearAllMocks(); });
 
 describe("ProductForm Basics + Sidebar", () => {
-  test("fires onSubmit with all visible fields wired through", async () => {
+  test("fires onSubmit with all visible fields wired through (slug auto-derived from title)", async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     render(<ProductForm onSubmit={onSubmit} submitLabel="Create" />);
-    fireEvent.change(screen.getByLabelText(/^slug$/i), { target: { value: "x" } });
-    fireEvent.change(screen.getByLabelText(/^title$/i), { target: { value: "Hello" } });
+    fireEvent.change(screen.getByLabelText(/^title$/i), { target: { value: "Hello World!" } });
     fireEvent.change(screen.getByLabelText(/^excerpt$/i), { target: { value: "ex" } });
     fireEvent.change(screen.getByLabelText(/^description$/i), { target: { value: "para 1\n\npara 2" } });
     fireEvent.change(screen.getByLabelText(/^price$/i), { target: { value: "9.99" } });
@@ -28,8 +27,8 @@ describe("ProductForm Basics + Sidebar", () => {
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
     const body = onSubmit.mock.calls[0][0];
     expect(body).toMatchObject({
-      slug: "x",
-      title: "Hello",
+      slug: "hello-world",
+      title: "Hello World!",
       excerpt: "ex",
       description: ["para 1", "para 2"],
       priceCents: 999,
@@ -37,6 +36,12 @@ describe("ProductForm Basics + Sidebar", () => {
       available: true,
     });
     expect(body.options).toBeUndefined();
+  });
+
+  test("permalink preview updates as title changes", () => {
+    render(<ProductForm onSubmit={vi.fn()} submitLabel="Create" />);
+    fireEvent.change(screen.getByLabelText(/^title$/i), { target: { value: "Cozy Christmas Book" } });
+    expect(screen.getByText(/\/products\/cozy-christmas-book/)).toBeTruthy();
   });
 
   test("status derivation: when publishedAt empty (new product) → Draft badge", () => {
@@ -47,7 +52,6 @@ describe("ProductForm Basics + Sidebar", () => {
   test("compare-at price emits in body when present", async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     render(<ProductForm onSubmit={onSubmit} submitLabel="Create" />);
-    fireEvent.change(screen.getByLabelText(/^slug$/i), { target: { value: "y" } });
     fireEvent.change(screen.getByLabelText(/^title$/i), { target: { value: "Y" } });
     fireEvent.change(screen.getByLabelText(/^excerpt$/i), { target: { value: "y-ex" } });
     fireEvent.change(screen.getByLabelText(/^price$/i), { target: { value: "10" } });
@@ -73,7 +77,6 @@ describe("ProductForm Basics + Sidebar", () => {
   test("adding tags via Enter populates the chip list and emits in body", async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     render(<ProductForm onSubmit={onSubmit} submitLabel="Create" />);
-    fireEvent.change(screen.getByLabelText(/^slug$/i), { target: { value: "t" } });
     fireEvent.change(screen.getByLabelText(/^title$/i), { target: { value: "T" } });
     fireEvent.change(screen.getByLabelText(/^excerpt$/i), { target: { value: "ex" } });
     fireEvent.change(screen.getByLabelText(/^price$/i), { target: { value: "1" } });

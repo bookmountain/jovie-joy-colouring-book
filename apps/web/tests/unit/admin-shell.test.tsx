@@ -59,14 +59,18 @@ describe("AdminShell body class side-effect", () => {
     expect(document.body.classList.contains("admin-route")).toBe(true);
   });
 
-  test("AdminShell does NOT add admin-route on /admin/login (just renders children)", async () => {
+  test("AdminShell renders children only on /admin/login (no sidebar/topbar) but still applies admin-route so design tokens work", async () => {
     const { AdminShell } = await import("@/components/admin/AdminShell");
-    render(
+    const { container } = render(
       <AdminShell pathname="/admin/login" user={null} onSignOut={() => {}}>
         <div>login form</div>
       </AdminShell>,
     );
-    expect(document.body.classList.contains("admin-route")).toBe(false);
+    // Tokens MUST be available so the login form's AdminButton/AdminPanel render correctly.
+    expect(document.body.classList.contains("admin-route")).toBe(true);
+    // But the sidebar / topbar should NOT be rendered on the login route.
+    expect(container.querySelector(".admin-side")).toBeNull();
+    expect(container.querySelector(".admin-topbar")).toBeNull();
     expect(screen.getByText("login form")).toBeTruthy();
   });
 });
