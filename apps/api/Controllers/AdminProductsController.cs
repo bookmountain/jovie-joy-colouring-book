@@ -120,6 +120,18 @@ public class AdminProductsController(AppDbContext db, IUploadService uploads) : 
         return "published";
     }
 
+    [HttpGet("tags")]
+    public async Task<ActionResult<IEnumerable<string>>> Tags(CancellationToken ct)
+    {
+        var all = await db.Products.AsNoTracking().Select(p => p.Tags).ToListAsync(ct);
+        var distinct = all.SelectMany(t => t).Where(t => !string.IsNullOrWhiteSpace(t))
+            .Select(t => t.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(t => t, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        return Ok(distinct);
+    }
+
     [HttpGet("{slug}")]
     public async Task<ActionResult<ProductDto>> Get(string slug, CancellationToken ct)
     {
@@ -200,6 +212,46 @@ public class AdminProductsController(AppDbContext db, IUploadService uploads) : 
         product.Available = false;
         await db.SaveChangesAsync(ct);
         return NoContent();
+    }
+
+    [HttpPost("{slug}/duplicate")]
+    public async Task<ActionResult<ProductDto>> Duplicate(string slug, CancellationToken ct)
+    {
+        var source = await db.Products
+            .Include(p => p.ProductCollections)
+            .FirstOrDefaultAsync(p => p.Slug == slug, ct);
+        if (source is null) return NotFound();
+
+        var newSlug = $"{slug}-copy";
+        var n = 2;
+        while (await db.Products.AnyAsync(p => p.Slug == newSlug, ct))
+        {
+            newSlug = $"{slug}-copy-{n}";
+            n++;
+        }
+
+        var copy = new Product
+        {
+            Slug = newSlug,
+            Title = source.Title,
+            Excerpt = source.Excerpt,
+            Description = source.Description.ToList(),
+            PriceCents = source.PriceCents,
+            CompareAtPriceCents = source.CompareAtPriceCents,
+            Available = source.Available,
+            ProductType = source.ProductType,
+            Images = source.Images.ToList(),
+            Options = source.Options.Select(o => new ProductOption(o.Name, o.Values.ToList())).ToList(),
+            SourceLinks = source.SourceLinks?.Select(s => new SourceLink(s.Label, s.Href, s.Image, s.Alt)).ToList(),
+            ReviewImages = source.ReviewImages?.ToList(),
+            InspirationImages = source.InspirationImages?.ToList(),
+            Tags = source.Tags.ToList(),
+            PublishedAt = null, // draft
+        };
+        db.Products.Add(copy);
+        await db.SaveChangesAsync(ct);
+
+        return CreatedAtAction(nameof(Get), new { slug = copy.Slug }, ProductDto.From(copy));
     }
 
     [HttpPost("{slug}/images")]
