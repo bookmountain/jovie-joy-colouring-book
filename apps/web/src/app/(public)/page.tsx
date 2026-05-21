@@ -8,7 +8,7 @@ import { HomeSection } from "@/components/content/home-section";
 import { HomeVideoSection } from "@/components/content/home-video-section";
 import { NewsletterForm } from "@/components/content/newsletter-form";
 import { getCozyMomentImages } from "@/data/gallery";
-import { apiGetContent } from "@/lib/api";
+import { apiGetContent, resolveAssetUrl } from "@/lib/api";
 import { getProductsForCollection } from "@/lib/catalog";
 import Image from "next/image";
 
@@ -35,13 +35,25 @@ export default async function Home() {
   const heroSlides = heroSlidesData?.slides ?? [];
   const heroIntervalMs = heroSlidesData?.intervalMs ?? 5000;
 
+  // Hi Friend! tiles prefer admin-uploaded images on the intro block, then fall
+  // back to the first two gallery images so the section never renders empty.
+  const introTiles: { src: string; alt: string }[] = [];
+  if (intro.image1) introTiles.push({ src: resolveAssetUrl(intro.image1), alt: intro.title ?? "Hi Friend" });
+  if (intro.image2) introTiles.push({ src: resolveAssetUrl(intro.image2), alt: intro.title ?? "Hi Friend" });
+  if (introTiles.length < 2) {
+    for (const fallback of cozyMomentImages) {
+      if (introTiles.length >= 2) break;
+      introTiles.push({ src: fallback.src, alt: fallback.alt });
+    }
+  }
+
   return (
     <main>
       <HomeHero intervalMs={heroIntervalMs} slides={heroSlides} />
       <section className="bg-cocoa-cream py-12 lg:py-16">
         <div className="mx-auto grid max-w-6xl gap-8 px-4 md:grid-cols-[0.8fr_1.2fr] md:items-center lg:px-8">
           <div className="grid grid-cols-2 gap-3">
-            {cozyMomentImages.slice(0, 2).map((image) => (
+            {introTiles.map((image) => (
               <div
                 className="relative aspect-square overflow-hidden rounded-coco bg-white shadow-soft"
                 key={image.src}
