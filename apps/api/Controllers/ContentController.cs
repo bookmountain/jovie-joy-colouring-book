@@ -64,6 +64,7 @@ public class ContentController(AppDbContext db) : ControllerBase
             HomeCozyMomentsHeader: grab(ContentBlockType.HomeCozyMomentsHeader),
             FooterContact: grab(ContentBlockType.FooterContact),
             HeaderBrand: grab(ContentBlockType.HeaderBrand),
-            NewsletterCopy: grab(ContentBlockType.NewsletterCopy)));
+            NewsletterCopy: grab(ContentBlockType.NewsletterCopy),
+            HomeHeroSlides: grab(ContentBlockType.HomeHeroSlides)));
     }
 }

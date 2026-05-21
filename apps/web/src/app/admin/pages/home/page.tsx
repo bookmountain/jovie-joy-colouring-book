@@ -6,11 +6,11 @@ import { ContentBlockEditor } from "@/components/admin/ContentBlockEditor";
 import type { ContentBlock } from "@/lib/api";
 import { AdminButton, AdminPanel, AdminPageHeader } from "@/components/admin/ui";
 
-const SECTIONS: { key: string; type: string; label: string }[] = [
-  { key: "home.hero", type: "HomeHero", label: "Hero" },
+const SECTIONS: { key: string; type: string; label: string; help?: string }[] = [
+  { key: "home.hero.slides", type: "HomeHeroSlides", label: "Hero carousel", help: "Top-of-page rotating banner. Each slide needs desktop + mobile images." },
   { key: "home.intro", type: "HomeIntro", label: "Hi Friend! panel" },
-  { key: "home.cozy-moments.header", type: "HomeCozyMomentsHeader", label: "Cozy Moments heading" },
   { key: "home.video", type: "HomeVideo", label: "Home video" },
+  { key: "home.cozy-moments.header", type: "HomeCozyMomentsHeader", label: "Cozy Moments heading", help: "Images for the grid are managed in /admin/gallery (coming soon)." },
   { key: "hero.artwork.footer", type: "HeroArtwork", label: "Footer artwork (homepage)" },
 ];
 
@@ -48,12 +48,7 @@ export default function AdminHomePage() {
     <div className="space-y-8">
       <AdminPageHeader
         title="Home page"
-        subtitle={
-          <>
-            Edit the home page sections. Cozy Moments images come from{" "}
-            <a className="text-cocoa-purple underline" href="/admin/gallery">/admin/gallery</a> (Phase 4b).
-          </>
-        }
+        subtitle="Edit the home page sections. Order on this page matches the live storefront top-to-bottom."
       />
 
       {SECTIONS.map((s) => {
@@ -65,6 +60,7 @@ export default function AdminHomePage() {
               <h2 className="text-lg font-bold">{s.label}</h2>
               <code className="text-xs text-cocoa-text">{s.key}</code>
             </div>
+            {s.help ? <p className="text-sm text-cocoa-text">{s.help}</p> : null}
             <ContentBlockEditor
               blockKey={s.key}
               type={s.type}

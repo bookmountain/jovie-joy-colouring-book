@@ -26,7 +26,8 @@ public record SiteContentBundleDto(
     List<ContentBlockDto> HomeCozyMomentsHeader,
     List<ContentBlockDto> FooterContact,
     List<ContentBlockDto> HeaderBrand,
-    List<ContentBlockDto> NewsletterCopy);
+    List<ContentBlockDto> NewsletterCopy,
+    List<ContentBlockDto> HomeHeroSlides);
 
 public record NavLinkDto(Guid Id, string Label, string Href, List<NavLinkDto> Children)
 {

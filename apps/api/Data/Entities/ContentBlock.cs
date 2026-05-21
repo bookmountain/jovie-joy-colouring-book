@@ -17,6 +17,7 @@ public enum ContentBlockType
     FooterContact,
     HeaderBrand,
     NewsletterCopy,
+    HomeHeroSlides,
 }
 
 public class ContentBlock

@@ -31,10 +31,13 @@ export default async function Home() {
     body: "We craft these coloring books to offer comfort and relaxation. The smallest creative moments can ground a busy day, and these pages are designed to make that pause feel gentle and easy.",
   };
   const cozyHeader = bundle.homeCozyMomentsHeader[0]?.data?.heading ?? "Cozy Moments";
+  const heroSlidesData = bundle.homeHeroSlides[0]?.data;
+  const heroSlides = heroSlidesData?.slides ?? [];
+  const heroIntervalMs = heroSlidesData?.intervalMs ?? 5000;
 
   return (
     <main>
-      <HomeHero />
+      <HomeHero intervalMs={heroIntervalMs} slides={heroSlides} />
       <section className="bg-cocoa-cream py-12 lg:py-16">
         <div className="mx-auto grid max-w-6xl gap-8 px-4 md:grid-cols-[0.8fr_1.2fr] md:items-center lg:px-8">
           <div className="grid grid-cols-2 gap-3">

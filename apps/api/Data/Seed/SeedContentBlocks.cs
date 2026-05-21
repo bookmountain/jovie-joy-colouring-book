@@ -31,6 +31,25 @@ public static class SeedContentBlocks
             },
             new()
             {
+                // Drives the homepage hero carousel. Each slide needs desktop+mobile images
+                // uploaded via /admin/pages/home. Image fields are intentionally empty —
+                // admin must upload assets; do NOT re-add third-party CDN URLs.
+                Key = "home.hero.slides", Type = ContentBlockType.HomeHeroSlides, SortIndex = 0, UpdatedAt = now,
+                Data = JsonDocument.Parse("""
+                {
+                  "intervalMs": 5000,
+                  "slides": [
+                    { "label": "Vinyl Sticker Packs", "href": "/collections/vinyl-sticker-packs", "desktop": "", "mobile": "" },
+                    { "label": "Comfy Corner Coloring Book", "href": "/products/comfy-corner-coloring-book", "desktop": "", "mobile": "" },
+                    { "label": "Spiral-bound Coloring Books", "href": "/collections/spiral-bound", "desktop": "", "mobile": "" },
+                    { "label": "Zoe&Book Coloring Community", "href": "https://www.facebook.com/", "desktop": "", "mobile": "" },
+                    { "label": "Free Coloring Pages", "href": "/pages/comics", "desktop": "", "mobile": "" }
+                  ]
+                }
+                """),
+            },
+            new()
+            {
                 Key = "announcement.bar", Type = ContentBlockType.Announcement, SortIndex = 0, UpdatedAt = now,
                 Data = JsonDocument.Parse("""
                 { "enabled": true, "text": "Free worldwide shipping over $50", "href": "/pages/shipping" }
