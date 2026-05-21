@@ -52,4 +52,9 @@ describe("AdminLabel + AdminField", () => {
     );
     expect(screen.getByText("Name").tagName).toBe("LABEL");
   });
+  test("AdminLabel renders hint text when provided", () => {
+    render(<AdminLabel hint="optional">Name</AdminLabel>);
+    expect(screen.getByText(/Name/)).toBeTruthy();
+    expect(screen.getByText(/—\s*optional/)).toBeTruthy();
+  });
 });
