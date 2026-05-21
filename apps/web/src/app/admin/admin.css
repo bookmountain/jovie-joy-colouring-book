@@ -109,3 +109,24 @@ body.admin-route [tabindex]:focus-visible {
   .admin-chip .x { cursor: pointer; font-weight: 900; opacity: 0.65; background: none; border: none; color: inherit; padding: 0 0 0 2px; }
   .admin-chip .x:hover { opacity: 1; }
 }
+
+@layer components {
+  .admin-panel { background: var(--admin-card); border: 1px solid var(--admin-line); border-radius: 14px; padding: 18px 20px; box-shadow: var(--admin-shadow-panel); }
+  .admin-panel[data-variant="danger"] { background: #fcf3ef; border-color: #e9c2b7; }
+  .admin-panel[data-variant="dashed"] { background: var(--admin-card-2); border: 1.5px dashed var(--admin-line); }
+  .admin-panel .section-tag { display: inline-block; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--admin-honey); font-weight: 800; margin-bottom: 8px; }
+  .admin-panel[data-variant="danger"] .section-tag { color: #a3392a; }
+  .admin-panel[data-variant="dashed"] .section-tag { color: var(--admin-coral); }
+  .admin-panel .panel-hint { font-size: 12px; color: var(--admin-muted); margin: 0 0 12px; line-height: 1.5; }
+
+  .admin-page-head { display: flex; align-items: flex-start; justify-content: space-between; padding: 0 4px 18px; gap: 16px; }
+  .admin-page-head .crumb { font-size: 11px; color: var(--admin-muted); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  .admin-page-head h1 { font-size: 24px; font-weight: 800; color: var(--admin-ink); margin: 4px 0 0; }
+  .admin-page-head .sub { font-size: 13px; color: var(--admin-ink-2); margin-top: 4px; }
+  .admin-page-head .actions { display: flex; gap: 8px; align-items: center; }
+
+  .admin-empty { background: var(--admin-card); border: 1px dashed var(--admin-line); border-radius: 14px; padding: 48px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .admin-empty .ic { font-size: 36px; line-height: 1; }
+  .admin-empty h3 { font-size: 16px; font-weight: 800; color: var(--admin-ink); margin: 0; }
+  .admin-empty p { font-size: 13px; color: var(--admin-muted); margin: 0; max-width: 420px; }
+}
