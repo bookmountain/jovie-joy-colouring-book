@@ -93,8 +93,7 @@ export type SiteContentBundle = {
 export type HeroSlide = {
   label: string;
   href: string;
-  desktop: string;
-  mobile: string;
+  image: string;
 };
 
 export type UserDto = { id: string; email: string; name: string | null; avatarUrl: string | null; isAdmin: boolean };

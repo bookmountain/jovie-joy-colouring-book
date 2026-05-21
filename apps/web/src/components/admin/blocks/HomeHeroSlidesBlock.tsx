@@ -8,8 +8,7 @@ import { AdminButton, AdminField, AdminInput, AdminLabel, AdminPanel } from "@/c
 type Slide = {
   label: string;
   href: string;
-  desktop: string;
-  mobile: string;
+  image: string;
 };
 
 type Data = {
@@ -17,11 +16,21 @@ type Data = {
   slides?: Slide[];
 };
 
-const EMPTY_SLIDE: Slide = { label: "", href: "", desktop: "", mobile: "" };
+const EMPTY_SLIDE: Slide = { label: "", href: "", image: "" };
+
+// Tolerate the legacy { desktop, mobile } shape — prefer desktop if image is missing.
+function normalizeSlide(s: unknown): Slide {
+  const raw = (s ?? {}) as { label?: string; href?: string; image?: string; desktop?: string; mobile?: string };
+  return {
+    label: raw.label ?? "",
+    href: raw.href ?? "",
+    image: raw.image || raw.desktop || raw.mobile || "",
+  };
+}
 
 export function HomeHeroSlidesBlock({ blockKey, data, onChange }: ContentBlockEditorProps) {
   const d = (data ?? {}) as Data;
-  const slides = d.slides ?? [];
+  const slides: Slide[] = (d.slides ?? []).map(normalizeSlide);
   const interval = d.intervalMs ?? 5000;
 
   function update(next: Partial<Data>) {
@@ -67,7 +76,7 @@ export function HomeHeroSlidesBlock({ blockKey, data, onChange }: ContentBlockEd
       ) : null}
 
       {slides.map((slide, idx) => (
-        <AdminPanel className="space-y-3" key={idx}>
+        <AdminPanel className="space-y-4" key={idx}>
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold">Slide {idx + 1}</h3>
             <div className="flex items-center gap-2">
@@ -120,20 +129,12 @@ export function HomeHeroSlidesBlock({ blockKey, data, onChange }: ContentBlockEd
             </AdminField>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <ImageUpload
-              label="Desktop image"
-              onChange={(url) => setSlide(idx, { desktop: url ?? "" })}
-              upload={(f) => adminUploadContentImage(blockKey, f)}
-              value={slide.desktop || null}
-            />
-            <ImageUpload
-              label="Mobile image"
-              onChange={(url) => setSlide(idx, { mobile: url ?? "" })}
-              upload={(f) => adminUploadContentImage(blockKey, f)}
-              value={slide.mobile || null}
-            />
-          </div>
+          <ImageUpload
+            label="Image"
+            onChange={(url) => setSlide(idx, { image: url ?? "" })}
+            upload={(f) => adminUploadContentImage(blockKey, f)}
+            value={slide.image || null}
+          />
         </AdminPanel>
       ))}
 

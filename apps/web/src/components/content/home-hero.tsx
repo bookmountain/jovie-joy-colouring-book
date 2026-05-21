@@ -11,10 +11,7 @@ type Props = {
 };
 
 export function HomeHero({ slides, intervalMs = 5000 }: Props) {
-  const visible = useMemo(
-    () => slides.filter((s) => s.desktop && s.mobile),
-    [slides],
-  );
+  const visible = useMemo(() => slides.filter((s) => s.image), [slides]);
   const [active, setActive] = useState(0);
 
   useEffect(() => {
@@ -39,19 +36,11 @@ export function HomeHero({ slides, intervalMs = 5000 }: Props) {
         >
           <Image
             alt={slide.label || ""}
-            className="hidden h-full w-full object-cover transition duration-500 group-hover:scale-[1.01] md:block"
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.01]"
             fill
             priority
-            sizes="100vw"
-            src={resolveAssetUrl(slide.desktop)}
-          />
-          <Image
-            alt={slide.label || ""}
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.01] md:hidden"
-            fill
-            priority
-            sizes="100vw"
-            src={resolveAssetUrl(slide.mobile)}
+            sizes="(min-width: 1470px) 1470px, 100vw"
+            src={resolveAssetUrl(slide.image)}
           />
         </Link>
         {visible.length > 1 ? (

@@ -31,10 +31,11 @@ public static class SeedContentBlocks
             },
             new()
             {
-                // Drives the homepage hero carousel. Slide images are seeded with the
-                // existing cocowyo placeholders so the storefront isn't empty on first
-                // boot — admin MUST replace each via /admin/pages/home before launch.
-                // See project_cocowyo_cleanup memory for the full asset replacement list.
+                // Drives the homepage hero carousel. Slide images are seeded with
+                // cocowyo placeholders so the storefront isn't empty on first boot —
+                // admin MUST replace each via /admin/pages/home before launch.
+                // The storefront uses a single image per slide with responsive CSS;
+                // there is no separate mobile asset.
                 Key = "home.hero.slides", Type = ContentBlockType.HomeHeroSlides, SortIndex = 0, UpdatedAt = now,
                 Data = JsonDocument.Parse("""
                 {
@@ -43,32 +44,27 @@ public static class SeedContentBlocks
                     {
                       "label": "Vinyl Sticker Packs",
                       "href": "/collections/vinyl-sticker-packs",
-                      "desktop": "https://cocowyo.com/cdn/shop/files/sticker-laucnhing-banner-DT.png?v=1777523750&width=2000",
-                      "mobile": "https://cocowyo.com/cdn/shop/files/sticker-laucnhing-banner-MB.png?v=1777523749&width=750"
+                      "image": "https://cocowyo.com/cdn/shop/files/sticker-laucnhing-banner-DT.png?v=1777523750&width=2000"
                     },
                     {
                       "label": "Comfy Corner Coloring Book",
                       "href": "/products/comfy-corner-coloring-book",
-                      "desktop": "https://cocowyo.com/cdn/shop/files/Comfy-Corner-coloring-book-banner-desktop.png?v=1775562163&width=2000",
-                      "mobile": "https://cocowyo.com/cdn/shop/files/comfy-corner-banner-mobile..png?v=1776313803&width=750"
+                      "image": "https://cocowyo.com/cdn/shop/files/Comfy-Corner-coloring-book-banner-desktop.png?v=1775562163&width=2000"
                     },
                     {
                       "label": "Spiral-bound Coloring Books",
                       "href": "/collections/spiral-bound",
-                      "desktop": "https://cocowyo.com/cdn/shop/files/spiral-bound-banner-desktop.png?v=1776307178&width=2000",
-                      "mobile": "https://cocowyo.com/cdn/shop/files/spiral-bound-banner-mobile..png?v=1776313803&width=750"
+                      "image": "https://cocowyo.com/cdn/shop/files/spiral-bound-banner-desktop.png?v=1776307178&width=2000"
                     },
                     {
                       "label": "Zoe&Book Coloring Community",
                       "href": "https://www.facebook.com/",
-                      "desktop": "https://cocowyo.com/cdn/shop/files/Come-Join-Us-DESKTOP.png?v=1774414477&width=2000",
-                      "mobile": "https://cocowyo.com/cdn/shop/files/community-banner-mobile..png?v=1776313802&width=750"
+                      "image": "https://cocowyo.com/cdn/shop/files/Come-Join-Us-DESKTOP.png?v=1774414477&width=2000"
                     },
                     {
                       "label": "Free Coloring Pages",
                       "href": "/pages/comics",
-                      "desktop": "https://cocowyo.com/cdn/shop/files/coco-wyo-free-coloring-pages.png?v=1751277856&width=1880",
-                      "mobile": "https://cocowyo.com/cdn/shop/files/freebies-banner-mobile..png?v=1776313802&width=750"
+                      "image": "https://cocowyo.com/cdn/shop/files/coco-wyo-free-coloring-pages.png?v=1751277856&width=1880"
                     }
                   ]
                 }
@@ -190,6 +186,7 @@ public static class SeedContentBlocks
 
         await HealLegacyHeroImageAsync(db);
         await BackfillEmptyHeroSlidesAsync(db, blocks);
+        await MigrateLegacyHeroSlideShapeAsync(db);
 
         await db.SaveChangesAsync();
     }
@@ -225,6 +222,7 @@ public static class SeedContentBlocks
         var anyImage = false;
         foreach (var slide in slidesProp.EnumerateArray())
         {
+            if (slide.TryGetProperty("image", out var im) && im.ValueKind == JsonValueKind.String && !string.IsNullOrEmpty(im.GetString())) { anyImage = true; break; }
             if (slide.TryGetProperty("desktop", out var d) && d.ValueKind == JsonValueKind.String && !string.IsNullOrEmpty(d.GetString())) { anyImage = true; break; }
             if (slide.TryGetProperty("mobile", out var m) && m.ValueKind == JsonValueKind.String && !string.IsNullOrEmpty(m.GetString())) { anyImage = true; break; }
         }
@@ -234,6 +232,37 @@ public static class SeedContentBlocks
         if (template is null) return;
 
         existing.Data = JsonDocument.Parse(template.Data.RootElement.GetRawText());
+        existing.UpdatedAt = DateTime.UtcNow;
+    }
+
+    // Rewrites legacy { desktop, mobile } slides to { image } in place.
+    // Idempotent: slides that already have `image` are left alone.
+    private static async Task MigrateLegacyHeroSlideShapeAsync(AppDbContext db)
+    {
+        var existing = await db.ContentBlocks.FirstOrDefaultAsync(b => b.Key == "home.hero.slides");
+        if (existing is null) return;
+        var node = JsonNode.Parse(existing.Data.RootElement.GetRawText()) as JsonObject;
+        if (node is null) return;
+        if (node["slides"] is not JsonArray slides) return;
+
+        var mutated = false;
+        foreach (var s in slides)
+        {
+            if (s is not JsonObject slide) continue;
+            var image = slide["image"]?.GetValue<string>();
+            if (!string.IsNullOrEmpty(image)) continue;
+
+            var fallback = slide["desktop"]?.GetValue<string>() ?? slide["mobile"]?.GetValue<string>();
+            if (string.IsNullOrEmpty(fallback)) continue;
+
+            slide["image"] = fallback;
+            slide.Remove("desktop");
+            slide.Remove("mobile");
+            mutated = true;
+        }
+
+        if (!mutated) return;
+        existing.Data = JsonDocument.Parse(node.ToJsonString());
         existing.UpdatedAt = DateTime.UtcNow;
     }
 }
