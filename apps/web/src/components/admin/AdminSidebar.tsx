@@ -21,6 +21,7 @@ const NAV: Array<{
   ]},
   { group: "Site content", items: [
     { href: "/admin/pages/home", label: "Home page", icon: "🏠" },
+    { href: "/admin/about", label: "About page", icon: "💁" },
     { href: "/admin/pages/header", label: "Header", icon: "🧭" },
     { href: "/admin/pages/footer", label: "Footer", icon: "🦶" },
     { href: "/admin/pages/announcement", label: "Announcement", icon: "📣" },

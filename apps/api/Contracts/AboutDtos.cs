@@ -7,3 +7,6 @@ public record AboutSectionDto(Guid Id, string Title, List<string> Body, string I
     public static AboutSectionDto From(AboutSection s) =>
         new(s.Id, s.Title, s.Body, s.Image, s.Alt, s.Background, s.SortIndex);
 }
+
+public record CreateAboutSectionRequest(string Title, List<string> Body, string Image, string Alt, string Background, int SortIndex);
+public record UpdateAboutSectionRequest(string Title, List<string> Body, string Image, string Alt, string Background, int SortIndex);

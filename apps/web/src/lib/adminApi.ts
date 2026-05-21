@@ -225,6 +225,22 @@ export const adminUpdateSocialLink = (label: string, body: AdminSocialLinkUpdate
 export const adminDeleteSocialLink = (label: string) =>
   adminFetch<void>(`/api/admin/social-links/${encodeURIComponent(label)}`, { method: "DELETE" });
 
+// About
+export type AdminAboutSection = { id: string; title: string; body: string[]; image: string; alt: string; background: string; sortIndex: number };
+export type AdminAboutSectionWriteBody = { title: string; body: string[]; image: string; alt: string; background: string; sortIndex: number };
+
+export const adminListAboutSections = () => adminFetch<AdminAboutSection[]>("/api/admin/about");
+export const adminCreateAboutSection = (body: AdminAboutSectionWriteBody) =>
+  adminFetch<AdminAboutSection>("/api/admin/about", { method: "POST", body: JSON.stringify(body) });
+export const adminUpdateAboutSection = (id: string, body: AdminAboutSectionWriteBody) =>
+  adminFetch<AdminAboutSection>(`/api/admin/about/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(body) });
+export const adminDeleteAboutSection = (id: string) =>
+  adminFetch<void>(`/api/admin/about/${encodeURIComponent(id)}`, { method: "DELETE" });
+export const adminUploadAboutImage = (id: string, file: File) => {
+  const fd = new FormData(); fd.append("file", file);
+  return adminFetch<{ url: string }>(`/api/admin/about/${encodeURIComponent(id)}/image`, { method: "POST", body: fd });
+};
+
 // Comics
 export type AdminComicImage = { src: string; alt: string };
 export type AdminComic = { id: string; title: string; description: string; hasDownload: boolean; images: AdminComicImage[]; sortIndex: number };

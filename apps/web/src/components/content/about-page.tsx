@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { getAboutSections } from "@/data/content";
+import { resolveAssetUrl } from "@/lib/api";
 
 export async function AboutPage() {
   const aboutSections = await getAboutSections();
@@ -22,7 +23,7 @@ export async function AboutPage() {
               className="h-full w-full object-cover"
               fill
               sizes="(min-width: 1024px) 560px, 100vw"
-              src={section.image}
+              src={resolveAssetUrl(section.image)}
             />
           </div>
           <div className="flex items-center px-5 py-8 text-center sm:px-8 lg:px-12">
