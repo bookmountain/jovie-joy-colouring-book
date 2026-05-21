@@ -10,6 +10,7 @@ import {
   type AdminGalleryImage,
 } from "@/lib/adminApi";
 import { resolveAssetUrl } from "@/lib/api";
+import { StaticPageHeaderEditor } from "@/components/admin/StaticPageHeaderEditor";
 import {
   AdminButton,
   AdminField,
@@ -82,6 +83,8 @@ export default function AdminGalleryPage() {
         title="Gallery"
         subtitle="Drives the Cozy Moments grid on the homepage (and the fallback images for the Hi Friend! panel). Upload square images at 1:1 ratio for best results."
       />
+
+      <StaticPageHeaderEditor slug="gallery" heading="Page header" hint="Title + intro shown on /pages/gallery." />
 
       <AdminPanel className="space-y-3">
         <h2 className="text-lg font-bold">Upload a new image</h2>

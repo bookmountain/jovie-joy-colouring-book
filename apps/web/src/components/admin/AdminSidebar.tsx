@@ -22,10 +22,10 @@ const NAV: Array<{
   { group: "Site content", items: [
     { href: "/admin/pages/home", label: "Home page", icon: "🏠" },
     { href: "/admin/about", label: "About page", icon: "💁" },
+    { href: "/admin/freebies", label: "Freebies page", icon: "🎁" },
     { href: "/admin/pages/header", label: "Header", icon: "🧭" },
     { href: "/admin/pages/footer", label: "Footer", icon: "🦶" },
     { href: "/admin/pages/announcement", label: "Announcement", icon: "📣" },
-    { href: "/admin/static-pages", label: "Static pages", icon: "📄" },
   ]},
   { group: "Editorial", items: [
     { href: "/admin/blog", label: "Blog", icon: "📝" },

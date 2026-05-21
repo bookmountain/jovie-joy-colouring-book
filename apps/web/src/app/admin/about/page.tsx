@@ -10,6 +10,7 @@ import {
   type AdminAboutSection,
 } from "@/lib/adminApi";
 import { ImageUpload } from "@/components/admin/ImageUpload";
+import { StaticPageHeaderEditor } from "@/components/admin/StaticPageHeaderEditor";
 import {
   AdminButton,
   AdminField,
@@ -126,6 +127,8 @@ export default function AdminAboutPage() {
         title="About page"
         subtitle="Sections rendered on /pages/about-us. Each section has its own image, title, body paragraphs (separated by a blank line), alt text, and background colour."
       />
+
+      <StaticPageHeaderEditor slug="about-us" heading="Page header" hint="Title + intro shown above the section list on the public page." />
 
       {error ? <p className="text-sm text-cocoa-coral">{error}</p> : null}
 

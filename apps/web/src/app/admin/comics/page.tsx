@@ -9,6 +9,7 @@ import {
   adminDeleteComicWorld,
   type AdminComicWorld,
 } from "@/lib/adminApi";
+import { StaticPageHeaderEditor } from "@/components/admin/StaticPageHeaderEditor";
 import {
   AdminButton,
   AdminField,
@@ -77,6 +78,8 @@ export default function AdminComicsPage() {
         title="Comics"
         subtitle="Manage comic worlds and the comics inside each one. Click a world to edit its comics + images."
       />
+
+      <StaticPageHeaderEditor slug="comics" heading="Page header" hint="Title + intro shown on /pages/comics." />
 
       {error ? <p className="text-sm text-cocoa-coral">{error}</p> : null}
 

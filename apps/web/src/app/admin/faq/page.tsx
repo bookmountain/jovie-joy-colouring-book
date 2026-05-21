@@ -11,6 +11,7 @@ import {
   type AdminFaq,
 } from "@/lib/adminApi";
 import { ContentBlockEditor } from "@/components/admin/ContentBlockEditor";
+import { StaticPageHeaderEditor } from "@/components/admin/StaticPageHeaderEditor";
 import {
   AdminButton,
   AdminField,
@@ -100,6 +101,8 @@ export default function AdminFaqPage() {
         title="FAQ"
         subtitle="Manage the FAQ list and the illustration shown above it on the homepage."
       />
+
+      <StaticPageHeaderEditor slug="faq" heading="Page header" hint="Title + intro shown on /pages/faq." />
 
       <AdminPanel className="space-y-3">
         <h2 className="text-lg font-bold">FAQ artwork (homepage banner)</h2>
