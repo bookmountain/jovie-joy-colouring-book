@@ -5,3 +5,6 @@ export * from "./AdminLabel";
 export * from "./AdminField";
 export * from "./AdminSwitch";
 export * from "./AdminCheckbox";
+export * from "./AdminButton";
+export * from "./AdminBadge";
+export * from "./AdminChip";

@@ -82,3 +82,30 @@ body.admin-route [tabindex]:focus-visible {
   .admin-checkbox .check { display: none; font-size: 11px; font-weight: 900; line-height: 1; color: #fff; }
   .admin-checkbox[data-state="on"] .check { display: inline; }
 }
+
+@layer components {
+  .admin-btn { padding: 10px 22px; border-radius: 999px; font-size: 13px; font-weight: 800; border: none; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: background 0.15s, color 0.15s, border-color 0.15s; }
+  .admin-btn[data-size="sm"] { padding: 7px 14px; font-size: 12px; }
+  .admin-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+  .admin-btn[data-variant="primary"] { background: var(--admin-coral); color: #fff; box-shadow: var(--admin-shadow-primary); }
+  .admin-btn[data-variant="primary"]:hover:not([disabled]) { background: var(--admin-coral-2); }
+  .admin-btn[data-variant="ghost"] { background: transparent; border: 1.5px solid #c9a868; color: #7a5523; }
+  .admin-btn[data-variant="ghost"]:hover:not([disabled]) { background: var(--admin-card-3); }
+  .admin-btn[data-variant="dark"] { background: var(--admin-ink); color: #fef6e3; }
+  .admin-btn[data-variant="danger"] { background: transparent; color: #a3392a; border: 1.5px solid #e0aea2; }
+  .admin-btn[data-variant="danger"]:hover:not([disabled]) { background: #fbeae6; }
+
+  .admin-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 11px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: 0.02em; }
+  .admin-badge[data-variant="pub"] { background: var(--admin-leaf-soft); color: #385c1f; }
+  .admin-badge[data-variant="draft"] { background: var(--admin-honey-soft); color: #7a5523; }
+  .admin-badge[data-variant="scheduled"] { background: #e2e8f4; color: #1f3a6b; }
+  .admin-badge[data-variant="oos"] { background: var(--admin-coral-soft); color: #a3392a; }
+  .admin-badge[data-variant="neutral"] { background: var(--admin-card-3); color: var(--admin-ink-2); }
+
+  .admin-chip { display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; border-radius: 999px; font-size: 11px; font-weight: 700; cursor: default; border: none; font-family: inherit; }
+  .admin-chip[data-variant="default"] { background: var(--admin-coral-soft); color: #a3392a; }
+  .admin-chip[data-variant="tag"] { background: var(--admin-honey-soft); color: #7a5523; }
+  .admin-chip[data-variant="add"] { background: transparent; border: 1.5px dashed #c9a868; color: var(--admin-ink-2); cursor: pointer; }
+  .admin-chip .x { cursor: pointer; font-weight: 900; opacity: 0.65; background: none; border: none; color: inherit; padding: 0 0 0 2px; }
+  .admin-chip .x:hover { opacity: 1; }
+}
