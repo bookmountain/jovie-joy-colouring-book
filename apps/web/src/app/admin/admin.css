@@ -130,3 +130,40 @@ body.admin-route [tabindex]:focus-visible {
   .admin-empty h3 { font-size: 16px; font-weight: 800; color: var(--admin-ink); margin: 0; }
   .admin-empty p { font-size: 13px; color: var(--admin-muted); margin: 0; max-width: 420px; }
 }
+
+@layer components {
+  .admin-toolbar { background: var(--admin-card); border: 1px solid var(--admin-line); border-radius: 14px; padding: 10px 12px; display: flex; gap: 8px; align-items: center; box-shadow: var(--admin-shadow-panel); margin-bottom: 12px; flex-wrap: wrap; }
+  .admin-toolbar-search { flex: 1; min-width: 220px; display: flex; align-items: center; background: #fffdf6; border: 1.5px solid var(--admin-line); border-radius: 10px; padding: 8px 14px; gap: 8px; }
+  .admin-toolbar-search input { border: none; outline: none; background: transparent; flex: 1; font-size: 13px; color: var(--admin-ink); font-family: inherit; }
+  .admin-toolbar-divider { width: 1px; height: 22px; background: var(--admin-line); }
+
+  .admin-filter-chip { background: #fffdf6; border: 1.5px solid var(--admin-line); border-radius: 10px; padding: 7px 12px; font-size: 12px; font-weight: 700; color: var(--admin-ink-2); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-family: inherit; }
+  .admin-filter-chip[data-state="on"] { background: var(--admin-coral); color: #fff; border-color: var(--admin-coral); }
+  .admin-filter-chip[data-state="on"] .count { background: rgba(255,255,255,0.22); padding: 0 6px; border-radius: 999px; font-size: 10px; }
+
+  .admin-bulk { background: var(--admin-coral); color: #fff; border-radius: 12px; padding: 9px 14px; display: flex; align-items: center; gap: 14px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(211,93,60,0.22); }
+  .admin-bulk .count { font-size: 12px; font-weight: 800; }
+  .admin-bulk .actions { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+  .admin-bulk .actions button { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .admin-bulk .actions button[data-tone="danger"] { background: rgba(0,0,0,0.18); }
+  .admin-bulk .dismiss { background: transparent; border: none; color: #fff; cursor: pointer; opacity: 0.8; font-weight: 900; font-size: 16px; padding: 0 6px; }
+
+  .admin-table-wrap { background: var(--admin-card); border: 1px solid var(--admin-line); border-radius: 14px; overflow: hidden; box-shadow: var(--admin-shadow-panel); }
+  .admin-table { width: 100%; border-collapse: collapse; }
+  .admin-table thead th { background: var(--admin-card-2); color: var(--admin-ink-2); font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; padding: 11px 14px; text-align: left; border-bottom: 1px solid var(--admin-line); }
+  .admin-table thead th[data-sortable="true"] { cursor: pointer; user-select: none; }
+  .admin-table tbody td { padding: 11px 14px; border-bottom: 1px solid var(--admin-line-soft); font-size: 13px; vertical-align: middle; color: var(--admin-ink); }
+  .admin-table tbody tr:hover { background: var(--admin-card-2); cursor: pointer; }
+  .admin-table tbody tr[data-selected="true"] { background: #fdf1de; }
+  .admin-table tbody tr:last-child td { border-bottom: none; }
+  .admin-table .skeleton-row td { padding: 11px 14px; }
+  .admin-table .skeleton-bar { height: 14px; background: var(--admin-line-soft); border-radius: 6px; animation: admin-shimmer 1.4s linear infinite; background: linear-gradient(90deg, var(--admin-line-soft), var(--admin-card-3), var(--admin-line-soft)); background-size: 200% 100%; }
+  @keyframes admin-shimmer { 0% { background-position: 0% 0; } 100% { background-position: -200% 0; } }
+
+  .admin-pagi { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; gap: 12px; flex-wrap: wrap; }
+  .admin-pagi .info { font-size: 12px; color: var(--admin-muted); }
+  .admin-pagi .controls { display: flex; gap: 4px; align-items: center; }
+  .admin-pagi .pgbtn { background: transparent; border: 1.5px solid var(--admin-line); border-radius: 8px; padding: 5px 11px; font-size: 12px; font-weight: 700; color: var(--admin-ink-2); cursor: pointer; font-family: inherit; }
+  .admin-pagi .pgbtn[data-state="on"] { background: var(--admin-coral); color: #fff; border-color: var(--admin-coral); }
+  .admin-pagi .pgbtn[disabled] { opacity: 0.4; cursor: not-allowed; }
+}
