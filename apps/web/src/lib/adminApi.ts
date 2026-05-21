@@ -225,6 +225,34 @@ export const adminUpdateSocialLink = (label: string, body: AdminSocialLinkUpdate
 export const adminDeleteSocialLink = (label: string) =>
   adminFetch<void>(`/api/admin/social-links/${encodeURIComponent(label)}`, { method: "DELETE" });
 
+// Comics
+export type AdminComicImage = { src: string; alt: string };
+export type AdminComic = { id: string; title: string; description: string; hasDownload: boolean; images: AdminComicImage[]; sortIndex: number };
+export type AdminComicWorld = { id: string; title: string; comics: AdminComic[]; sortIndex: number };
+export type AdminComicWriteBody = { title: string; description: string; hasDownload: boolean; images: AdminComicImage[]; sortIndex: number };
+export type AdminComicWorldWriteBody = { title: string; sortIndex: number };
+
+export const adminListComicWorlds = () => adminFetch<AdminComicWorld[]>("/api/admin/comics");
+export const adminCreateComicWorld = (body: AdminComicWorldWriteBody) =>
+  adminFetch<AdminComicWorld>("/api/admin/comics", { method: "POST", body: JSON.stringify(body) });
+export const adminUpdateComicWorld = (id: string, body: AdminComicWorldWriteBody) =>
+  adminFetch<AdminComicWorld>(`/api/admin/comics/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(body) });
+export const adminDeleteComicWorld = (id: string) =>
+  adminFetch<void>(`/api/admin/comics/${encodeURIComponent(id)}`, { method: "DELETE" });
+
+export const adminListComics = (worldId: string) =>
+  adminFetch<AdminComic[]>(`/api/admin/comics/${encodeURIComponent(worldId)}/comics`);
+export const adminCreateComic = (worldId: string, body: AdminComicWriteBody) =>
+  adminFetch<AdminComic>(`/api/admin/comics/${encodeURIComponent(worldId)}/comics`, { method: "POST", body: JSON.stringify(body) });
+export const adminUpdateComic = (worldId: string, comicId: string, body: AdminComicWriteBody) =>
+  adminFetch<AdminComic>(`/api/admin/comics/${encodeURIComponent(worldId)}/comics/${encodeURIComponent(comicId)}`, { method: "PUT", body: JSON.stringify(body) });
+export const adminDeleteComic = (worldId: string, comicId: string) =>
+  adminFetch<void>(`/api/admin/comics/${encodeURIComponent(worldId)}/comics/${encodeURIComponent(comicId)}`, { method: "DELETE" });
+export const adminUploadComicImage = (worldId: string, comicId: string, file: File) => {
+  const fd = new FormData(); fd.append("file", file);
+  return adminFetch<{ url: string }>(`/api/admin/comics/${encodeURIComponent(worldId)}/comics/${encodeURIComponent(comicId)}/image`, { method: "POST", body: fd });
+};
+
 // Blogs
 export type AdminBlogCategory = { slug: string; title: string; excerpt: string; image: string; sortIndex: number };
 export type AdminBlogCategoryWriteBody = { title: string; excerpt: string; image: string; sortIndex: number };

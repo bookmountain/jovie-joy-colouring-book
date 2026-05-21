@@ -18,3 +18,9 @@ public record ComicWorldDto(Guid Id, string Title, List<ComicDto> Comics, int So
         w.Comics.OrderBy(c => c.SortIndex).Select(ComicDto.From).ToList(),
         w.SortIndex);
 }
+
+public record CreateComicWorldRequest(string Title, int SortIndex);
+public record UpdateComicWorldRequest(string Title, int SortIndex);
+
+public record CreateComicRequest(string Title, string Description, bool HasDownload, List<ComicImageDto> Images, int SortIndex);
+public record UpdateComicRequest(string Title, string Description, bool HasDownload, List<ComicImageDto> Images, int SortIndex);

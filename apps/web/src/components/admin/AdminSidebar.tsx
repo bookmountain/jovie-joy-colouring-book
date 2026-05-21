@@ -28,7 +28,7 @@ const NAV: Array<{
   ]},
   { group: "Editorial", items: [
     { href: "/admin/blog", label: "Blog", icon: "📝" },
-    { href: "/admin/comics", label: "Comics", icon: "🎨", soon: true, badge: "soon" },
+    { href: "/admin/comics", label: "Comics", icon: "🎨" },
     { href: "/admin/gallery", label: "Gallery", icon: "🖼️" },
     { href: "/admin/faq", label: "FAQ", icon: "❓" },
     { href: "/admin/featured-on", label: "Featured On", icon: "⭐" },

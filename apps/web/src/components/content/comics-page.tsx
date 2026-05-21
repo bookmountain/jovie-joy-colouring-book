@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { getComicWorlds } from "@/data/content";
 import type { Comic } from "@/data/content";
+import { resolveAssetUrl } from "@/lib/api";
 
 function getImageGridClass(imageCount: number) {
   if (imageCount === 2) {
@@ -57,7 +58,7 @@ function ComicSection({ comic }: { comic: Comic }) {
                   ? "(min-width: 1024px) 25vw, 50vw"
                   : "(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
               }
-              src={image.src}
+              src={resolveAssetUrl(image.src)}
             />
           </a>
         ))}
