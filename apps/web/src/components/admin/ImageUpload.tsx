@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { AdminButton } from "@/components/admin/ui";
 
 export type ImageUploadProps = {
   value?: string | null;
@@ -45,14 +46,14 @@ export function ImageUpload({ value, onChange, upload, label, accept = "image/*"
           </div>
         )}
         <div className="space-y-2">
-          <button
-            className="coco-button-secondary"
+          <AdminButton
             disabled={busy}
             onClick={() => inputRef.current?.click()}
             type="button"
+            variant="ghost"
           >
             {busy ? "Uploading…" : value ? "Replace" : "Upload"}
-          </button>
+          </AdminButton>
           {value ? (
             <button
               className="block text-xs text-cocoa-coral underline"

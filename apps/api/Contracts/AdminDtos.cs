@@ -4,7 +4,7 @@ public record CreateProductRequest(
     string Slug, string Title, string Excerpt, List<string> Description,
     int PriceCents, int? CompareAtPriceCents, bool Available,
     string ProductType, List<string> Images,
-    List<Data.Entities.ProductOption> Options,
+    List<Data.Entities.ProductOption>? Options,
     List<Data.Entities.SourceLink>? SourceLinks,
     List<string>? ReviewImages, List<string>? InspirationImages,
     List<string> Tags, List<string> CollectionSlugs,
@@ -14,7 +14,7 @@ public record UpdateProductRequest(
     string Title, string Excerpt, List<string> Description,
     int PriceCents, int? CompareAtPriceCents, bool Available,
     string ProductType, List<string> Images,
-    List<Data.Entities.ProductOption> Options,
+    List<Data.Entities.ProductOption>? Options,
     List<Data.Entities.SourceLink>? SourceLinks,
     List<string>? ReviewImages, List<string>? InspirationImages,
     List<string> Tags, List<string> CollectionSlugs);

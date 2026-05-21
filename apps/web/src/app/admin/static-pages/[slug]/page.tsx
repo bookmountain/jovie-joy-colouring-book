@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { adminGetStaticPage, adminUpdateStaticPage } from "@/lib/adminApi";
 import type { StaticPage } from "@/lib/api";
 import { StaticPageForm } from "@/components/admin/StaticPageForm";
+import { AdminPageHeader } from "@/components/admin/ui";
 
 export default function AdminStaticPageEdit() {
   const params = useParams<{ slug: string }>();
@@ -21,16 +22,18 @@ export default function AdminStaticPageEdit() {
 
   return (
     <div>
-      <h1 className="coco-heading mb-6">{page.title}</h1>
-      <StaticPageForm
-        initial={page}
-        onSubmit={async (body) => {
-          const updated = await adminUpdateStaticPage(page.slug, body);
-          setPage(updated);
-          setSavedAt(new Date().toLocaleTimeString());
-        }}
-        submitLabel="Save changes"
-      />
+      <AdminPageHeader title={page.title} />
+      <div className="mt-6">
+        <StaticPageForm
+          initial={page}
+          onSubmit={async (body) => {
+            const updated = await adminUpdateStaticPage(page.slug, body);
+            setPage(updated);
+            setSavedAt(new Date().toLocaleTimeString());
+          }}
+          submitLabel="Save changes"
+        />
+      </div>
       {savedAt ? <p className="mt-3 text-sm text-cocoa-mint">Saved at {savedAt}</p> : null}
       <button className="mt-8 text-sm underline" onClick={() => router.push("/admin/static-pages")} type="button">← Back</button>
     </div>

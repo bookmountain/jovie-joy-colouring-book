@@ -25,7 +25,74 @@ async function adminFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 // Products
-export const adminListProducts = () => adminFetch<Product[]>("/api/admin/products");
+export type AdminProductListItem = {
+  slug: string;
+  title: string;
+  excerpt: string;
+  priceCents: number;
+  compareAtPriceCents: number | null;
+  available: boolean;
+  productType: string;
+  status: "published" | "draft" | "scheduled" | "out_of_stock";
+  tags: string[];
+  collectionSlugs: string[];
+  primaryImage: string | null;
+  publishedAt: string | null;
+  updatedAt: string;
+};
+export type AdminProductListResponse = {
+  items: AdminProductListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+export type AdminProductListQuery = {
+  q?: string;
+  format?: string[];
+  status?: string[];
+  collection?: string[];
+  tag?: string[];
+  sort?: "title_asc" | "title_desc" | "price_asc" | "price_desc" | "updated_asc" | "updated_desc";
+  page?: number;
+  pageSize?: number;
+};
+
+function csv(values: string[] | undefined): string | undefined {
+  return values && values.length > 0 ? values.join(",") : undefined;
+}
+
+export const adminListProducts = (query: AdminProductListQuery = {}) => {
+  const p = new URLSearchParams();
+  if (query.q) p.set("q", query.q);
+  const f = csv(query.format); if (f) p.set("format", f);
+  const s = csv(query.status); if (s) p.set("status", s);
+  const c = csv(query.collection); if (c) p.set("collection", c);
+  const t = csv(query.tag); if (t) p.set("tag", t);
+  if (query.sort) p.set("sort", query.sort);
+  p.set("page", String(query.page ?? 1));
+  p.set("pageSize", String(query.pageSize ?? 25));
+  return adminFetch<AdminProductListResponse>(`/api/admin/products?${p}`);
+};
+
+export type AdminProductBulkAction =
+  | "publish" | "unpublish" | "delete" | "add-to-collection" | "remove-from-collection";
+
+export const adminBulkProducts = (body: {
+  slugs: string[];
+  action: AdminProductBulkAction;
+  payload?: { collectionSlug?: string };
+}) =>
+  adminFetch<{ updated: number }>("/api/admin/products/bulk", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+
+export const adminDuplicateProduct = (slug: string) =>
+  adminFetch<Product>(`/api/admin/products/${slug}/duplicate`, { method: "POST" });
+
+export const adminListProductTags = () =>
+  adminFetch<string[]>("/api/admin/products/tags");
+
 export const adminGetProduct = (slug: string) => adminFetch<Product>(`/api/admin/products/${slug}`);
 export const adminCreateProduct = (body: AdminProductWriteBody) =>
   adminFetch<Product>("/api/admin/products", { method: "POST", body: JSON.stringify(body) });
@@ -103,7 +170,7 @@ export type AdminProductWriteBody = {
   slug?: string; title: string; excerpt: string; description: string[];
   priceCents: number; compareAtPriceCents: number | null; available: boolean;
   productType: string; images: string[];
-  options: { name: string; values: string[] }[];
+  options?: { name: string; values: string[] }[]; // optional now — BE preserves/defaults
   sourceLinks: { label: string; href: string; image?: string; alt?: string }[] | null;
   reviewImages: string[] | null; inspirationImages: string[] | null;
   tags: string[]; collectionSlugs: string[];

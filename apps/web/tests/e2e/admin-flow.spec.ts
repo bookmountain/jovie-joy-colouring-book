@@ -60,6 +60,15 @@ test.describe("admin flow", () => {
       });
     });
 
+    // Mock home page content sections
+    await page.route("**/api/admin/content/home.**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ key: "home.hero", type: "HomeHero", data: {}, sortIndex: 0 }),
+      });
+    });
+
     await page.goto("/admin/login");
     await page.getByLabel("Email").fill("admin@joviejoy.com");
     await page.getByLabel("Password").fill("anything");
@@ -73,7 +82,7 @@ test.describe("admin flow", () => {
     await page.getByRole("link", { name: "Products" }).click();
     await expect(page.getByRole("heading", { level: 1, name: /products/i })).toBeVisible();
 
-    await page.getByRole("link", { name: "Content" }).click();
-    await expect(page.getByRole("heading", { level: 1, name: /content/i })).toBeVisible();
+    await page.getByRole("link", { name: "Home page" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: /home page/i })).toBeVisible();
   });
 });

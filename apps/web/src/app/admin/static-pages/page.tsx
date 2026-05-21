@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { adminCreateStaticPage, adminDeleteStaticPage, adminListStaticPages } from "@/lib/adminApi";
 import type { StaticPage } from "@/lib/api";
 import { StaticPageForm } from "@/components/admin/StaticPageForm";
+import { AdminButton, AdminPageHeader } from "@/components/admin/ui";
 
 export default function AdminStaticPagesList() {
   const router = useRouter();
@@ -25,12 +26,14 @@ export default function AdminStaticPagesList() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h1 className="coco-heading">Static pages</h1>
-        <button className="coco-button-primary" onClick={() => setShowCreate(!showCreate)} type="button">
-          {showCreate ? "Cancel" : "+ New page"}
-        </button>
-      </div>
+      <AdminPageHeader
+        title="Static pages"
+        actions={
+          <AdminButton onClick={() => setShowCreate(!showCreate)} type="button" variant="primary">
+            {showCreate ? "Cancel" : "+ New page"}
+          </AdminButton>
+        }
+      />
       {showCreate ? (
         <div className="mt-6">
           <StaticPageForm

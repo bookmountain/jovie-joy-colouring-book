@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useState } from "react";
 import { adminListOrders, type AdminOrder } from "@/lib/adminApi";
 import { formatCents } from "@/lib/format";
+import { AdminButton, AdminSelect } from "@/components/admin/ui";
 
 const STATUSES = ["", "pending", "paid", "failed", "refunded"];
 
@@ -27,8 +28,7 @@ export function OrdersTable() {
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <label className="text-sm font-semibold">Status</label>
-        <select
-          className="coco-input"
+        <AdminSelect
           onChange={(e) => {
             setPage(1);
             setStatus(e.target.value);
@@ -40,7 +40,7 @@ export function OrdersTable() {
               {s || "All"}
             </option>
           ))}
-        </select>
+        </AdminSelect>
         <span className="ml-auto text-sm text-cocoa-text">{data.total} orders</span>
       </div>
 
@@ -91,25 +91,27 @@ export function OrdersTable() {
       </table>
 
       <div className="flex items-center justify-between">
-        <button
-          className="coco-button-secondary disabled:opacity-50"
+        <AdminButton
+          className="disabled:opacity-50"
           disabled={page === 1}
           onClick={() => setPage(Math.max(1, page - 1))}
           type="button"
+          variant="ghost"
         >
           Prev
-        </button>
+        </AdminButton>
         <span className="text-sm">
           Page {page} / {lastPage}
         </span>
-        <button
-          className="coco-button-secondary disabled:opacity-50"
+        <AdminButton
+          className="disabled:opacity-50"
           disabled={page === lastPage}
           onClick={() => setPage(Math.min(lastPage, page + 1))}
           type="button"
+          variant="ghost"
         >
           Next
-        </button>
+        </AdminButton>
       </div>
     </div>
   );

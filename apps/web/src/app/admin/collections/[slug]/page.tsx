@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { adminGetCollection, adminUpdateCollection } from "@/lib/adminApi";
 import type { Collection } from "@/lib/api";
 import { CollectionForm } from "@/components/admin/CollectionForm";
+import { AdminPageHeader } from "@/components/admin/ui";
 
 export default function AdminCollectionEdit() {
   const params = useParams<{ slug: string }>();
@@ -23,16 +24,18 @@ export default function AdminCollectionEdit() {
 
   return (
     <div>
-      <h1 className="coco-heading mb-6">{collection.title}</h1>
-      <CollectionForm
-        initial={collection}
-        onSubmit={async (body) => {
-          const updated = await adminUpdateCollection(collection.slug, body);
-          setCollection(updated);
-          setSavedAt(new Date().toLocaleTimeString());
-        }}
-        submitLabel="Save changes"
-      />
+      <AdminPageHeader title={collection.title} />
+      <div className="mt-6">
+        <CollectionForm
+          initial={collection}
+          onSubmit={async (body) => {
+            const updated = await adminUpdateCollection(collection.slug, body);
+            setCollection(updated);
+            setSavedAt(new Date().toLocaleTimeString());
+          }}
+          submitLabel="Save changes"
+        />
+      </div>
       {savedAt ? <p className="mt-3 text-sm text-cocoa-mint">Saved at {savedAt}</p> : null}
       <button
         className="mt-8 text-sm underline"

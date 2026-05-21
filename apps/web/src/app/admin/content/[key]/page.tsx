@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { adminGetContent, adminUpsertContent } from "@/lib/adminApi";
 import type { ContentBlock } from "@/lib/api";
 import { ContentBlockEditor } from "@/components/admin/ContentBlockEditor";
+import { AdminButton, AdminPanel, AdminPageHeader } from "@/components/admin/ui";
 
 export default function AdminContentEditPage() {
   const params = useParams<{ key: string }>();
@@ -50,30 +51,27 @@ export default function AdminContentEditPage() {
 
   return (
     <div>
-      <h1 className="coco-heading">{block.key}</h1>
-      <p className="mt-1 text-sm text-cocoa-text">
-        Type: <code>{block.type}</code>
-      </p>
-
-      <div className="coco-panel mt-6 p-6">
+      <AdminPageHeader title={block.key} subtitle={<>Type: <code>{block.type}</code></>} />
+      <AdminPanel className="mt-6">
         <ContentBlockEditor
           blockKey={block.key}
           data={data}
           onChange={setData}
           type={block.type}
         />
-      </div>
+      </AdminPanel>
 
       {savedAt ? <p className="mt-3 text-sm text-cocoa-mint">Saved at {savedAt}</p> : null}
       <div className="mt-4 flex items-center gap-3">
-        <button
-          className="coco-button-primary disabled:opacity-60"
+        <AdminButton
+          className="disabled:opacity-60"
           disabled={submitting}
           onClick={save}
           type="button"
+          variant="primary"
         >
           {submitting ? "Saving…" : "Save"}
-        </button>
+        </AdminButton>
         <button
           className="text-sm underline"
           onClick={() => router.push("/admin/content")}

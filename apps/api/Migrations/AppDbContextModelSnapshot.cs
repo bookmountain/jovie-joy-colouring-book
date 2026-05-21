@@ -566,7 +566,7 @@ namespace JovieJoy.Api.Migrations
                     b.Property<int>("ProductType")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("PublishedAt")
+                    b.Property<DateTime?>("PublishedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("ReviewImages")

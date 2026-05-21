@@ -1,6 +1,7 @@
 "use client";
 
 import type { ContentBlockEditorProps } from "@/components/admin/ContentBlockEditor";
+import { AdminField, AdminInput, AdminLabel } from "@/components/admin/ui";
 
 type Data = { enabled?: boolean; text?: string; href?: string };
 
@@ -16,22 +17,22 @@ export function AnnouncementBlock({ data, onChange }: ContentBlockEditorProps) {
         />
         <span className="text-sm font-semibold">Show announcement bar</span>
       </label>
-      <label className="block">
-        <span className="mb-1 block text-sm font-semibold">Text</span>
-        <input
-          className="coco-input w-full"
+      <AdminField>
+        <AdminLabel htmlFor="ann-text">Text</AdminLabel>
+        <AdminInput
+          id="ann-text"
           onChange={(e) => onChange({ ...d, text: e.target.value })}
           value={d.text ?? ""}
         />
-      </label>
-      <label className="block">
-        <span className="mb-1 block text-sm font-semibold">Href</span>
-        <input
-          className="coco-input w-full"
+      </AdminField>
+      <AdminField>
+        <AdminLabel htmlFor="ann-href">Href</AdminLabel>
+        <AdminInput
+          id="ann-href"
           onChange={(e) => onChange({ ...d, href: e.target.value })}
           value={d.href ?? ""}
         />
-      </label>
+      </AdminField>
     </div>
   );
 }

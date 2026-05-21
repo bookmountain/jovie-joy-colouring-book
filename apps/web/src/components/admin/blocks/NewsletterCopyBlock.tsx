@@ -1,6 +1,7 @@
 "use client";
 
 import type { ContentBlockEditorProps } from "@/components/admin/ContentBlockEditor";
+import { AdminField, AdminInput, AdminLabel } from "@/components/admin/ui";
 
 type Data = { heading?: string; ctaLabel?: string; successMessage?: string };
 
@@ -8,31 +9,31 @@ export function NewsletterCopyBlock({ data, onChange }: ContentBlockEditorProps)
   const d = (data ?? {}) as Data;
   return (
     <div className="space-y-3">
-      <label className="block">
-        <span className="mb-1 block text-sm font-semibold">Heading</span>
-        <input
-          className="coco-input w-full"
+      <AdminField>
+        <AdminLabel htmlFor="nl-heading">Heading</AdminLabel>
+        <AdminInput
+          id="nl-heading"
           onChange={(e) => onChange({ ...d, heading: e.target.value })}
           value={d.heading ?? ""}
         />
-      </label>
+      </AdminField>
       <div className="grid gap-3 sm:grid-cols-2">
-        <label>
-          <span className="mb-1 block text-sm font-semibold">CTA label</span>
-          <input
-            className="coco-input w-full"
+        <AdminField>
+          <AdminLabel htmlFor="nl-cta">CTA label</AdminLabel>
+          <AdminInput
+            id="nl-cta"
             onChange={(e) => onChange({ ...d, ctaLabel: e.target.value })}
             value={d.ctaLabel ?? ""}
           />
-        </label>
-        <label>
-          <span className="mb-1 block text-sm font-semibold">Success message</span>
-          <input
-            className="coco-input w-full"
+        </AdminField>
+        <AdminField>
+          <AdminLabel htmlFor="nl-success">Success message</AdminLabel>
+          <AdminInput
+            id="nl-success"
             onChange={(e) => onChange({ ...d, successMessage: e.target.value })}
             value={d.successMessage ?? ""}
           />
-        </label>
+        </AdminField>
       </div>
     </div>
   );

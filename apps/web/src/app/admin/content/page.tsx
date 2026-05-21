@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { adminListContent, adminDeleteContent } from "@/lib/adminApi";
 import type { ContentBlock } from "@/lib/api";
+import { AdminPageHeader } from "@/components/admin/ui";
 
 const ORDER = [
   "HomeHero",
@@ -34,12 +35,14 @@ export default function AdminContentPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h1 className="coco-heading">Content</h1>
-        <Link className="coco-button-primary" href="/admin/content/new">
-          + New block
-        </Link>
-      </div>
+      <AdminPageHeader
+        title="Content"
+        actions={
+          <Link className="admin-btn" data-variant="primary" href="/admin/content/new">
+            + New block
+          </Link>
+        }
+      />
       <p className="mt-2 text-sm text-cocoa-text">
         Typed blocks rendered on the storefront: hero, announcement, video, hero artwork.
         AboutSection, FaqEntry, FooterGroup, FeaturedOn types accept raw JSON for now.

@@ -4,6 +4,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminUpsertContent } from "@/lib/adminApi";
 import { ContentBlockEditor } from "@/components/admin/ContentBlockEditor";
+import {
+  AdminButton,
+  AdminField,
+  AdminInput,
+  AdminLabel,
+  AdminPanel,
+  AdminPageHeader,
+  AdminSelect,
+} from "@/components/admin/ui";
 
 const TYPES = [
   "HomeHero", "Announcement", "HomeVideo", "HeroArtwork",
@@ -34,57 +43,60 @@ export default function AdminContentNew() {
 
   return (
     <div>
-      <h1 className="coco-heading mb-6">New content block</h1>
-      <div className="coco-panel space-y-4 p-6">
-        <label className="block">
-          <span className="mb-1 block text-sm font-semibold">
-            Key (e.g. <code>about.section.1</code>)
-          </span>
-          <input
-            className="coco-input w-full"
-            onChange={(e) => setKey(e.target.value)}
-            required
-            value={key}
-          />
-        </label>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label>
-            <span className="mb-1 block text-sm font-semibold">Type</span>
-            <select
-              className="coco-input w-full"
-              onChange={(e) => setType(e.target.value)}
-              value={type}
-            >
-              {TYPES.map((t) => (
-                <option key={t}>{t}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span className="mb-1 block text-sm font-semibold">Sort index</span>
-            <input
-              className="coco-input w-full"
-              onChange={(e) => setSortIndex(Number(e.target.value))}
-              type="number"
-              value={sortIndex}
+      <AdminPageHeader title="New content block" />
+      <div className="mt-6 space-y-6">
+        <AdminPanel className="space-y-4">
+          <AdminField>
+            <AdminLabel htmlFor="cb-key">
+              Key (e.g. <code>about.section.1</code>)
+            </AdminLabel>
+            <AdminInput
+              id="cb-key"
+              onChange={(e) => setKey(e.target.value)}
+              required
+              value={key}
             />
-          </label>
-        </div>
-      </div>
+          </AdminField>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <AdminField>
+              <AdminLabel htmlFor="cb-type">Type</AdminLabel>
+              <AdminSelect
+                id="cb-type"
+                onChange={(e) => setType(e.target.value)}
+                value={type}
+              >
+                {TYPES.map((t) => (
+                  <option key={t}>{t}</option>
+                ))}
+              </AdminSelect>
+            </AdminField>
+            <AdminField>
+              <AdminLabel htmlFor="cb-sortindex">Sort index</AdminLabel>
+              <AdminInput
+                id="cb-sortindex"
+                onChange={(e) => setSortIndex(Number(e.target.value))}
+                type="number"
+                value={sortIndex}
+              />
+            </AdminField>
+          </div>
+        </AdminPanel>
 
-      <div className="coco-panel mt-6 p-6">
-        <ContentBlockEditor blockKey={key || "new"} data={data} onChange={setData} type={type} />
-      </div>
+        <AdminPanel>
+          <ContentBlockEditor blockKey={key || "new"} data={data} onChange={setData} type={type} />
+        </AdminPanel>
 
-      {error ? <p className="mt-3 text-sm text-cocoa-coral">{error}</p> : null}
-      <button
-        className="coco-button-primary mt-4 disabled:opacity-60"
-        disabled={submitting || !key}
-        onClick={save}
-        type="button"
-      >
-        {submitting ? "Creating…" : "Create"}
-      </button>
+        {error ? <p className="text-sm text-cocoa-coral">{error}</p> : null}
+        <AdminButton
+          className="disabled:opacity-60"
+          disabled={submitting || !key}
+          onClick={save}
+          type="button"
+          variant="primary"
+        >
+          {submitting ? "Creating…" : "Create"}
+        </AdminButton>
+      </div>
     </div>
   );
 }

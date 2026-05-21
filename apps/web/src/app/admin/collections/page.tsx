@@ -10,6 +10,7 @@ import {
 } from "@/lib/adminApi";
 import type { Collection } from "@/lib/api";
 import { CollectionForm } from "@/components/admin/CollectionForm";
+import { AdminButton, AdminPageHeader } from "@/components/admin/ui";
 
 export default function AdminCollectionsList() {
   const router = useRouter();
@@ -24,16 +25,18 @@ export default function AdminCollectionsList() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h1 className="coco-heading">Collections</h1>
-        <button
-          className="coco-button-primary"
-          onClick={() => setShowCreate(!showCreate)}
-          type="button"
-        >
-          {showCreate ? "Cancel" : "+ New collection"}
-        </button>
-      </div>
+      <AdminPageHeader
+        title="Collections"
+        actions={
+          <AdminButton
+            onClick={() => setShowCreate(!showCreate)}
+            type="button"
+            variant="primary"
+          >
+            {showCreate ? "Cancel" : "+ New collection"}
+          </AdminButton>
+        }
+      />
       {error ? <p className="mt-3 text-cocoa-coral">{error}</p> : null}
       {showCreate ? (
         <div className="mt-6">

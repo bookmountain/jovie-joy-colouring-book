@@ -1,10 +1,13 @@
 import { AnalyticsCards } from "@/components/admin/AnalyticsCards";
+import { AdminPageHeader } from "@/components/admin/ui";
 
 export default function AdminDashboard() {
   return (
     <div>
-      <h1 className="coco-heading mb-6">Dashboard</h1>
-      <AnalyticsCards />
+      <AdminPageHeader title="Dashboard" />
+      <div className="mt-6">
+        <AnalyticsCards />
+      </div>
     </div>
   );
 }

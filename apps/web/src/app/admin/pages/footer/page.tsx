@@ -9,6 +9,7 @@ import {
   type AdminFooterLink, type AdminSocialLink, type AdminTrendingTerm,
 } from "@/lib/adminApi";
 import { ContentBlockEditor } from "@/components/admin/ContentBlockEditor";
+import { AdminButton, AdminInput, AdminPanel, AdminPageHeader } from "@/components/admin/ui";
 
 export default function AdminFooterPage() {
   const [contactDraft, setContactDraft] = useState<unknown>({});
@@ -85,20 +86,20 @@ export default function AdminFooterPage() {
 
   return (
     <div className="space-y-8">
-      <header><h1 className="coco-heading">Footer</h1></header>
+      <AdminPageHeader title="Footer" />
 
-      <section className="coco-panel space-y-3 p-6">
+      <AdminPanel className="space-y-3">
         <h2 className="text-lg font-bold">Contact</h2>
         <ContentBlockEditor blockKey="footer.contact" type="FooterContact" data={contactDraft} onChange={setContactDraft} />
         <div className="flex items-center gap-3">
-          <button className="coco-button-primary disabled:opacity-60" disabled={contactSaving} onClick={saveContact} type="button">
+          <AdminButton className="disabled:opacity-60" disabled={contactSaving} onClick={saveContact} type="button" variant="primary">
             {contactSaving ? "Saving…" : "Save contact"}
-          </button>
+          </AdminButton>
           {contactSavedAt ? <span className="text-xs text-cocoa-mint">Saved at {contactSavedAt}</span> : null}
         </div>
-      </section>
+      </AdminPanel>
 
-      <section className="coco-panel space-y-3 p-6">
+      <AdminPanel className="space-y-3">
         <h2 className="text-lg font-bold">Footer link groups</h2>
         <table className="w-full text-sm">
           <thead>
@@ -109,25 +110,25 @@ export default function AdminFooterPage() {
           <tbody>
             {footer.map((f) => (
               <tr key={f.id} className="border-b border-cocoa-line">
-                <td className="py-2"><input className="coco-input w-40" defaultValue={f.groupTitle} onBlur={(e) => updateFooterLink(f.id, { groupTitle: e.target.value })} /></td>
-                <td><input className="coco-input w-48" defaultValue={f.label} onBlur={(e) => updateFooterLink(f.id, { label: e.target.value })} /></td>
-                <td><input className="coco-input w-64" defaultValue={f.href} onBlur={(e) => updateFooterLink(f.id, { href: e.target.value })} /></td>
-                <td><input className="coco-input w-16" defaultValue={f.sortIndex} onBlur={(e) => updateFooterLink(f.id, { sortIndex: Number(e.target.value) })} type="number" /></td>
+                <td className="py-2"><AdminInput className="w-40" defaultValue={f.groupTitle} onBlur={(e) => updateFooterLink(f.id, { groupTitle: e.target.value })} /></td>
+                <td><AdminInput className="w-48" defaultValue={f.label} onBlur={(e) => updateFooterLink(f.id, { label: e.target.value })} /></td>
+                <td><AdminInput className="w-64" defaultValue={f.href} onBlur={(e) => updateFooterLink(f.id, { href: e.target.value })} /></td>
+                <td><AdminInput className="w-16" defaultValue={f.sortIndex} onBlur={(e) => updateFooterLink(f.id, { sortIndex: Number(e.target.value) })} type="number" /></td>
                 <td className="text-right"><button className="text-cocoa-coral underline" onClick={() => deleteFooterLink(f.id)} type="button">Delete</button></td>
               </tr>
             ))}
           </tbody>
         </table>
         <div className="grid grid-cols-5 gap-2">
-          <input className="coco-input" placeholder="groupKey" value={newLink.groupKey} onChange={(e) => setNewLink({ ...newLink, groupKey: e.target.value })} />
-          <input className="coco-input" placeholder="Group title" value={newLink.groupTitle} onChange={(e) => setNewLink({ ...newLink, groupTitle: e.target.value })} />
-          <input className="coco-input" placeholder="Label" value={newLink.label} onChange={(e) => setNewLink({ ...newLink, label: e.target.value })} />
-          <input className="coco-input" placeholder="/href" value={newLink.href} onChange={(e) => setNewLink({ ...newLink, href: e.target.value })} />
-          <button className="coco-button-secondary" onClick={addFooterLink} type="button">+ Add</button>
+          <AdminInput placeholder="groupKey" value={newLink.groupKey} onChange={(e) => setNewLink({ ...newLink, groupKey: e.target.value })} />
+          <AdminInput placeholder="Group title" value={newLink.groupTitle} onChange={(e) => setNewLink({ ...newLink, groupTitle: e.target.value })} />
+          <AdminInput placeholder="Label" value={newLink.label} onChange={(e) => setNewLink({ ...newLink, label: e.target.value })} />
+          <AdminInput placeholder="/href" value={newLink.href} onChange={(e) => setNewLink({ ...newLink, href: e.target.value })} />
+          <AdminButton onClick={addFooterLink} type="button" variant="ghost">+ Add</AdminButton>
         </div>
-      </section>
+      </AdminPanel>
 
-      <section className="coco-panel space-y-3 p-6">
+      <AdminPanel className="space-y-3">
         <h2 className="text-lg font-bold">Social links</h2>
         <table className="w-full text-sm">
           <thead><tr className="border-b border-cocoa-line text-left text-cocoa-text"><th className="py-2">Label</th><th>Href</th><th>Order</th><th /></tr></thead>
@@ -135,21 +136,21 @@ export default function AdminFooterPage() {
             {social.map((s) => (
               <tr key={s.label} className="border-b border-cocoa-line">
                 <td className="py-2 font-semibold">{s.label}</td>
-                <td><input className="coco-input w-64" defaultValue={s.href} onBlur={(e) => updateSocial(s.label, { href: e.target.value, sortIndex: s.sortIndex })} /></td>
-                <td><input className="coco-input w-16" defaultValue={s.sortIndex} onBlur={(e) => updateSocial(s.label, { href: s.href, sortIndex: Number(e.target.value) })} type="number" /></td>
+                <td><AdminInput className="w-64" defaultValue={s.href} onBlur={(e) => updateSocial(s.label, { href: e.target.value, sortIndex: s.sortIndex })} /></td>
+                <td><AdminInput className="w-16" defaultValue={s.sortIndex} onBlur={(e) => updateSocial(s.label, { href: s.href, sortIndex: Number(e.target.value) })} type="number" /></td>
                 <td className="text-right"><button className="text-cocoa-coral underline" onClick={() => deleteSocial(s.label)} type="button">Delete</button></td>
               </tr>
             ))}
           </tbody>
         </table>
         <div className="grid grid-cols-4 gap-2">
-          <input className="coco-input" placeholder="Label (e.g. Instagram)" value={newSocial.label} onChange={(e) => setNewSocial({ ...newSocial, label: e.target.value })} />
-          <input className="coco-input col-span-2" placeholder="https://…" value={newSocial.href} onChange={(e) => setNewSocial({ ...newSocial, href: e.target.value })} />
-          <button className="coco-button-secondary" onClick={addSocial} type="button">+ Add</button>
+          <AdminInput placeholder="Label (e.g. Instagram)" value={newSocial.label} onChange={(e) => setNewSocial({ ...newSocial, label: e.target.value })} />
+          <AdminInput className="col-span-2" placeholder="https://…" value={newSocial.href} onChange={(e) => setNewSocial({ ...newSocial, href: e.target.value })} />
+          <AdminButton onClick={addSocial} type="button" variant="ghost">+ Add</AdminButton>
         </div>
-      </section>
+      </AdminPanel>
 
-      <section className="coco-panel space-y-3 p-6">
+      <AdminPanel className="space-y-3">
         <h2 className="text-lg font-bold">Search trending terms</h2>
         <ul className="space-y-1 text-sm">
           {trending.map((t) => (
@@ -160,10 +161,10 @@ export default function AdminFooterPage() {
           ))}
         </ul>
         <div className="flex gap-2">
-          <input className="coco-input flex-1" placeholder="New term" value={newTerm.term} onChange={(e) => setNewTerm({ ...newTerm, term: e.target.value })} />
-          <button className="coco-button-secondary" disabled={!newTerm.term} onClick={addTerm} type="button">+ Add</button>
+          <AdminInput className="flex-1" placeholder="New term" value={newTerm.term} onChange={(e) => setNewTerm({ ...newTerm, term: e.target.value })} />
+          <AdminButton disabled={!newTerm.term} onClick={addTerm} type="button" variant="ghost">+ Add</AdminButton>
         </div>
-      </section>
+      </AdminPanel>
     </div>
   );
 }
