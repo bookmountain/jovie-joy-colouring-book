@@ -46,7 +46,7 @@ export function HomeProductRowBlock({ data, onChange }: ContentBlockEditorProps)
           />
         </AdminField>
         <AdminField>
-          <AdminLabel htmlFor="hpr-href">"View all" link href</AdminLabel>
+          <AdminLabel htmlFor="hpr-href">&ldquo;View all&rdquo; link href</AdminLabel>
           <AdminInput
             id="hpr-href"
             onChange={(e) => onChange({ ...d, href: e.target.value })}
