@@ -30,7 +30,7 @@ const NAV: Array<{
     { href: "/admin/blog", label: "Blog", icon: "📝", soon: true, badge: "soon" },
     { href: "/admin/comics", label: "Comics", icon: "🎨", soon: true, badge: "soon" },
     { href: "/admin/gallery", label: "Gallery", icon: "🖼️", soon: true, badge: "soon" },
-    { href: "/admin/faq", label: "FAQ", icon: "❓", soon: true, badge: "soon" },
+    { href: "/admin/faq", label: "FAQ", icon: "❓" },
     { href: "/admin/featured-on", label: "Featured On", icon: "⭐" },
   ]},
 ];

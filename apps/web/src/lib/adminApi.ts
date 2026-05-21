@@ -225,6 +225,18 @@ export const adminUpdateSocialLink = (label: string, body: AdminSocialLinkUpdate
 export const adminDeleteSocialLink = (label: string) =>
   adminFetch<void>(`/api/admin/social-links/${encodeURIComponent(label)}`, { method: "DELETE" });
 
+// FAQs
+export type AdminFaq = { slug: string; question: string; answer: string; group: string | null; sortIndex: number };
+export type AdminFaqUpdateBody = { question: string; answer: string; group: string | null; sortIndex: number };
+export type AdminFaqCreateBody = { slug: string; question: string; answer: string; group: string | null; sortIndex: number };
+export const adminListFaqs = () => adminFetch<AdminFaq[]>("/api/admin/faqs");
+export const adminCreateFaq = (body: AdminFaqCreateBody) =>
+  adminFetch<AdminFaq>("/api/admin/faqs", { method: "POST", body: JSON.stringify(body) });
+export const adminUpdateFaq = (slug: string, body: AdminFaqUpdateBody) =>
+  adminFetch<AdminFaq>(`/api/admin/faqs/${encodeURIComponent(slug)}`, { method: "PUT", body: JSON.stringify(body) });
+export const adminDeleteFaq = (slug: string) =>
+  adminFetch<void>(`/api/admin/faqs/${encodeURIComponent(slug)}`, { method: "DELETE" });
+
 // Featured On
 export type AdminFeaturedOn = { slug: string; label: string; href: string; image: string; alt: string; sortIndex: number };
 export type AdminFeaturedOnUpdateBody = { label: string; href: string; image: string; alt: string; sortIndex: number };

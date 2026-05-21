@@ -11,3 +11,6 @@ public record FaqDto(string Slug, string Question, string Answer, List<FaqLinkDt
         f.Links?.Select(l => new FaqLinkDto(l.Label, l.Href)).ToList(),
         f.Group, f.SortIndex);
 }
+
+public record CreateFaqRequest(string Slug, string Question, string Answer, string? Group, int SortIndex);
+public record UpdateFaqRequest(string Question, string Answer, string? Group, int SortIndex);

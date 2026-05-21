@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { getFooterArtwork } from "@/data/content";
+import { resolveAssetUrl } from "@/lib/api";
 
 export async function HomeFooterArt() {
   const footerArtwork = await getFooterArtwork();
@@ -17,7 +18,7 @@ export async function HomeFooterArt() {
           height={365}
           priority={false}
           sizes="100vw"
-          src={footerArtwork.desktop}
+          src={resolveAssetUrl(footerArtwork.desktop)}
           width={2089}
         />
       </div>
@@ -27,7 +28,7 @@ export async function HomeFooterArt() {
           className="block h-auto w-full"
           height={181}
           sizes="78vw"
-          src={footerArtwork.mobile}
+          src={resolveAssetUrl(footerArtwork.mobile)}
           width={316}
         />
       </div>

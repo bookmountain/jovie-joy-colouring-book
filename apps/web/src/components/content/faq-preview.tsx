@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getFaqArtwork } from "@/data/content";
 import { getFaqs } from "@/data/faqs";
+import { resolveAssetUrl } from "@/lib/api";
 
 export async function FaqPreview() {
   const [faqArtwork, faqs] = await Promise.all([getFaqArtwork(), getFaqs()]);
@@ -17,7 +18,7 @@ export async function FaqPreview() {
                 className="h-full w-full object-contain"
                 fill
                 sizes="(min-width: 1200px) 1200px, 100vw"
-                src={faqArtwork.desktop}
+                src={resolveAssetUrl(faqArtwork.desktop)}
               />
             </div>
             <div className="relative aspect-[1518/476] w-full overflow-hidden md:hidden">
@@ -26,7 +27,7 @@ export async function FaqPreview() {
                 className="h-full w-full object-contain"
                 fill
                 sizes="100vw"
-                src={faqArtwork.mobile}
+                src={resolveAssetUrl(faqArtwork.mobile)}
               />
             </div>
           </>
