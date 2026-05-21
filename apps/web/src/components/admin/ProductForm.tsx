@@ -20,6 +20,8 @@ import {
   AdminFormatPicker,
   type ProductFormat,
 } from "@/components/admin/product/AdminFormatPicker";
+import { AdminGalleryUploader } from "@/components/admin/product/AdminGalleryUploader";
+import { adminUploadGeneral, adminUploadProductImage } from "@/lib/adminApi";
 
 export type ProductFormProps = {
   initial?: Product;
@@ -81,6 +83,10 @@ export function ProductForm({ initial, onSubmit, submitLabel, onDiscard }: Produ
   const [collectionSlugs, setCollectionSlugs] = useState<string[]>(initial?.collections ?? []);
   const [publishedAt, setPublishedAt] = useState(initial?.publishedAt?.slice(0, 10) ?? "");
 
+  const [images, setImages] = useState<string[]>(initial?.images ?? []);
+  const [inspirationImages, setInspirationImages] = useState<string[]>(initial?.inspirationImages ?? []);
+  const [reviewImages, setReviewImages] = useState<string[]>(initial?.reviewImages ?? []);
+
   const [allCollections, setAllCollections] = useState<{ slug: string; title: string }[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -88,6 +94,10 @@ export function ProductForm({ initial, onSubmit, submitLabel, onDiscard }: Produ
   useEffect(() => {
     adminListCollections().then((cs) => setAllCollections(cs.map((c) => ({ slug: c.slug, title: c.title })))).catch(() => {});
   }, []);
+
+  const uploadImage = initial
+    ? (file: File) => adminUploadProductImage(initial.slug, file)
+    : (file: File) => adminUploadGeneral(file, "products");
 
   const status = deriveStatus(available, publishedAt || null);
 
@@ -115,10 +125,10 @@ export function ProductForm({ initial, onSubmit, submitLabel, onDiscard }: Produ
         compareAtPriceCents: compareDollars ? dollarsToCents(compareDollars) : null,
         available,
         productType: productFormat,
-        images: initial?.images ?? [],
+        images,
         sourceLinks: initial?.sourceLinks ?? null,
-        reviewImages: initial?.reviewImages ?? null,
-        inspirationImages: initial?.inspirationImages ?? null,
+        reviewImages: reviewImages.length > 0 ? reviewImages : null,
+        inspirationImages: inspirationImages.length > 0 ? inspirationImages : null,
         tags,
         collectionSlugs,
         publishedAt: publishedAt || null,
@@ -178,7 +188,19 @@ export function ProductForm({ initial, onSubmit, submitLabel, onDiscard }: Produ
             </AdminField>
           </AdminPanel>
 
-          {/* Media + source links + digital fulfillment + danger zone — added in Tasks B6, B7 */}
+          <AdminPanel sectionTag="Media — Product gallery" hint="Carousel customers see on the product page. Drag to reorder. The primary (★) is used everywhere there's a thumbnail.">
+            <AdminGalleryUploader value={images} onChange={setImages} upload={uploadImage} emptyHint="No images yet — add at least one." />
+          </AdminPanel>
+
+          <AdminPanel sectionTag="Media — Inspiration gallery" hint="Styled lifestyle photography shown in the 'story' section of the PDP. Optional.">
+            <AdminGalleryUploader value={inspirationImages} onChange={setInspirationImages} upload={uploadImage} emptyHint="Optional — adds a styled gallery on the product page." />
+          </AdminPanel>
+
+          <AdminPanel sectionTag="Media — Customer photos" hint="Social-proof shots from customers / press. Optional.">
+            <AdminGalleryUploader value={reviewImages} onChange={setReviewImages} upload={uploadImage} emptyHint="Optional — appears in the 'Real cozy moments' section." />
+          </AdminPanel>
+
+          {/* Source links + digital fulfillment + danger zone — added in Task B7 */}
         </div>
 
         {/* RIGHT COLUMN — Sidebar */}
