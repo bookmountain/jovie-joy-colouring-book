@@ -11,26 +11,15 @@ export async function FaqPreview() {
     <section className="bg-white py-10 lg:py-12">
       <div className="mx-auto max-w-[1200px] px-4 lg:px-8">
         {faqArtwork ? (
-          <>
-            <div className="relative hidden aspect-[1195/300] w-full overflow-hidden md:block">
-              <Image
-                alt="Zoe&Book FAQ illustration"
-                className="h-full w-full object-contain"
-                fill
-                sizes="(min-width: 1200px) 1200px, 100vw"
-                src={resolveAssetUrl(faqArtwork.desktop)}
-              />
-            </div>
-            <div className="relative aspect-[1518/476] w-full overflow-hidden md:hidden">
-              <Image
-                alt="Zoe&Book mobile FAQ illustration"
-                className="h-full w-full object-contain"
-                fill
-                sizes="100vw"
-                src={resolveAssetUrl(faqArtwork.mobile)}
-              />
-            </div>
-          </>
+          <div className="relative aspect-[1518/476] w-full overflow-hidden md:aspect-[1195/300]">
+            <Image
+              alt="Zoe&Book FAQ illustration"
+              className="h-full w-full object-contain"
+              fill
+              sizes="(min-width: 1200px) 1200px, 100vw"
+              src={resolveAssetUrl(faqArtwork)}
+            />
+          </div>
         ) : null}
 
         <div className="mx-auto mt-8 max-w-[1150px] divide-y divide-cocoa-line bg-white px-1">

@@ -22,18 +22,19 @@ export async function getHomeVideo(): Promise<{ src: string; youtubeHref: string
   return bundle.homeVideo[0]?.data ?? null;
 }
 
-export async function getFaqArtwork(): Promise<{ desktop: string; mobile: string } | null> {
-  const bundle = await apiGetContent();
-  return bundle.heroArtwork.find((b) => b.key === "hero.artwork.faq")?.data as
-    | { desktop: string; mobile: string }
-    | undefined ?? null;
+function pickHeroArtwork(data: unknown): string | null {
+  const d = (data ?? {}) as { image?: string; desktop?: string; mobile?: string };
+  return d.image || d.desktop || d.mobile || null;
 }
 
-export async function getFooterArtwork(): Promise<{ desktop: string; mobile: string } | null> {
+export async function getFaqArtwork(): Promise<string | null> {
   const bundle = await apiGetContent();
-  return bundle.heroArtwork.find((b) => b.key === "hero.artwork.footer")?.data as
-    | { desktop: string; mobile: string }
-    | undefined ?? null;
+  return pickHeroArtwork(bundle.heroArtwork.find((b) => b.key === "hero.artwork.faq")?.data);
+}
+
+export async function getFooterArtwork(): Promise<string | null> {
+  const bundle = await apiGetContent();
+  return pickHeroArtwork(bundle.heroArtwork.find((b) => b.key === "hero.artwork.footer")?.data);
 }
 
 export async function getFeaturedOnLinks(): Promise<FeaturedOnLink[]> {

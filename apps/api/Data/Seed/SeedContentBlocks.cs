@@ -91,17 +91,14 @@ public static class SeedContentBlocks
             {
                 Key = "hero.artwork.faq", Type = ContentBlockType.HeroArtwork, SortIndex = 0, UpdatedAt = now,
                 Data = JsonDocument.Parse("""
-                {
-                  "desktop": "https://cocowyo.com/cdn/shop/files/FAQs-desktop-2.png?v=1776916849&width=1500",
-                  "mobile":  "https://cocowyo.com/cdn/shop/files/FAQs-mobile.png?v=1776916631&width=750"
-                }
+                { "image": "https://cocowyo.com/cdn/shop/files/FAQs-desktop-2.png?v=1776916849&width=1500" }
                 """),
             },
             new()
             {
                 Key = "hero.artwork.footer", Type = ContentBlockType.HeroArtwork, SortIndex = 1, UpdatedAt = now,
                 Data = JsonDocument.Parse("""
-                { "desktop": "https://cocowyo.com/cdn/shop/files/Destop-footer.png?v=1777450734&width=3840", "mobile": "/placeholders/footer-characters-mobile.png" }
+                { "image": "https://cocowyo.com/cdn/shop/files/Destop-footer.png?v=1777450734&width=3840" }
                 """),
             },
             new()
@@ -187,6 +184,7 @@ public static class SeedContentBlocks
         await HealLegacyHeroImageAsync(db);
         await BackfillEmptyHeroSlidesAsync(db, blocks);
         await MigrateLegacyHeroSlideShapeAsync(db);
+        await MigrateLegacyHeroArtworkShapeAsync(db);
 
         await db.SaveChangesAsync();
     }
@@ -264,5 +262,44 @@ public static class SeedContentBlocks
         if (!mutated) return;
         existing.Data = JsonDocument.Parse(node.ToJsonString());
         existing.UpdatedAt = DateTime.UtcNow;
+    }
+
+    // HeroArtwork blocks (hero.artwork.faq, hero.artwork.footer, etc.) used to
+    // carry { desktop, mobile }. Storefront now renders a single image with
+    // responsive CSS, so migrate any existing rows in place: copy desktop (or
+    // mobile, as a fallback) into image and drop the old keys. Idempotent.
+    private static async Task MigrateLegacyHeroArtworkShapeAsync(AppDbContext db)
+    {
+        var rows = await db.ContentBlocks
+            .Where(b => b.Type == ContentBlockType.HeroArtwork)
+            .ToListAsync();
+
+        foreach (var row in rows)
+        {
+            if (JsonNode.Parse(row.Data.RootElement.GetRawText()) is not JsonObject node) continue;
+
+            var currentImage = node["image"]?.GetValue<string>();
+            if (!string.IsNullOrEmpty(currentImage))
+            {
+                // Already on the new shape — just make sure legacy keys are gone.
+                if (node.ContainsKey("desktop") || node.ContainsKey("mobile"))
+                {
+                    node.Remove("desktop");
+                    node.Remove("mobile");
+                    row.Data = JsonDocument.Parse(node.ToJsonString());
+                    row.UpdatedAt = DateTime.UtcNow;
+                }
+                continue;
+            }
+
+            var fallback = node["desktop"]?.GetValue<string>() ?? node["mobile"]?.GetValue<string>();
+            if (string.IsNullOrEmpty(fallback)) continue;
+
+            node["image"] = fallback;
+            node.Remove("desktop");
+            node.Remove("mobile");
+            row.Data = JsonDocument.Parse(node.ToJsonString());
+            row.UpdatedAt = DateTime.UtcNow;
+        }
     }
 }

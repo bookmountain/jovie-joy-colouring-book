@@ -48,7 +48,12 @@ export function CollectionForm({ initial, onSubmit, submitLabel }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    adminListProducts().then((r) => setAllProducts(r.items as unknown as Product[])).catch((e: Error) => setError(e.message));
+    // Fetch the full catalog (not the default 25/page) so every product is
+    // pickable from the "Add product" picker, including stores with hundreds
+    // of items where the cap would otherwise hide most of them.
+    adminListProducts({ pageSize: 1000 })
+      .then((r) => setAllProducts(r.items as unknown as Product[]))
+      .catch((e: Error) => setError(e.message));
   }, []);
 
   const uploadHero = initial
