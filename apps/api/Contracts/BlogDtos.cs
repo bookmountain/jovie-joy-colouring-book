@@ -13,3 +13,9 @@ public record ArticleDto(string Slug, string BlogSlug, string Title, string Exce
 }
 
 public record BlogCategoryWithArticlesDto(BlogCategoryDto Category, List<ArticleDto> Articles);
+
+public record CreateBlogCategoryRequest(string Slug, string Title, string Excerpt, string Image, int SortIndex);
+public record UpdateBlogCategoryRequest(string Title, string Excerpt, string Image, int SortIndex);
+
+public record CreateArticleRequest(string Slug, string Title, string Excerpt, string Image, List<string> Body, int SortIndex);
+public record UpdateArticleRequest(string Title, string Excerpt, string Image, List<string> Body, int SortIndex);

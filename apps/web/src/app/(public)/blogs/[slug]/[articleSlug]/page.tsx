@@ -2,6 +2,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { getArticle, getBlogCategory } from "@/data/content";
+import { resolveAssetUrl } from "@/lib/api";
 
 type PageProps = {
   params: Promise<{ slug: string; articleSlug: string }>;
@@ -50,7 +51,7 @@ export default async function ArticlePage({ params }: PageProps) {
             fill
             priority
             sizes="(min-width: 1024px) 860px, 100vw"
-            src={article.image}
+            src={resolveAssetUrl(article.image)}
           />
         </div>
         <div className="mt-8 space-y-5 text-base leading-8 text-cocoa-text">

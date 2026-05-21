@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getBlogCategories } from "@/data/content";
+import { resolveAssetUrl } from "@/lib/api";
 
 export async function BlogCategoryCards() {
   const blogCategories = await getBlogCategories();
@@ -22,7 +23,7 @@ export async function BlogCategoryCards() {
                   className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
                   fill
                   sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw"
-                  src={category.image}
+                  src={resolveAssetUrl(category.image)}
                 />
               </div>
               <h3 className="mt-4 text-xl font-extrabold">{category.title}</h3>

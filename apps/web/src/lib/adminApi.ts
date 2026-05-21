@@ -225,6 +225,39 @@ export const adminUpdateSocialLink = (label: string, body: AdminSocialLinkUpdate
 export const adminDeleteSocialLink = (label: string) =>
   adminFetch<void>(`/api/admin/social-links/${encodeURIComponent(label)}`, { method: "DELETE" });
 
+// Blogs
+export type AdminBlogCategory = { slug: string; title: string; excerpt: string; image: string; sortIndex: number };
+export type AdminBlogCategoryWriteBody = { title: string; excerpt: string; image: string; sortIndex: number };
+export type AdminBlogCategoryCreateBody = AdminBlogCategoryWriteBody & { slug: string };
+export type AdminArticle = { slug: string; blogSlug: string; title: string; excerpt: string; image: string; body: string[]; sortIndex?: number };
+export type AdminArticleWriteBody = { title: string; excerpt: string; image: string; body: string[]; sortIndex: number };
+export type AdminArticleCreateBody = AdminArticleWriteBody & { slug: string };
+
+export const adminListBlogCategories = () => adminFetch<AdminBlogCategory[]>("/api/admin/blogs");
+export const adminCreateBlogCategory = (body: AdminBlogCategoryCreateBody) =>
+  adminFetch<AdminBlogCategory>("/api/admin/blogs", { method: "POST", body: JSON.stringify(body) });
+export const adminUpdateBlogCategory = (slug: string, body: AdminBlogCategoryWriteBody) =>
+  adminFetch<AdminBlogCategory>(`/api/admin/blogs/${encodeURIComponent(slug)}`, { method: "PUT", body: JSON.stringify(body) });
+export const adminDeleteBlogCategory = (slug: string) =>
+  adminFetch<void>(`/api/admin/blogs/${encodeURIComponent(slug)}`, { method: "DELETE" });
+export const adminUploadBlogCategoryImage = (slug: string, file: File) => {
+  const fd = new FormData(); fd.append("file", file);
+  return adminFetch<{ url: string }>(`/api/admin/blogs/${encodeURIComponent(slug)}/image`, { method: "POST", body: fd });
+};
+
+export const adminListArticles = (categorySlug: string) =>
+  adminFetch<AdminArticle[]>(`/api/admin/blogs/${encodeURIComponent(categorySlug)}/articles`);
+export const adminCreateArticle = (categorySlug: string, body: AdminArticleCreateBody) =>
+  adminFetch<AdminArticle>(`/api/admin/blogs/${encodeURIComponent(categorySlug)}/articles`, { method: "POST", body: JSON.stringify(body) });
+export const adminUpdateArticle = (categorySlug: string, articleSlug: string, body: AdminArticleWriteBody) =>
+  adminFetch<AdminArticle>(`/api/admin/blogs/${encodeURIComponent(categorySlug)}/articles/${encodeURIComponent(articleSlug)}`, { method: "PUT", body: JSON.stringify(body) });
+export const adminDeleteArticle = (categorySlug: string, articleSlug: string) =>
+  adminFetch<void>(`/api/admin/blogs/${encodeURIComponent(categorySlug)}/articles/${encodeURIComponent(articleSlug)}`, { method: "DELETE" });
+export const adminUploadArticleImage = (categorySlug: string, articleSlug: string, file: File) => {
+  const fd = new FormData(); fd.append("file", file);
+  return adminFetch<{ url: string }>(`/api/admin/blogs/${encodeURIComponent(categorySlug)}/articles/${encodeURIComponent(articleSlug)}/image`, { method: "POST", body: fd });
+};
+
 // Gallery
 export type AdminGalleryImage = { id: string; src: string; alt: string; sortIndex: number };
 export type AdminGalleryWriteBody = { src: string; alt: string; sortIndex: number };
