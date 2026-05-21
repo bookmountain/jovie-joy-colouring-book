@@ -210,3 +210,11 @@ body.admin-route [tabindex]:focus-visible {
 .admin-gallery-add { aspect-ratio: 1; border: 2px dashed #c9a868; border-radius: 10px; background: transparent; color: var(--admin-ink-2); font-weight: 700; cursor: pointer; font-family: inherit; }
 .admin-gallery-add:hover { background: var(--admin-card-3); }
 .admin-gallery-add[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+.admin-fmt { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.admin-fmt-tile { padding: 14px 8px; border: 1.5px solid var(--admin-line); border-radius: 12px; text-align: center; cursor: pointer; font-size: 12px; font-weight: 700; background: #fffdf6; color: var(--admin-ink-2); transition: transform 0.12s, border-color 0.12s; font-family: inherit; }
+.admin-fmt-tile:hover { transform: translateY(-1px); }
+.admin-fmt-tile .ic { display: block; font-size: 24px; margin-bottom: 4px; line-height: 1; }
+.admin-fmt-tile[data-state="on"] { background: var(--admin-coral); color: #fff; border-color: var(--admin-coral); box-shadow: var(--admin-shadow-primary); }
+.admin-fmt-tile .sub { display: block; font-size: 10px; font-weight: 600; color: var(--admin-muted); margin-top: 2px; letter-spacing: 0.02em; }
+.admin-fmt-tile[data-state="on"] .sub { color: #ffd9cb; }
