@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using JovieJoy.Api.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,10 +7,10 @@ namespace JovieJoy.Api.Data.Seed;
 
 public static class SeedContentBlocks
 {
+    private const string LegacyHeroImagePlaceholder = "/placeholders/footer-characters-desktop.png";
+
     public static async Task RunAsync(AppDbContext db)
     {
-        if (await db.ContentBlocks.AnyAsync()) return;
-
         var now = DateTime.UtcNow;
 
         var blocks = new List<ContentBlock>
@@ -24,7 +25,7 @@ public static class SeedContentBlocks
                   "subtext": "Hand-drawn pages designed for slow, warm moments.",
                   "ctaLabel": "Shop the cozy collection",
                   "ctaHref": "/collections/cute-comfy",
-                  "image": "/placeholders/footer-characters-desktop.png"
+                  "image": ""
                 }
                 """),
             },
@@ -112,7 +113,35 @@ public static class SeedContentBlocks
             },
         };
 
-        db.ContentBlocks.AddRange(blocks);
+        var existingKeys = await db.ContentBlocks.Select(b => b.Key).ToListAsync();
+        var existingKeySet = new HashSet<string>(existingKeys, StringComparer.Ordinal);
+
+        var missing = blocks.Where(b => !existingKeySet.Contains(b.Key)).ToList();
+        if (missing.Count > 0)
+        {
+            db.ContentBlocks.AddRange(missing);
+        }
+
+        await HealLegacyHeroImageAsync(db);
+
         await db.SaveChangesAsync();
+    }
+
+    private static async Task HealLegacyHeroImageAsync(AppDbContext db)
+    {
+        var hero = await db.ContentBlocks.FirstOrDefaultAsync(b => b.Key == "home.hero");
+        if (hero is null) return;
+
+        if (!hero.Data.RootElement.TryGetProperty("image", out var imageProp)) return;
+        if (imageProp.ValueKind != JsonValueKind.String) return;
+        if (imageProp.GetString() != LegacyHeroImagePlaceholder) return;
+
+        var json = hero.Data.RootElement.GetRawText();
+        var node = JsonNode.Parse(json) as JsonObject;
+        if (node is null) return;
+        node["image"] = "";
+
+        hero.Data = JsonDocument.Parse(node.ToJsonString());
+        hero.UpdatedAt = DateTime.UtcNow;
     }
 }

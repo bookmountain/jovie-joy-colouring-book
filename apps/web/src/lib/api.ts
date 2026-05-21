@@ -5,6 +5,12 @@
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
+export function resolveAssetUrl(url: string | null | undefined): string {
+  if (!url) return "";
+  if (url.startsWith("/uploads")) return `${API_URL}${url}`;
+  return url;
+}
+
 export type ProductOption = { name: string; values: string[] };
 export type SourceLink = { label: string; href: string; image?: string; alt?: string };
 

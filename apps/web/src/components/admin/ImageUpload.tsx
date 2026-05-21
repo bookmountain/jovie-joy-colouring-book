@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { resolveAssetUrl } from "@/lib/api";
 import { AdminButton } from "@/components/admin/ui";
 
 export type ImageUploadProps = {
@@ -38,7 +39,7 @@ export function ImageUpload({ value, onChange, upload, label, accept = "image/*"
           <img
             alt="Uploaded asset"
             className="h-24 w-24 rounded-coco-sm border border-cocoa-line object-cover"
-            src={value}
+            src={resolveAssetUrl(value)}
           />
         ) : (
           <div className="flex h-24 w-24 items-center justify-center rounded-coco-sm border border-dashed border-cocoa-line text-xs text-cocoa-text">

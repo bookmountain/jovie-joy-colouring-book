@@ -3,13 +3,7 @@
 import { useRef } from "react";
 import { AdminInput } from "@/components/admin/ui/AdminInput";
 import { AdminButton } from "@/components/admin/ui/AdminButton";
-import { API_URL } from "@/lib/api";
-
-function resolveImageUrl(url: string): string {
-  if (!url) return url;
-  if (url.startsWith("/uploads")) return `${API_URL}${url}`;
-  return url;
-}
+import { resolveAssetUrl } from "@/lib/api";
 
 export type SourceLinkValue = {
   label: string;
@@ -41,7 +35,7 @@ export function AdminSourceLinksEditor({ value, onChange, upload }: AdminSourceL
   return (
     <div>
       {value.map((row, idx) => (
-        <SourceRow key={idx} idx={idx} row={row} patch={patch} remove={remove} upload={upload} resolveImageUrl={resolveImageUrl} />
+        <SourceRow key={idx} idx={idx} row={row} patch={patch} remove={remove} upload={upload} />
       ))}
       <div style={{ paddingTop: 14 }}>
         <AdminButton variant="ghost" size="sm" onClick={add}>+ Add source link</AdminButton>
@@ -51,14 +45,13 @@ export function AdminSourceLinksEditor({ value, onChange, upload }: AdminSourceL
 }
 
 function SourceRow({
-  idx, row, patch, remove, upload, resolveImageUrl,
+  idx, row, patch, remove, upload,
 }: {
   idx: number;
   row: SourceLinkValue;
   patch: (i: number, p: Partial<SourceLinkValue>) => void;
   remove: (i: number) => void;
   upload: (f: File) => Promise<{ url: string }>;
-  resolveImageUrl: (u: string) => string;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -81,7 +74,7 @@ function SourceRow({
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileRef.current?.click(); }}
       >
         {row.image
-          ? <img alt={row.alt ?? ""} src={resolveImageUrl(row.image)} />
+          ? <img alt={row.alt ?? ""} src={resolveAssetUrl(row.image)} />
           : <span>+ image</span>}
       </div>
       <AdminInput aria-label="label" placeholder="Penguin Random House" value={row.label} onChange={(e) => patch(idx, { label: e.target.value })} />

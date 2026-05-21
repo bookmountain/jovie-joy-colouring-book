@@ -35,7 +35,10 @@
       "Skill(superpowers:using-git-worktrees)",
       "Bash(dotnet run *)",
       "Bash(echo \"PID: $!\")",
-      "Bash(curl -s http://localhost:8080/health)"
+      "Bash(curl -s http://localhost:8080/health)",
+      "Bash(git commit *)",
+      "Bash(git worktree *)",
+      "Bash(ln -sf /home/book/code/jovie-joy-colouring-book/apps/web/node_modules .claude/worktrees/overhaul-zoe-book-phase-4a/apps/web/node_modules)"
     ]
   }
 }
