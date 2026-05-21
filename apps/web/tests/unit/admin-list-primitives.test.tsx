@@ -17,6 +17,12 @@ describe("AdminToolbar.Search", () => {
     render(<AdminToolbar searchValue="" onSearchChange={() => {}}><span>extra</span></AdminToolbar>);
     expect(screen.getByText("extra")).toBeTruthy();
   });
+  test("input gets aria-label from searchAriaLabel prop, else falls back to placeholder", () => {
+    const { rerender } = render(<AdminToolbar searchValue="" onSearchChange={() => {}} placeholder="P" />);
+    expect((screen.getByPlaceholderText("P") as HTMLInputElement).getAttribute("aria-label")).toBe("P");
+    rerender(<AdminToolbar searchValue="" onSearchChange={() => {}} placeholder="P" searchAriaLabel="Search products" />);
+    expect((screen.getByPlaceholderText("P") as HTMLInputElement).getAttribute("aria-label")).toBe("Search products");
+  });
 });
 
 describe("AdminFilterChip", () => {
@@ -128,6 +134,42 @@ describe("AdminTable", () => {
       />,
     );
     expect(container.querySelectorAll(".skeleton-row")).toHaveLength(5);
+  });
+  test("rows with onRowClick are keyboard-accessible (Enter/Space fire onRowClick)", () => {
+    const onRowClick = vi.fn();
+    const { container } = render(
+      <AdminTable
+        columns={[{ key: "title", label: "Title" }]}
+        rows={[{ id: "a", title: "Alpha" }]}
+        getRowKey={(r) => r.id}
+        onRowClick={onRowClick}
+      />,
+    );
+    // Get the data row (skip header)
+    const rows = container.querySelectorAll("tbody tr");
+    expect(rows.length).toBe(1);
+    const row = rows[0] as HTMLTableRowElement;
+    expect(row.getAttribute("role")).toBe("button");
+    expect(row.getAttribute("tabindex")).toBe("0");
+    fireEvent.keyDown(row, { key: "Enter" });
+    expect(onRowClick).toHaveBeenCalledTimes(1);
+    fireEvent.keyDown(row, { key: " " });
+    expect(onRowClick).toHaveBeenCalledTimes(2);
+  });
+  test("rows without onRowClick are not keyboard-activatable", () => {
+    const { container } = render(
+      <AdminTable
+        columns={[{ key: "title", label: "Title" }]}
+        rows={[{ id: "a", title: "Alpha" }]}
+        getRowKey={(r) => r.id}
+      />,
+    );
+    // Get the data row (skip header)
+    const rows = container.querySelectorAll("tbody tr");
+    expect(rows.length).toBe(1);
+    const row = rows[0] as HTMLTableRowElement;
+    expect(row.getAttribute("role")).toBeNull();
+    expect(row.getAttribute("tabindex")).toBeNull();
   });
 });
 
