@@ -75,7 +75,7 @@ export type SiteContentBundle = {
   featuredOn: ContentBlock[];
   homeVideo: ContentBlock<{ src: string; youtubeHref: string }>[];
   footerGroups: ContentBlock[];
-  announcement: ContentBlock<{ enabled: boolean; text: string; href: string }>[];
+  announcement: ContentBlock<{ enabled: boolean; text: string; href: string; backgroundImage?: string }>[];
   heroArtwork: ContentBlock<{ desktop: string; mobile: string }>[];
   navigation: NavLink[];
   footerLinks: FooterLinkGroup[];
