@@ -46,7 +46,10 @@ public class AdminProductsController(AppDbContext db, IUploadService uploads) : 
             Slug = req.Slug, Title = req.Title, Excerpt = req.Excerpt,
             Description = req.Description, PriceCents = req.PriceCents,
             CompareAtPriceCents = req.CompareAtPriceCents, Available = req.Available,
-            ProductType = pt, Images = req.Images, Options = req.Options,
+            ProductType = pt, Images = req.Images,
+            Options = (req.Options is { Count: > 0 })
+                ? req.Options
+                : new List<ProductOption> { new("Format", new List<string> { "Default Title" }) },
             SourceLinks = req.SourceLinks, ReviewImages = req.ReviewImages,
             InspirationImages = req.InspirationImages, Tags = req.Tags,
             PublishedAt = req.PublishedAt ?? DateTime.UtcNow,
@@ -77,7 +80,10 @@ public class AdminProductsController(AppDbContext db, IUploadService uploads) : 
         product.Available = req.Available;
         product.ProductType = pt;
         product.Images = req.Images;
-        product.Options = req.Options;
+        if (req.Options is { Count: > 0 })
+        {
+            product.Options = req.Options;
+        }
         product.SourceLinks = req.SourceLinks;
         product.ReviewImages = req.ReviewImages;
         product.InspirationImages = req.InspirationImages;
