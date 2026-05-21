@@ -196,3 +196,17 @@ body.admin-route [tabindex]:focus-visible {
 .admin-topbar a.view-site { font-size: 11px; font-weight: 800; color: var(--admin-ink-2); text-decoration: none; padding: 7px 12px; border-radius: 8px; border: 1.5px solid var(--admin-line); }
 
 .admin-body { padding: 22px; flex: 1; }
+
+.admin-gallery { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+@media (max-width: 700px) { .admin-gallery { grid-template-columns: repeat(3, 1fr); } }
+.admin-gallery-thumb { aspect-ratio: 1; background: #fef0d4; border: 1px solid var(--admin-line-soft); border-radius: 10px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; cursor: grab; }
+.admin-gallery-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.admin-gallery-thumb[data-primary="true"] { box-shadow: 0 0 0 2px var(--admin-coral); }
+.admin-gallery-thumb[data-primary="true"]::after { content: "★ primary"; position: absolute; bottom: 4px; left: 4px; background: var(--admin-coral); color: #fff; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 6px; letter-spacing: 0.03em; }
+.admin-gallery-thumb .controls { position: absolute; top: 4px; right: 4px; display: none; gap: 4px; }
+.admin-gallery-thumb:hover .controls { display: flex; }
+.admin-gallery-thumb .controls button { background: rgba(255,255,255,0.92); border: none; border-radius: 4px; font-size: 11px; padding: 2px 5px; cursor: pointer; font-family: inherit; line-height: 1; }
+.admin-gallery-thumb .controls button[data-tone="danger"] { color: #a3392a; }
+.admin-gallery-add { aspect-ratio: 1; border: 2px dashed #c9a868; border-radius: 10px; background: transparent; color: var(--admin-ink-2); font-weight: 700; cursor: pointer; font-family: inherit; }
+.admin-gallery-add:hover { background: var(--admin-card-3); }
+.admin-gallery-add[disabled] { opacity: 0.5; cursor: not-allowed; }
