@@ -48,7 +48,7 @@ export function CollectionForm({ initial, onSubmit, submitLabel }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    adminListProducts().then(setAllProducts).catch((e: Error) => setError(e.message));
+    adminListProducts().then((r) => setAllProducts(r.items as unknown as Product[])).catch((e: Error) => setError(e.message));
   }, []);
 
   const uploadHero = initial

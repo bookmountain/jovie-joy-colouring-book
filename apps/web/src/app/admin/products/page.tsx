@@ -16,7 +16,7 @@ export default function AdminProductsList() {
   const [showCreate, setShowCreate] = useState(false);
 
   function reload() {
-    adminListProducts().then(setProducts).catch((e: Error) => setError(e.message));
+    adminListProducts().then((r) => setProducts(r.items as unknown as Product[])).catch((e: Error) => setError(e.message));
   }
   useEffect(reload, []);
 
