@@ -103,7 +103,7 @@ export type AdminProductWriteBody = {
   slug?: string; title: string; excerpt: string; description: string[];
   priceCents: number; compareAtPriceCents: number | null; available: boolean;
   productType: string; images: string[];
-  options: { name: string; values: string[] }[];
+  options?: { name: string; values: string[] }[]; // optional now — BE preserves/defaults
   sourceLinks: { label: string; href: string; image?: string; alt?: string }[] | null;
   reviewImages: string[] | null; inspirationImages: string[] | null;
   tags: string[]; collectionSlugs: string[];
