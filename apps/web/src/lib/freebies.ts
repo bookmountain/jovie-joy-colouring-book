@@ -103,3 +103,11 @@ export async function adminFreebieRequests(slug: string): Promise<FreebieRequest
 export async function adminResendFreebieRequest(slug: string, id: string): Promise<void> {
   await adminFetch(`/api/admin/freebies/${slug}/requests/${id}/resend`, { method: "POST" });
 }
+export async function adminUploadFreebieCover(slug: string, file: File): Promise<FreebieAdmin> {
+  const fd = new FormData(); fd.append("file", file);
+  return adminFetch<FreebieAdmin>(`/api/admin/freebies/${slug}/cover`, { method: "POST", body: fd });
+}
+export async function adminUploadFreebieFile(slug: string, file: File): Promise<FreebieAdmin> {
+  const fd = new FormData(); fd.append("file", file);
+  return adminFetch<FreebieAdmin>(`/api/admin/freebies/${slug}/file`, { method: "POST", body: fd });
+}
