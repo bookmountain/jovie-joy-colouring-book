@@ -36,6 +36,6 @@ public record FreebieRequestDto(
     DateTime ExpiresAt, DateTime CreatedAt);
 
 public record CreateFreebieRequest(string Slug, string Title, string Excerpt, List<string>? Description, bool? Published);
-public record UpdateFreebieRequest(string Title, string Excerpt, List<string> Description, bool Published);
+public record UpdateFreebieRequest(string? Title, string? Excerpt, List<string>? Description, bool Published);
 public record FreebieRequestCreate(string Email, bool OptIn);
 public record FreebieReorderItem(string Slug, int SortIndex);

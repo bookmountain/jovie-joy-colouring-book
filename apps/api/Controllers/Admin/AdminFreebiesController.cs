@@ -66,9 +66,9 @@ public class AdminFreebiesController(AppDbContext db) : ControllerBase
     {
         var row = await db.Freebies.FirstOrDefaultAsync(f => f.Slug == slug, ct);
         if (row is null) return NotFound();
-        row.Title = req.Title;
-        row.Excerpt = req.Excerpt;
-        row.Description = req.Description;
+        row.Title = string.IsNullOrWhiteSpace(req.Title) ? row.Title : req.Title;
+        row.Excerpt = req.Excerpt ?? "";
+        row.Description = req.Description ?? new List<string>();
         row.Published = req.Published;
         row.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);

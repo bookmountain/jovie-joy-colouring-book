@@ -59,6 +59,24 @@ public class AdminFreebiesControllerTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task Update_with_missing_optional_fields_defaults_to_empty()
+    {
+        await _factory.SeedFreebie("upd-defaults", published: true);
+        var admin = await _factory.CreateAdminClientAsync();
+        // Body omits excerpt and description entirely.
+        var resp = await admin.PutAsJsonAsync("/api/admin/freebies/upd-defaults",
+            new { title = "Kept", published = true });
+        resp.IsSuccessStatusCode.Should().BeTrue();
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var row = await db.Freebies.FirstAsync(f => f.Slug == "upd-defaults");
+        row.Title.Should().Be("Kept");
+        row.Excerpt.Should().Be("");
+        row.Description.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task Delete_removes_freebie_and_requests()
     {
         var fid = await _factory.SeedFreebie("del-1");
