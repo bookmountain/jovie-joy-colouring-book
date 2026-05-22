@@ -147,4 +147,26 @@ public class ApiFactory : WebApplicationFactory<Program>
         await db.SaveChangesAsync();
         return slug;
     }
+
+    public async Task<Guid> SeedFreebie(string slug = "demo-freebie", bool published = true, string filePath = "/uploads/freebies/files/demo.pdf")
+    {
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var f = new Freebie
+        {
+            Slug = slug,
+            Title = $"Title {slug}",
+            Excerpt = "Free thing",
+            Description = new List<string> { "Paragraph one." },
+            CoverImage = "/uploads/freebies/covers/demo.png",
+            FilePath = filePath,
+            FileKind = "pdf",
+            FileSizeBytes = 1024,
+            SortIndex = 0,
+            Published = published,
+        };
+        db.Freebies.Add(f);
+        await db.SaveChangesAsync();
+        return f.Id;
+    }
 }
