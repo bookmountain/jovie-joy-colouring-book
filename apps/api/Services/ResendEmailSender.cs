@@ -26,7 +26,6 @@ public class ResendEmailSender(HttpClient http, IOptions<ResendOptions> opts, IL
             return;
         }
 
-        http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", opts.Value.ApiKey);
         var payload = new
         {
             from = $"{opts.Value.FromName} <{opts.Value.FromAddress}>",
@@ -35,7 +34,12 @@ public class ResendEmailSender(HttpClient http, IOptions<ResendOptions> opts, IL
             html,
             text,
         };
-        var resp = await http.PostAsJsonAsync("https://api.resend.com/emails", payload, ct);
+        using var req = new HttpRequestMessage(HttpMethod.Post, "https://api.resend.com/emails")
+        {
+            Content = JsonContent.Create(payload),
+        };
+        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", opts.Value.ApiKey);
+        var resp = await http.SendAsync(req, ct);
         if (!resp.IsSuccessStatusCode)
         {
             var body = await resp.Content.ReadAsStringAsync(ct);
