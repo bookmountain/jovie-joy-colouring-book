@@ -115,4 +115,34 @@ public class AdminFreebiesControllerTests : IClassFixture<ApiFactory>
         (await db.Freebies.FirstAsync(f => f.Slug == "ord-b")).SortIndex.Should().Be(0);
         (await db.Freebies.FirstAsync(f => f.Slug == "ord-a")).SortIndex.Should().Be(1);
     }
+
+    [Fact]
+    public async Task Resend_regenerates_token_and_sends_email()
+    {
+        var fid = await _factory.SeedFreebie("rs-1");
+        Guid rid;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var r = new Data.Entities.FreebieRequest
+            {
+                FreebieId = fid, Email = "rs@x.com", Token = "old-token",
+                ExpiresAt = DateTime.UtcNow.AddDays(-1),
+            };
+            db.FreebieRequests.Add(r);
+            await db.SaveChangesAsync();
+            rid = r.Id;
+        }
+
+        var admin = await _factory.CreateAdminClientAsync();
+        var resp = await admin.PostAsync($"/api/admin/freebies/rs-1/requests/{rid}/resend", content: null);
+        resp.IsSuccessStatusCode.Should().BeTrue();
+
+        using var s2 = _factory.Services.CreateScope();
+        var db2 = s2.ServiceProvider.GetRequiredService<AppDbContext>();
+        var row = await db2.FreebieRequests.FirstAsync(r => r.Id == rid);
+        row.Token.Should().NotBe("old-token");
+        row.ExpiresAt.Should().BeAfter(DateTime.UtcNow);
+        _factory.Emails.Sent.Should().Contain(x => x.To == "rs@x.com");
+    }
 }

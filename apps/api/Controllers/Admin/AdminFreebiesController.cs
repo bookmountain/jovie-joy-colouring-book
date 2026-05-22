@@ -1,16 +1,23 @@
 using JovieJoy.Api.Contracts;
 using JovieJoy.Api.Data;
 using JovieJoy.Api.Data.Entities;
+using JovieJoy.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace JovieJoy.Api.Controllers.Admin;
 
 [ApiController]
 [Route("api/admin/freebies")]
 [Authorize(Policy = "AdminOnly")]
-public class AdminFreebiesController(AppDbContext db) : ControllerBase
+public class AdminFreebiesController(
+    AppDbContext db,
+    IUploadService uploads,
+    IWebHostEnvironment env,
+    IEmailSender emailSender,
+    IOptions<FreebiesOptions> opts) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<FreebieAdminDto>>> List(CancellationToken ct)
@@ -100,5 +107,98 @@ public class AdminFreebiesController(AppDbContext db) : ControllerBase
         }
         await db.SaveChangesAsync(ct);
         return NoContent();
+    }
+
+    [HttpPost("{slug}/cover")]
+    [RequestSizeLimit(10 * 1024 * 1024)]
+    public async Task<ActionResult<FreebieAdminDto>> UploadCover(string slug, IFormFile file, CancellationToken ct)
+    {
+        var row = await db.Freebies.FirstOrDefaultAsync(f => f.Slug == slug, ct);
+        if (row is null) return NotFound();
+        try
+        {
+            var url = await uploads.SaveImageAsync(file, "freebies/covers", slug, ct);
+            uploads.DeleteIfLocal(row.CoverImage);
+            row.CoverImage = url;
+            row.UpdatedAt = DateTime.UtcNow;
+            await db.SaveChangesAsync(ct);
+            var count = await db.FreebieRequests.CountAsync(r => r.FreebieId == row.Id, ct);
+            return Ok(FreebieAdminDto.From(row, count, null));
+        }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+    }
+
+    [HttpPost("{slug}/file")]
+    [RequestSizeLimit(50 * 1024 * 1024)]
+    public async Task<ActionResult<FreebieAdminDto>> UploadFile(string slug, IFormFile file, CancellationToken ct)
+    {
+        var row = await db.Freebies.FirstOrDefaultAsync(f => f.Slug == slug, ct);
+        if (row is null) return NotFound();
+
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        var kind = ext switch
+        {
+            ".pdf" => "pdf",
+            ".zip" => "zip",
+            _ => null,
+        };
+        if (kind is null) return BadRequest(new { error = "Only .pdf or .zip accepted" });
+        if (file.Length > opts.Value.MaxFileSizeMb * 1024L * 1024L)
+            return BadRequest(new { error = $"File exceeds {opts.Value.MaxFileSizeMb}MB" });
+
+        var dir = Path.Combine(env.ContentRootPath, "uploads", "freebies", "files");
+        Directory.CreateDirectory(dir);
+        var fileName = $"{slug}_{Path.GetRandomFileName()}{ext}";
+        var abs = Path.Combine(dir, fileName);
+        await using (var stream = System.IO.File.Create(abs))
+            await file.CopyToAsync(stream, ct);
+
+        // remove old file if any
+        if (!string.IsNullOrEmpty(row.FilePath))
+        {
+            var oldAbs = Path.Combine(env.ContentRootPath, row.FilePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            if (System.IO.File.Exists(oldAbs)) System.IO.File.Delete(oldAbs);
+        }
+
+        row.FilePath = $"/uploads/freebies/files/{fileName}";
+        row.FileKind = kind;
+        row.FileSizeBytes = file.Length;
+        row.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
+
+        var count = await db.FreebieRequests.CountAsync(r => r.FreebieId == row.Id, ct);
+        return Ok(FreebieAdminDto.From(row, count, null));
+    }
+
+    [HttpGet("{slug}/requests")]
+    public async Task<ActionResult<IEnumerable<FreebieRequestDto>>> Requests(string slug, CancellationToken ct)
+    {
+        var row = await db.Freebies.AsNoTracking().FirstOrDefaultAsync(f => f.Slug == slug, ct);
+        if (row is null) return NotFound();
+        var requests = await db.FreebieRequests.AsNoTracking()
+            .Where(r => r.FreebieId == row.Id)
+            .OrderByDescending(r => r.CreatedAt)
+            .Take(500)
+            .Select(r => new FreebieRequestDto(
+                r.Id, r.Email, r.OptedIntoNewsletter, r.DownloadCount,
+                r.FirstDownloadedAt, r.LastDownloadedAt, r.ExpiresAt, r.CreatedAt))
+            .ToListAsync(ct);
+        return Ok(requests);
+    }
+
+    [HttpPost("{slug}/requests/{id:guid}/resend")]
+    public async Task<IActionResult> Resend(string slug, Guid id, CancellationToken ct)
+    {
+        var row = await db.FreebieRequests.Include(r => r.Freebie)
+            .FirstOrDefaultAsync(r => r.Id == id && r.Freebie.Slug == slug, ct);
+        if (row is null) return NotFound();
+
+        row.Token = FreebieTokens.Generate();
+        row.ExpiresAt = DateTime.UtcNow.AddDays(opts.Value.DownloadTtlDays);
+        await db.SaveChangesAsync(ct);
+
+        var url = $"{opts.Value.BaseUrl.TrimEnd('/')}/api/freebies/download/{row.Token}";
+        await emailSender.SendFreebieDownloadAsync(row.Email, row.Freebie, url, ct);
+        return Ok(new { ok = true });
     }
 }
