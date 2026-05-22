@@ -2,6 +2,7 @@ using JovieJoy.Api.Contracts;
 using JovieJoy.Api.Data;
 using JovieJoy.Api.Data.Entities;
 using JovieJoy.Api.Services;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -14,7 +15,8 @@ public class FreebiesController(
     AppDbContext db,
     IEmailSender email,
     IOptions<FreebiesOptions> opts,
-    ILogger<FreebiesController> logger) : ControllerBase
+    ILogger<FreebiesController> logger,
+    IWebHostEnvironment env) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<FreebieListItemDto>>> List(CancellationToken ct)
@@ -89,5 +91,34 @@ public class FreebiesController(
         }
 
         return Ok(new { ok = true });
+    }
+
+    [HttpGet("download/{token}")]
+    public async Task<IActionResult> Download(string token, CancellationToken ct)
+    {
+        var webAppUrl = HttpContext.RequestServices
+            .GetRequiredService<IConfiguration>()["WebAppUrl"] ?? "http://localhost:3000";
+
+        var req = await db.FreebieRequests.Include(r => r.Freebie)
+            .FirstOrDefaultAsync(r => r.Token == token, ct);
+        if (req is null) return Redirect($"{webAppUrl}/pages/freebies?download=invalid");
+        if (req.ExpiresAt < DateTime.UtcNow || !req.Freebie.Published)
+            return Redirect($"{webAppUrl}/pages/freebies?download=expired");
+
+        var rel = req.Freebie.FilePath.TrimStart('/');
+        var abs = Path.Combine(env.ContentRootPath, rel.Replace('/', Path.DirectorySeparatorChar));
+        if (!System.IO.File.Exists(abs))
+            return Redirect($"{webAppUrl}/pages/freebies?download=expired");
+
+        req.DownloadCount += 1;
+        req.FirstDownloadedAt ??= DateTime.UtcNow;
+        req.LastDownloadedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
+
+        var safeSlug = string.Concat(req.Freebie.Slug.Where(c => char.IsLetterOrDigit(c) || c == '-' || c == '_'));
+        var downloadName = $"{safeSlug}.{req.Freebie.FileKind}";
+        var contentType = req.Freebie.FileKind == "zip" ? "application/zip" : "application/pdf";
+        var stream = System.IO.File.OpenRead(abs);
+        return File(stream, contentType, downloadName);
     }
 }
