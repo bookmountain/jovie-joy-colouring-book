@@ -9,7 +9,7 @@ function requireToken(): string {
   return t;
 }
 
-async function adminFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function adminFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set("Authorization", `Bearer ${requireToken()}`);
   if (init.body && !headers.has("Content-Type") && !(init.body instanceof FormData)) {
