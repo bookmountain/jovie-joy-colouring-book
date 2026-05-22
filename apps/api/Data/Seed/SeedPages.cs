@@ -25,7 +25,7 @@ public static class SeedPages
                 Blocks = new List<string> { "Comic entries can be added to this fixture later." } },
             new StaticPage { Slug = "freebies", Title = "Freebies",
                 Intro = "A simple page for free mini coloring resources.",
-                Blocks = new List<string> { "Freebie products are pulled from the freebies collection." } },
+                Blocks = new List<string> { "Grab a free download — pop in your email and we'll send the file straight to your inbox." } },
             new StaticPage { Slug = "faq", Title = "FAQs",
                 Intro = "Common store questions in an accordion layout.",
                 Blocks = new List<string> { "FAQ entries come from the dedicated FAQ fixture." } }

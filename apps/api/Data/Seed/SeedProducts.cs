@@ -719,31 +719,6 @@ public static class SeedProducts
                 InspirationImages = null,
                 Tags = new List<string> { "food", "drink", "sweets", "bold easy" },
                 PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2024-02-01"), DateTimeKind.Utc),
-            },
-            // 27
-            new Product
-            {
-                Slug = "mini-coloring-book",
-                Title = "Mini Coloring Book",
-                Excerpt = "A free mini coloring book used in the public freebies area.",
-                Description = new List<string>
-                {
-                    "The freebie route needs at least one zero-price product-like card.",
-                },
-                PriceCents = 0,
-                CompareAtPriceCents = null,
-                Available = true,
-                ProductType = ProductType.Freebie,
-                Images = new List<string>
-                {
-                    "https://cdn.shopify.com/s/files/1/0602/0133/6893/files/1-Mini-coloring-book-Front.png?v=1778068163",
-                },
-                Options = defaultOptions,
-                SourceLinks = null,
-                ReviewImages = null,
-                InspirationImages = null,
-                Tags = new List<string> { "freebie", "mini", "digital" },
-                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2026-04-01"), DateTimeKind.Utc),
             }
         );
         await db.SaveChangesAsync();

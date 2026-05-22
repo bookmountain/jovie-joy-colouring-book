@@ -75,10 +75,6 @@ public static class SeedCollections
                     Excerpt = "Pattern-based bold and easy coloring books.",
                     DefaultSort = SortKey.TitleAscending, SortIndex = 13,
                     ProductOrder = new List<string>() },
-            new() { Slug = "freebies", Title = "Freebies",
-                    Excerpt = "Free mini coloring resources.",
-                    DefaultSort = SortKey.TitleAscending, SortIndex = 14,
-                    ProductOrder = new List<string> { "mini-coloring-book" } },
         };
 
         db.Collections.AddRange(collections);
@@ -114,7 +110,6 @@ public static class SeedCollections
             ["comfy-patterns-coloring-book"] = new() { "all", "physical-books", "paperback-coloring-book", "patterns", "bold-easy" },
             ["cute-groovy-coloring-book"] = new() { "all", "physical-books", "paperback-coloring-book", "patterns", "bold-easy" },
             ["food-drink-sweets-coloring-book"] = new() { "all", "physical-books", "paperback-coloring-book", "bold-easy" },
-            ["mini-coloring-book"] = new() { "all", "freebies" },
         };
 
         var collectionsBySlug = await db.Collections.ToDictionaryAsync(c => c.Slug);

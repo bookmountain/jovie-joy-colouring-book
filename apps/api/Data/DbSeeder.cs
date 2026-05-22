@@ -10,6 +10,7 @@ public static class DbSeeder
     public static async Task SeedAsync(AppDbContext db, IConfiguration config)
     {
         await SeedProducts.RunAsync(db);
+        await SeedFreebies.RunAsync(db);
         await SeedCollections.RunAsync(db);
         await SeedContentBlocks.RunAsync(db);
         await SeedBlogs.RunAsync(db);
