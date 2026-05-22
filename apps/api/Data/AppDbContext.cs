@@ -29,6 +29,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> opts) : DbContext(opts)
     public DbSet<FeaturedOnLink> FeaturedOnLinks => Set<FeaturedOnLink>();
     public DbSet<TrendingTerm> TrendingTerms => Set<TrendingTerm>();
     public DbSet<Faq> Faqs => Set<Faq>();
+    public DbSet<Freebie> Freebies => Set<Freebie>();
+    public DbSet<FreebieRequest> FreebieRequests => Set<FreebieRequest>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -235,6 +237,34 @@ public class AppDbContext(DbContextOptions<AppDbContext> opts) : DbContext(opts)
             e.Property(x => x.Links).HasColumnType("jsonb")
                 .HasConversion(v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
                                v => v == null ? null : JsonSerializer.Deserialize<List<FaqLink>>(v, (JsonSerializerOptions?)null));
+        });
+
+        b.Entity<Freebie>(e =>
+        {
+            e.ToTable("freebies");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Slug).HasMaxLength(200).IsRequired();
+            e.HasIndex(x => x.Slug).IsUnique();
+            e.Property(x => x.Title).HasMaxLength(300).IsRequired();
+            e.Property(x => x.Excerpt).HasMaxLength(1000).IsRequired();
+            e.Property(x => x.Description).HasColumnType("jsonb").HasConversion(jsonStringList);
+            e.Property(x => x.CoverImage).HasMaxLength(500);
+            e.Property(x => x.FilePath).HasMaxLength(500);
+            e.Property(x => x.FileKind).HasMaxLength(8);
+        });
+
+        b.Entity<FreebieRequest>(e =>
+        {
+            e.ToTable("freebie_requests");
+            e.HasKey(x => x.Id);
+            e.HasOne(x => x.Freebie).WithMany(f => f.Requests).HasForeignKey(x => x.FreebieId).OnDelete(DeleteBehavior.Cascade);
+            e.Property(x => x.Email).HasMaxLength(320).IsRequired();
+            e.Property(x => x.Token).HasMaxLength(64).IsRequired();
+            e.HasIndex(x => x.Token).IsUnique();
+            e.HasIndex(x => x.Email);
+            e.HasIndex(x => x.FreebieId);
+            e.Property(x => x.Ip).HasMaxLength(64);
+            e.Property(x => x.UserAgent).HasMaxLength(500);
         });
     }
 }
