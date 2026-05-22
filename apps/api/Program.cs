@@ -63,6 +63,7 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddHttpClient();
 
 builder.Services.Configure<ResendOptions>(builder.Configuration.GetSection("Resend"));
+builder.Services.Configure<FreebiesOptions>(builder.Configuration.GetSection("Freebies"));
 builder.Services.AddHttpClient<IEmailSender, ResendEmailSender>();
 
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"]

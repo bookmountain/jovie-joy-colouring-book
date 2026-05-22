@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Text;
 using JovieJoy.Api.Data;
 using JovieJoy.Api.Data.Entities;
+using JovieJoy.Api.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -43,8 +44,14 @@ public class ApiFactory : WebApplicationFactory<Program>
             services.RemoveAll<AppDbContext>();
             services.RemoveAll<IDbContextOptionsConfiguration<AppDbContext>>();
             services.AddDbContext<AppDbContext>(o => o.UseInMemoryDatabase(_dbName));
+
+            services.RemoveAll<IEmailSender>();
+            services.AddSingleton<FakeEmailSender>();
+            services.AddSingleton<IEmailSender>(sp => sp.GetRequiredService<FakeEmailSender>());
         });
     }
+
+    public FakeEmailSender Emails => Services.GetRequiredService<FakeEmailSender>();
 
     /// <summary>
     /// Returns an HttpClient pre-authorised as an admin user via a locally-issued JWT.

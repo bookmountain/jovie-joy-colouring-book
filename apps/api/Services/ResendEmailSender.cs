@@ -12,13 +12,25 @@ public class ResendOptions
     public string FromName { get; set; } = "Jovie Joy";
 }
 
-public class ResendEmailSender(HttpClient http, IOptions<ResendOptions> opts, ILogger<ResendEmailSender> log) : IEmailSender
+public class FreebiesOptions
+{
+    public int DownloadTtlDays { get; set; } = 7;
+    public int MaxFileSizeMb { get; set; } = 15;
+    public string BaseUrl { get; set; } = "http://localhost:8080";
+}
+
+public class ResendEmailSender(
+    HttpClient http,
+    IOptions<ResendOptions> opts,
+    IOptions<FreebiesOptions> freebieOpts,
+    ILogger<ResendEmailSender> log) : IEmailSender
 {
     public async Task SendFreebieDownloadAsync(string to, Freebie f, string downloadUrl, CancellationToken ct)
     {
+        var ttlDays = freebieOpts.Value.DownloadTtlDays;
         var subject = $"Your free download — {f.Title}";
-        var html = BuildHtml(f, downloadUrl);
-        var text = $"Your download link for {f.Title}: {downloadUrl}\nThis link expires in 7 days.";
+        var html = BuildHtml(f, downloadUrl, ttlDays);
+        var text = $"Your download link for {f.Title}: {downloadUrl}\nThis link expires in {ttlDays} days.";
 
         if (string.IsNullOrWhiteSpace(opts.Value.ApiKey))
         {
@@ -48,11 +60,11 @@ public class ResendEmailSender(HttpClient http, IOptions<ResendOptions> opts, IL
         }
     }
 
-    private static string BuildHtml(Freebie f, string url) => $@"
+    private static string BuildHtml(Freebie f, string url, int ttlDays) => $@"
 <!doctype html><html><body style=""font-family:system-ui,sans-serif;color:#222"">
   <h2 style=""margin:0 0 12px 0"">{System.Net.WebUtility.HtmlEncode(f.Title)}</h2>
   <p>Thanks for grabbing this freebie! Click the button below to download.</p>
   <p><a href=""{url}"" style=""display:inline-block;background:#5b3aa8;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none"">Download your file</a></p>
-  <p style=""font-size:13px;color:#666"">This link expires in 7 days. If the button doesn't work, copy and paste: <br/>{url}</p>
+  <p style=""font-size:13px;color:#666"">This link expires in {ttlDays} days. If the button doesn't work, copy and paste: <br/>{url}</p>
 </body></html>";
 }
