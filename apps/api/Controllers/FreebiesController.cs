@@ -13,7 +13,8 @@ namespace JovieJoy.Api.Controllers;
 public class FreebiesController(
     AppDbContext db,
     IEmailSender email,
-    IOptions<FreebiesOptions> opts) : ControllerBase
+    IOptions<FreebiesOptions> opts,
+    ILogger<FreebiesController> logger) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<FreebieListItemDto>>> List(CancellationToken ct)
@@ -56,6 +57,8 @@ public class FreebiesController(
         }
         else
         {
+            var rawUa = Request.Headers.UserAgent.ToString();
+            var ua = string.IsNullOrEmpty(rawUa) ? null : rawUa[..Math.Min(rawUa.Length, 500)];
             row = new FreebieRequest
             {
                 FreebieId = f.Id,
@@ -64,7 +67,7 @@ public class FreebiesController(
                 ExpiresAt = DateTime.UtcNow + ttl,
                 OptedIntoNewsletter = body.OptIn,
                 Ip = HttpContext.Connection.RemoteIpAddress?.ToString(),
-                UserAgent = Request.Headers.UserAgent.ToString(),
+                UserAgent = ua,
             };
             db.FreebieRequests.Add(row);
         }
@@ -75,7 +78,15 @@ public class FreebiesController(
         await db.SaveChangesAsync(ct);
 
         var url = $"{opts.Value.BaseUrl.TrimEnd('/')}/api/freebies/download/{row.Token}";
-        await email.SendFreebieDownloadAsync(body.Email, f, url, ct);
+        try
+        {
+            await email.SendFreebieDownloadAsync(body.Email, f, url, ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Freebie email send failed for {Slug} → {Email}", slug, body.Email);
+            return StatusCode(StatusCodes.Status502BadGateway, new { error = "email_send_failed" });
+        }
 
         return Ok(new { ok = true });
     }
