@@ -17,7 +17,8 @@ public class AdminFreebiesController(
     IUploadService uploads,
     IWebHostEnvironment env,
     IEmailSender emailSender,
-    IOptions<FreebiesOptions> opts) : ControllerBase
+    IOptions<FreebiesOptions> opts,
+    ILogger<AdminFreebiesController> logger) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<FreebieAdminDto>>> List(CancellationToken ct)
@@ -198,7 +199,15 @@ public class AdminFreebiesController(
         await db.SaveChangesAsync(ct);
 
         var url = $"{opts.Value.BaseUrl.TrimEnd('/')}/api/freebies/download/{row.Token}";
-        await emailSender.SendFreebieDownloadAsync(row.Email, row.Freebie, url, ct);
+        try
+        {
+            await emailSender.SendFreebieDownloadAsync(row.Email, row.Freebie, url, ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Freebie resend failed for {Slug} → {Email}", slug, row.Email);
+            return StatusCode(StatusCodes.Status502BadGateway, new { error = "email_send_failed" });
+        }
         return Ok(new { ok = true });
     }
 }
