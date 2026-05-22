@@ -81,4 +81,31 @@ public class FreebieDownloadTests : IClassFixture<ApiFactory>
         var resp = await client.GetAsync($"/api/freebies/download/{token}");
         resp.Headers.Location!.ToString().Should().Contain("download=expired");
     }
+
+    [Fact]
+    public async Task Traversal_attempt_redirects_to_expired()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var hostEnv = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
+        // Place a real file OUTSIDE the uploads root so File.Exists would otherwise succeed.
+        var sentinelPath = Path.Combine(hostEnv.ContentRootPath, "freebie-traversal-sentinel.txt");
+        await File.WriteAllTextAsync(sentinelPath, "should not be served");
+        try
+        {
+            var freebieId = await _factory.SeedFreebie("dl-trav", filePath: "/../freebie-traversal-sentinel.txt");
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var token = $"tok-trav-{Guid.NewGuid():N}";
+            db.FreebieRequests.Add(new FreebieRequest
+            {
+                FreebieId = freebieId, Email = "x@y.com", Token = token,
+                ExpiresAt = DateTime.UtcNow.AddDays(1), OptedIntoNewsletter = false,
+            });
+            await db.SaveChangesAsync();
+
+            var client = _factory.CreateClient(new() { AllowAutoRedirect = false });
+            var resp = await client.GetAsync($"/api/freebies/download/{token}");
+            resp.Headers.Location!.ToString().Should().Contain("download=expired");
+        }
+        finally { if (File.Exists(sentinelPath)) File.Delete(sentinelPath); }
+    }
 }

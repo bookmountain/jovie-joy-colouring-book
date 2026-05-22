@@ -16,7 +16,8 @@ public class FreebiesController(
     IEmailSender email,
     IOptions<FreebiesOptions> opts,
     ILogger<FreebiesController> logger,
-    IWebHostEnvironment env) : ControllerBase
+    IWebHostEnvironment env,
+    IConfiguration config) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<FreebieListItemDto>>> List(CancellationToken ct)
@@ -96,17 +97,19 @@ public class FreebiesController(
     [HttpGet("download/{token}")]
     public async Task<IActionResult> Download(string token, CancellationToken ct)
     {
-        var webAppUrl = HttpContext.RequestServices
-            .GetRequiredService<IConfiguration>()["WebAppUrl"] ?? "http://localhost:3000";
+        var webAppUrl = config["WebAppUrl"] ?? "http://localhost:3000";
 
         var req = await db.FreebieRequests.Include(r => r.Freebie)
             .FirstOrDefaultAsync(r => r.Token == token, ct);
         if (req is null) return Redirect($"{webAppUrl}/pages/freebies?download=invalid");
-        if (req.ExpiresAt < DateTime.UtcNow || !req.Freebie.Published)
+        if (req.ExpiresAt < DateTime.UtcNow || req.Freebie is null || !req.Freebie.Published)
             return Redirect($"{webAppUrl}/pages/freebies?download=expired");
 
+        var uploadsRoot = Path.GetFullPath(Path.Combine(env.ContentRootPath, "uploads"));
         var rel = req.Freebie.FilePath.TrimStart('/');
-        var abs = Path.Combine(env.ContentRootPath, rel.Replace('/', Path.DirectorySeparatorChar));
+        var abs = Path.GetFullPath(Path.Combine(env.ContentRootPath, rel.Replace('/', Path.DirectorySeparatorChar)));
+        if (!abs.StartsWith(uploadsRoot + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+            return Redirect($"{webAppUrl}/pages/freebies?download=expired");
         if (!System.IO.File.Exists(abs))
             return Redirect($"{webAppUrl}/pages/freebies?download=expired");
 
