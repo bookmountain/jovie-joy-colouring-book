@@ -62,6 +62,9 @@ builder.Services.AddScoped<IStripeService, StripeService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddHttpClient();
 
+builder.Services.Configure<ResendOptions>(builder.Configuration.GetSection("Resend"));
+builder.Services.AddHttpClient<IEmailSender, ResendEmailSender>();
+
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"]
     ?? throw new InvalidOperationException("Stripe__SecretKey is required");
 
