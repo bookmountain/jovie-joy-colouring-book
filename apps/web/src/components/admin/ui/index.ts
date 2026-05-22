@@ -16,3 +16,5 @@ export * from "./AdminFilterChip";
 export * from "./AdminBulkBar";
 export * from "./AdminTable";
 export * from "./AdminPagination";
+export * from "./AdminModal";
+export * from "./AdminConfirmDialog";

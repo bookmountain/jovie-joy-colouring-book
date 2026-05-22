@@ -10,8 +10,7 @@ import {
   type FreebieAdmin,
 } from "@/lib/freebies";
 import { ImageUpload } from "@/components/admin/ImageUpload";
-import { AdminPanel } from "@/components/admin/ui";
-import { AdminButton } from "@/components/admin/ui/AdminButton";
+import { AdminPanel, AdminButton, AdminConfirmDialog } from "@/components/admin/ui";
 
 export function FreebieForm({ initial, onSaved, onDeleted }: {
   initial: FreebieAdmin;
@@ -31,6 +30,7 @@ export function FreebieForm({ initial, onSaved, onDeleted }: {
   const [cover, setCover] = useState<string | null>(initial.coverImage || null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [fileBusy, setFileBusy] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   async function save() {
     setSaving(true);
@@ -69,8 +69,8 @@ export function FreebieForm({ initial, onSaved, onDeleted }: {
   }
 
   async function destroy() {
-    if (!window.confirm(`Delete freebie ${initial.slug}? This also removes its request history.`)) return;
     await adminDeleteFreebie(initial.slug);
+    setDeleteOpen(false);
     onDeleted();
   }
 
@@ -127,9 +127,19 @@ export function FreebieForm({ initial, onSaved, onDeleted }: {
       </AdminPanel>
 
       <div className="flex justify-between">
-        <AdminButton variant="danger" onClick={destroy}>Delete freebie</AdminButton>
+        <AdminButton variant="danger" onClick={() => setDeleteOpen(true)}>Delete freebie</AdminButton>
         <AdminButton onClick={save} disabled={saving}>{saving ? "Saving…" : "Save"}</AdminButton>
       </div>
+
+      <AdminConfirmDialog
+        open={deleteOpen}
+        title={`Delete "${initial.title}"?`}
+        body="This also removes the freebie's request history. The action cannot be undone."
+        confirmLabel="Delete freebie"
+        destructive
+        onConfirm={destroy}
+        onCancel={() => setDeleteOpen(false)}
+      />
     </div>
   );
 }
