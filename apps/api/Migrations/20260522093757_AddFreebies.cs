@@ -84,6 +84,10 @@ namespace JovieJoy.Api.Migrations
                 column: "Slug",
                 unique: true);
 
+            // Backfill: move rows from products (ProductType = 3 = Freebie) into the new freebies table,
+            // then remove those products, their product_collections rows, and the now-empty 'freebies' collection.
+            // Freebies are no longer products; they live in their own table.
+            // See docs/superpowers/specs/2026-05-22-freebie-redesign-design.md for background.
             migrationBuilder.Sql(@"
 INSERT INTO freebies (
     ""Id"", ""Slug"", ""Title"", ""Excerpt"", ""Description"", ""CoverImage"",
