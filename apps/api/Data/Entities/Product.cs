@@ -1,6 +1,6 @@
 namespace JovieJoy.Api.Data.Entities;
 
-public enum ProductType { Physical, Digital, Sticker, Freebie }
+public enum ProductType { Physical, Digital, Sticker, [System.Obsolete("Use Freebie entity instead", true)] Freebie }
 
 public class Product
 {

@@ -1,6 +1,6 @@
 "use client";
 
-export type ProductFormat = "physical" | "digital" | "sticker" | "freebie";
+export type ProductFormat = "physical" | "digital" | "sticker";
 
 export const PRODUCT_FORMATS: ReadonlyArray<{
   value: ProductFormat;
@@ -11,7 +11,6 @@ export const PRODUCT_FORMATS: ReadonlyArray<{
   { value: "physical", label: "Physical book", sub: "Ships to address", icon: "📕" },
   { value: "digital",  label: "Digital PDF",  sub: "Delivered by email", icon: "📄" },
   { value: "sticker",  label: "Sticker pack", sub: "Ships to address", icon: "🌟" },
-  { value: "freebie",  label: "Freebie",      sub: "Free download, skips checkout", icon: "🎁" },
 ];
 
 export function AdminFormatPicker({

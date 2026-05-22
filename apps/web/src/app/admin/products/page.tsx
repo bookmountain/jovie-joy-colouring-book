@@ -155,13 +155,12 @@ export default function AdminProductsPage() {
       key: "price",
       label: "Price",
       sortable: true,
-      render: (row) =>
-        row.productType === "freebie" ? <span>Free</span> : (
-          <span>
-            {formatCents(row.priceCents)}
-            {row.compareAtPriceCents ? <span style={{ color: "var(--admin-muted)", textDecoration: "line-through", fontSize: 10, marginLeft: 5 }}>{formatCents(row.compareAtPriceCents)}</span> : null}
-          </span>
-        ),
+      render: (row) => (
+        <span>
+          {formatCents(row.priceCents)}
+          {row.compareAtPriceCents ? <span style={{ color: "var(--admin-muted)", textDecoration: "line-through", fontSize: 10, marginLeft: 5 }}>{formatCents(row.compareAtPriceCents)}</span> : null}
+        </span>
+      ),
     },
     {
       key: "status",

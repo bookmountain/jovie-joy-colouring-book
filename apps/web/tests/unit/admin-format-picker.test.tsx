@@ -3,16 +3,15 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { AdminFormatPicker, PRODUCT_FORMATS } from "@/components/admin/product/AdminFormatPicker";
 
 describe("AdminFormatPicker", () => {
-  test("renders all four format tiles with sub-labels", () => {
+  test("renders all three format tiles with sub-labels", () => {
     render(<AdminFormatPicker value="physical" onChange={() => {}} />);
-    expect(PRODUCT_FORMATS).toHaveLength(4);
+    expect(PRODUCT_FORMATS).toHaveLength(3);
     for (const f of PRODUCT_FORMATS) {
       expect(screen.getByRole("radio", { name: new RegExp(f.label, "i") })).toBeTruthy();
     }
     // Verify all sub-labels are present (some may be duplicated like "Ships to address")
     expect(screen.getAllByText("Ships to address")).toHaveLength(2);
     expect(screen.getByText("Delivered by email")).toBeTruthy();
-    expect(screen.getByText("Free download, skips checkout")).toBeTruthy();
   });
 
   test("selected tile has data-state=on and aria-checked=true", () => {
@@ -36,7 +35,7 @@ describe("AdminFormatPicker", () => {
     expect(onChange).toHaveBeenCalledWith("sticker");
   });
 
-  test("PRODUCT_FORMATS exports the four expected values in order", () => {
-    expect(PRODUCT_FORMATS.map((f) => f.value)).toEqual(["physical", "digital", "sticker", "freebie"]);
+  test("PRODUCT_FORMATS exports the three expected values in order", () => {
+    expect(PRODUCT_FORMATS.map((f) => f.value)).toEqual(["physical", "digital", "sticker"]);
   });
 });
