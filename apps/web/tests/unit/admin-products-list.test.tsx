@@ -25,12 +25,13 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
-const PRODUCT = (overrides: Partial<{ slug: string; title: string; status: string; productType: string }> = {}) => ({
+const PRODUCT = (overrides: Partial<{ slug: string; title: string; status: string; productType: string; primaryImage: string | null }> = {}) => ({
   slug: overrides.slug ?? "a", title: overrides.title ?? "Alpha", excerpt: "",
   priceCents: 100, compareAtPriceCents: null, available: true,
   productType: overrides.productType ?? "physical",
   status: overrides.status ?? "published",
-  tags: [], collectionSlugs: [], primaryImage: null,
+  tags: [], collectionSlugs: [],
+  primaryImage: overrides.primaryImage ?? null,
   publishedAt: "2026-01-01T00:00:00Z", updatedAt: "2026-01-02T00:00:00Z",
 });
 
@@ -71,6 +72,18 @@ describe("/admin/products list", () => {
     expect(screen.getByText(/1 selected/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /^publish$/i }));
     await waitFor(() => expect(bulkMock).toHaveBeenCalledWith(expect.objectContaining({ action: "publish", slugs: ["a"] })));
+  });
+
+  test("renders uploaded product thumbnails from the API host", async () => {
+    listMock.mockResolvedValue({
+      items: [PRODUCT({ primaryImage: "/uploads/products/alpha.png" })],
+      total: 1,
+      page: 1,
+      pageSize: 25,
+    });
+    const { container } = render(<AdminProductsPage />);
+    await waitFor(() => expect(screen.getByText("Alpha")).toBeTruthy());
+    expect(container.querySelector("img")?.getAttribute("src")).toBe("http://localhost:8080/uploads/products/alpha.png");
   });
 
   test("empty state shows 'Add your first product' when total=0", async () => {

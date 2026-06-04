@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 
 export type AdminTableColumn<Row> = {
   key: string;
@@ -19,6 +19,14 @@ export type AdminTableProps<Row> = {
   onSort?: (key: string) => void;
   loading?: boolean;
 };
+
+function isNestedInteractiveTarget(target: EventTarget | null, row: HTMLElement): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  const interactive = target.closest(
+    "a,button,input,select,textarea,label,[role='button'],[role='checkbox'],[role='switch'],[role='radio'],[contenteditable='true']",
+  );
+  return !!interactive && interactive !== row;
+}
 
 export function AdminTable<Row extends Record<string, unknown>>({
   columns, rows, getRowKey, onRowClick, isSelected, sortKey, sortDir, onSort, loading,
@@ -54,10 +62,18 @@ export function AdminTable<Row extends Record<string, unknown>>({
                   data-selected={isSelected?.(row) ? "true" : undefined}
                   role={onRowClick ? "button" : undefined}
                   tabIndex={onRowClick ? 0 : undefined}
-                  onClick={onRowClick ? () => onRowClick(row) : undefined}
+                  onClick={
+                    onRowClick
+                      ? (e: MouseEvent<HTMLTableRowElement>) => {
+                          if (isNestedInteractiveTarget(e.target, e.currentTarget)) return;
+                          onRowClick(row);
+                        }
+                      : undefined
+                  }
                   onKeyDown={
                     onRowClick
-                      ? (e) => {
+                      ? (e: KeyboardEvent<HTMLTableRowElement>) => {
+                          if (isNestedInteractiveTarget(e.target, e.currentTarget)) return;
                           if (e.key === "Enter" || e.key === " ") {
                             e.preventDefault();
                             onRowClick(row);

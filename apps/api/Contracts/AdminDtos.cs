@@ -17,7 +17,8 @@ public record UpdateProductRequest(
     List<Data.Entities.ProductOption>? Options,
     List<Data.Entities.SourceLink>? SourceLinks,
     List<string>? ReviewImages, List<string>? InspirationImages,
-    List<string> Tags, List<string> CollectionSlugs);
+    List<string> Tags, List<string> CollectionSlugs,
+    DateTime? PublishedAt);
 
 public record CreateCollectionRequest(
     string Slug, string Title, string Excerpt, string? HeroImage,

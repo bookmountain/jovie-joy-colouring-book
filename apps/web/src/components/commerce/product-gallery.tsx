@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Product } from "@/data/products";
+import { resolveAssetUrl } from "@/lib/api";
 
 export function ProductGallery({ product }: { product: Product }) {
   const images = product.images;
@@ -34,7 +35,7 @@ export function ProductGallery({ product }: { product: Product }) {
           fill
           priority
           sizes="(min-width: 1024px) 50vw, 100vw"
-          src={activeImage}
+          src={resolveAssetUrl(activeImage)}
         />
         {images.length > 1 ? (
           <div className="absolute inset-x-3 top-1/2 flex -translate-y-1/2 items-center justify-between">
@@ -77,7 +78,7 @@ export function ProductGallery({ product }: { product: Product }) {
                 className="h-full w-full object-cover"
                 fill
                 sizes="120px"
-                src={image}
+                src={resolveAssetUrl(image)}
               />
             </button>
           ))}

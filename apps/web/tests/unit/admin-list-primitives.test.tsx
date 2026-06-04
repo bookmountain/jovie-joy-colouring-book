@@ -97,6 +97,34 @@ describe("AdminTable", () => {
     fireEvent.click(screen.getByText("Alpha"));
     expect(onRowClick).toHaveBeenCalledWith({ id: "a", title: "Alpha" });
   });
+  test("clicking an interactive control inside a row does not fire onRowClick", () => {
+    const onRowClick = vi.fn();
+    const onAction = vi.fn();
+    const { container } = render(
+      <AdminTable
+        columns={[{ key: "action", label: "Action", render: () => <button onClick={onAction}>Select</button> }]}
+        rows={[{ id: "a", title: "Alpha" }]}
+        getRowKey={(r) => r.id}
+        onRowClick={onRowClick}
+      />,
+    );
+    fireEvent.click(container.querySelector("td button")!);
+    expect(onAction).toHaveBeenCalledTimes(1);
+    expect(onRowClick).not.toHaveBeenCalled();
+  });
+  test("keyboard events on an interactive control inside a row do not fire onRowClick", () => {
+    const onRowClick = vi.fn();
+    const { container } = render(
+      <AdminTable
+        columns={[{ key: "action", label: "Action", render: () => <button>Select</button> }]}
+        rows={[{ id: "a", title: "Alpha" }]}
+        getRowKey={(r) => r.id}
+        onRowClick={onRowClick}
+      />,
+    );
+    fireEvent.keyDown(container.querySelector("td button")!, { key: " " });
+    expect(onRowClick).not.toHaveBeenCalled();
+  });
   test("isSelected marks the row data-selected=true", () => {
     render(
       <AdminTable

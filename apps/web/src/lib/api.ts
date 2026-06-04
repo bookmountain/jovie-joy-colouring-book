@@ -1,6 +1,6 @@
 // Typed REST client for the Zoe&Book BE.
-// All loaders default to `revalidate: 60` so server components cache for 1 minute.
-// `cache: "no-store"` is opt-in (used by mutation flows + auth).
+// Content loaders default to `revalidate: 60`; product/catalog loaders opt into
+// `cache: "no-store"` so admin publish/upload changes show on the storefront.
 
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
@@ -100,9 +100,13 @@ export type UserDto = { id: string; email: string; name: string | null; avatarUr
 
 export type CheckoutResponse = { checkoutUrl: string; orderId: string };
 
-async function get<T>(path: string, init?: RequestInit): Promise<T> {
+async function get<T>(path: string, init?: RequestInit & { next?: { revalidate?: number } }): Promise<T> {
   const url = `${API_URL}${path}`;
-  const res = await fetch(url, { next: { revalidate: 60 }, ...init });
+  const fetchInit: RequestInit & { next?: { revalidate?: number } } = { ...init };
+  if (!fetchInit.cache && !fetchInit.next) {
+    fetchInit.next = { revalidate: 60 };
+  }
+  const res = await fetch(url, fetchInit);
   if (!res.ok) throw new Error(`${url} returned ${res.status}`);
   return (await res.json()) as T;
 }
@@ -131,11 +135,11 @@ export const apiGetProducts = (collection?: string, sort?: string) => {
   if (collection) q.set("collection", collection);
   if (sort) q.set("sort", sort);
   const suffix = q.toString() ? `?${q}` : "";
-  return get<Product[]>(`/api/products${suffix}`);
+  return get<Product[]>(`/api/products${suffix}`, { cache: "no-store" });
 };
-export const apiGetProduct = (slug: string) => get<Product>(`/api/products/${slug}`);
-export const apiGetCollections = () => get<Collection[]>("/api/collections");
-export const apiGetCollection = (slug: string) => get<CollectionWithProducts>(`/api/collections/${slug}`);
+export const apiGetProduct = (slug: string) => get<Product>(`/api/products/${slug}`, { cache: "no-store" });
+export const apiGetCollections = () => get<Collection[]>("/api/collections", { cache: "no-store" });
+export const apiGetCollection = (slug: string) => get<CollectionWithProducts>(`/api/collections/${slug}`, { cache: "no-store" });
 export const apiGetBlogs = () => get<BlogCategory[]>("/api/blogs");
 export const apiGetBlog = (slug: string) => get<{ category: BlogCategory; articles: Article[] }>(`/api/blogs/${slug}`);
 export const apiGetArticle = (blogSlug: string, articleSlug: string) =>

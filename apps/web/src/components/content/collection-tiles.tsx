@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { resolveAssetUrl } from "@/lib/api";
 import { getCollectionBySlug, getProductsForCollection } from "@/lib/catalog";
 
 const tileSlugs = ["bold-easy", "cute-comfy", "classic", "seasonal"];
@@ -36,7 +37,7 @@ export async function CollectionTiles() {
                   className="h-full w-full object-cover opacity-80 transition duration-300 group-hover:scale-[1.03]"
                   fill
                   sizes="(min-width: 768px) 50vw, 100vw"
-                  src={image}
+                  src={resolveAssetUrl(image)}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-cocoa-ink/50 via-cocoa-ink/5 to-transparent" />
                 <h3 className="absolute bottom-5 left-5 rounded-full bg-white/90 px-5 py-2 text-2xl font-extrabold tracking-normal text-cocoa-ink shadow-soft">

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/data/products";
+import { resolveAssetUrl } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
 import { useSite } from "@/state/site-store";
 import { WishlistButton } from "./wishlist-button";
@@ -12,6 +13,7 @@ export function ProductCard({ product }: { product: Product }) {
   const onSale =
     typeof product.compareAtPriceCents === "number" &&
     product.compareAtPriceCents > product.priceCents;
+  const imageSrc = resolveAssetUrl(product.images[0]);
 
   return (
     <article
@@ -29,7 +31,7 @@ export function ProductCard({ product }: { product: Product }) {
             className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
             fill
             sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-            src={product.images[0]}
+            src={imageSrc}
           />
           {onSale ? (
             <span className="absolute left-3 top-3 rounded-[4px] bg-cocoa-purple px-3 py-1 text-xs font-extrabold text-white">

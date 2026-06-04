@@ -10,6 +10,7 @@ import {
   adminListProductTags,
   type AdminProductListItem,
 } from "@/lib/adminApi";
+import { resolveAssetUrl } from "@/lib/api";
 import { formatCents } from "@/lib/format";
 import { AdminPageHeader } from "@/components/admin/ui/AdminPageHeader";
 import { AdminToolbar } from "@/components/admin/ui/AdminToolbar";
@@ -128,7 +129,7 @@ export default function AdminProductsPage() {
       render: (row) => (
         <div style={{ width: 36, height: 36, background: "#fef0d4", border: "1px solid var(--admin-line-soft)", borderRadius: 8, overflow: "hidden" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          {row.primaryImage ? <img alt="" src={row.primaryImage} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
+          {row.primaryImage ? <img alt="" src={resolveAssetUrl(row.primaryImage)} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
         </div>
       ),
     },

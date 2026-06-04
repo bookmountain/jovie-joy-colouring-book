@@ -8,7 +8,7 @@ import { fetchCatalog, getPopularProducts, searchCatalog } from "@/lib/catalog";
 import { formatMoney } from "@/lib/format";
 import { useSite } from "@/state/site-store";
 import type { Product } from "@/lib/api";
-import { apiGetContent } from "@/lib/api";
+import { apiGetContent, resolveAssetUrl } from "@/lib/api";
 
 export function SearchDrawer() {
   const { state, dispatch } = useSite();
@@ -105,7 +105,7 @@ export function SearchDrawer() {
                       className="h-full w-full object-cover"
                       fill
                       sizes="72px"
-                      src={product.images[0]}
+                      src={resolveAssetUrl(product.images[0])}
                     />
                   </div>
                   <div>

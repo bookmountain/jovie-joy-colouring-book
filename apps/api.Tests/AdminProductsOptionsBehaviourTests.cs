@@ -157,4 +157,61 @@ public class AdminProductsOptionsBehaviourTests : IClassFixture<ApiFactory>
         Assert.Single(dto!.Options);
         Assert.Equal("Binding", dto.Options[0].Name);
     }
+
+    [Fact]
+    public async Task Update_persists_published_at_from_detail_form()
+    {
+        var client = await _f.CreateAdminClientAsync();
+        var slug = $"publish-detail-{Guid.NewGuid():N}";
+
+        var seedBody = new
+        {
+            slug,
+            title = "Draft product",
+            excerpt = "E",
+            description = new[] { "d" },
+            priceCents = 100,
+            compareAtPriceCents = (int?)null,
+            available = true,
+            productType = "physical",
+            images = Array.Empty<string>(),
+            options = (object?)null,
+            sourceLinks = (object?)null,
+            reviewImages = (string[]?)null,
+            inspirationImages = (string[]?)null,
+            tags = Array.Empty<string>(),
+            collectionSlugs = Array.Empty<string>(),
+            publishedAt = (string?)null,
+        };
+        var seed = await client.PostAsJsonAsync("/api/admin/products", seedBody);
+        seed.EnsureSuccessStatusCode();
+
+        var publishDate = "2026-06-04";
+        var updateBody = new
+        {
+            title = "Published product",
+            excerpt = "E",
+            description = new[] { "d" },
+            priceCents = 100,
+            compareAtPriceCents = (int?)null,
+            available = true,
+            productType = "physical",
+            images = Array.Empty<string>(),
+            options = (object?)null,
+            sourceLinks = (object?)null,
+            reviewImages = (string[]?)null,
+            inspirationImages = (string[]?)null,
+            tags = Array.Empty<string>(),
+            collectionSlugs = Array.Empty<string>(),
+            publishedAt = publishDate,
+        };
+
+        var res = await client.PutAsJsonAsync($"/api/admin/products/{slug}", updateBody);
+        res.EnsureSuccessStatusCode();
+        var dto = await res.Content.ReadFromJsonAsync<ProductDto>();
+
+        Assert.NotNull(dto);
+        Assert.NotNull(dto!.PublishedAt);
+        Assert.Equal(DateTime.SpecifyKind(DateTime.Parse(publishDate), DateTimeKind.Utc), dto.PublishedAt);
+    }
 }

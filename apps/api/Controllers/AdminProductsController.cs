@@ -197,6 +197,7 @@ public class AdminProductsController(AppDbContext db, IUploadService uploads) : 
         product.ReviewImages = req.ReviewImages;
         product.InspirationImages = req.InspirationImages;
         product.Tags = req.Tags;
+        product.PublishedAt = req.PublishedAt;
         product.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct);
 

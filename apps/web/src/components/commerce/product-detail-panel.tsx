@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Minus, Plus } from "lucide-react";
 import type { Product } from "@/data/products";
+import { resolveAssetUrl } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
 import { useSite } from "@/state/site-store";
 import { WishlistButton } from "./wishlist-button";
@@ -14,6 +15,7 @@ export function ProductDetailPanel({ product }: { product: Product }) {
   const onSale =
     typeof product.compareAtPriceCents === "number" &&
     product.compareAtPriceCents > product.priceCents;
+  const productImage = resolveAssetUrl(product.images[0]);
 
   return (
     <section className="lg:sticky lg:top-28">
@@ -90,7 +92,7 @@ export function ProductDetailPanel({ product }: { product: Product }) {
                 title: product.title,
                 priceCents: product.priceCents,
                 quantity,
-                image: product.images[0],
+                image: productImage,
                 option: product.options[0]?.values[0],
               },
             })
@@ -127,7 +129,7 @@ export function ProductDetailPanel({ product }: { product: Product }) {
                   alt={link.alt ?? link.label}
                   className="h-auto max-h-9 w-full object-contain"
                   height={48}
-                  src={link.image}
+                  src={resolveAssetUrl(link.image)}
                   width={180}
                 />
               ) : (

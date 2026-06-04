@@ -9,6 +9,12 @@ namespace JovieJoy.Api.Controllers;
 [Route("api/products")]
 public class ProductsController(AppDbContext db) : ControllerBase
 {
+    private static IQueryable<Data.Entities.Product> Published(IQueryable<Data.Entities.Product> query)
+    {
+        var now = DateTime.UtcNow;
+        return query.Where(p => p.PublishedAt != null && p.PublishedAt <= now);
+    }
+
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ProductDto>>> List(
         [FromQuery] string? collection,
@@ -19,6 +25,8 @@ public class ProductsController(AppDbContext db) : ControllerBase
             .AsNoTracking()
             .Include(p => p.ProductCollections).ThenInclude(pc => pc.Collection)
             .AsQueryable();
+
+        query = Published(query);
 
         if (!string.IsNullOrWhiteSpace(collection))
             query = query.Where(p => p.ProductCollections.Any(pc => pc.Collection.Slug == collection));
@@ -41,9 +49,11 @@ public class ProductsController(AppDbContext db) : ControllerBase
     [HttpGet("{slug}")]
     public async Task<ActionResult<ProductDto>> Get(string slug, CancellationToken ct)
     {
+        var now = DateTime.UtcNow;
         var product = await db.Products
             .AsNoTracking()
             .Include(p => p.ProductCollections).ThenInclude(pc => pc.Collection)
+            .Where(p => p.PublishedAt != null && p.PublishedAt <= now)
             .FirstOrDefaultAsync(p => p.Slug == slug, ct);
 
         return product is null ? NotFound() : Ok(ProductDto.From(product));

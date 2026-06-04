@@ -48,6 +48,7 @@ function makeListItem(overrides: Partial<{
   productType: string;
   priceCents: number;
   status: string;
+  primaryImage: string | null;
 }> = {}) {
   return {
     slug: overrides.slug ?? "cozy-book",
@@ -60,7 +61,7 @@ function makeListItem(overrides: Partial<{
     status: overrides.status ?? "published",
     tags: ["cozy"],
     collectionSlugs: [],
-    primaryImage: null,
+    primaryImage: overrides.primaryImage ?? null,
     publishedAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -144,18 +145,17 @@ test.describe("admin product CRM", () => {
           body: JSON.stringify(createdProduct),
         });
       } else if (r.request().method() === "PUT") {
+        const body = r.request().postDataJSON();
         await r.fulfill({
           status: 200,
           contentType: "application/json",
-          body: JSON.stringify(publishedProduct),
+          body: JSON.stringify({ ...publishedProduct, publishedAt: body.publishedAt }),
         });
       }
     });
 
     await page.goto("/admin/products/new");
 
-    // Fill slug (only visible on new-product form)
-    await page.locator("#pf-slug").fill(slug);
     // Fill basics
     await page.locator("#pf-title").fill(`CRM Test ${stamp}`);
     await page.locator("#pf-excerpt").fill("Smoke product for CRM test.");
@@ -182,17 +182,27 @@ test.describe("admin product CRM", () => {
     await page.getByRole("switch", { name: /published/i }).click();
 
     // Submit the edit
+    const updateRequest = page.waitForRequest((request) =>
+      request.method() === "PUT" && request.url().includes(`/api/admin/products/${slug}`),
+    );
     await page.getByRole("button", { name: /save changes/i }).click();
+    const updatePayload = (await updateRequest).postDataJSON();
+    expect(updatePayload.publishedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
     // After update the badge should update to "Published"
     await expect(page.getByText("Published").first()).toBeVisible({ timeout: 10_000 });
   });
 
   // ---------------------------------------------------------------------------
-  // Test 2: list page — search, format filter, bulk unpublish
+  // Test 2: list page — thumbnail, search, row selection, bulk unpublish
   // ---------------------------------------------------------------------------
-  test("list page supports search and bulk unpublish", async ({ page }) => {
-    const cozyItem = makeListItem({ slug: "cozy-book", title: "Cozy Colouring Book", status: "published" });
+  test("list page row controls stay on list, show uploaded thumbnails, and support bulk unpublish", async ({ page }) => {
+    const cozyItem = makeListItem({
+      slug: "cozy-book",
+      title: "Cozy Colouring Book",
+      status: "published",
+      primaryImage: "/uploads/products/cozy-cover.png",
+    });
     const listResponse = JSON.stringify({ items: [cozyItem], total: 1, page: 1, pageSize: 25 });
 
     // Wildcard matches the paginated list endpoint but NOT /bulk or /tags paths
@@ -219,6 +229,10 @@ test.describe("admin product CRM", () => {
 
     await page.goto("/admin/products");
     await expect(page.getByRole("heading", { level: 1, name: "Products" })).toBeVisible();
+    await expect(page.locator("tbody img")).toHaveAttribute(
+      "src",
+      "http://localhost:8080/uploads/products/cozy-cover.png",
+    );
 
     // Search — wait for the debounced query to fire
     await page.getByPlaceholder(/search/i).fill("cozy");
@@ -230,6 +244,7 @@ test.describe("admin product CRM", () => {
 
     // Bulk bar should now show "1 selected"
     await expect(page.getByText("1 selected")).toBeVisible();
+    await expect(page).toHaveURL(/\/admin\/products$/);
 
     // Click Unpublish in the bulk bar; wait for the bulk POST to settle
     const bulkDone = page.waitForResponse(/\/api\/admin\/products\/bulk/);

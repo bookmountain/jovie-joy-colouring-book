@@ -30,7 +30,11 @@ public class CollectionsController(AppDbContext db) : ControllerBase
 
         if (collection is null) return NotFound();
 
-        var members = collection.ProductCollections.Select(pc => pc.Product).ToList();
+        var now = DateTime.UtcNow;
+        var members = collection.ProductCollections
+            .Select(pc => pc.Product)
+            .Where(p => p.PublishedAt != null && p.PublishedAt <= now)
+            .ToList();
 
         List<Data.Entities.Product> ordered;
         if (collection.ProductOrder.Count > 0)

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/data/products";
+import { resolveAssetUrl } from "@/lib/api";
 
 export function ProductVisualStory({ product }: { product: Product }) {
   const reviewImages = product.reviewImages ?? [];
@@ -25,7 +26,7 @@ export function ProductVisualStory({ product }: { product: Product }) {
                   className="h-full w-full object-cover"
                   fill
                   sizes="(min-width: 768px) 20vw, 50vw"
-                  src={image}
+                  src={resolveAssetUrl(image)}
                 />
               </div>
             ))}
@@ -46,7 +47,7 @@ export function ProductVisualStory({ product }: { product: Product }) {
                     className="h-full w-full object-cover"
                     fill
                     sizes="(min-width: 768px) 25vw, 50vw"
-                    src={image}
+                    src={resolveAssetUrl(image)}
                   />
                 </div>
               ))}

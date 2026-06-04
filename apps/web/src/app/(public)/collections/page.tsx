@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getAllCollections } from "@/data/collections";
+import { resolveAssetUrl } from "@/lib/api";
 import { getProductsForCollection } from "@/lib/catalog";
 
 export default async function CollectionsPage() {
@@ -30,7 +31,7 @@ export default async function CollectionsPage() {
                   className="h-full w-full object-cover transition group-hover:scale-[1.03]"
                   fill
                   sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-                  src={image}
+                  src={resolveAssetUrl(image)}
                 />
               ) : null}
             </div>
