@@ -9,10 +9,15 @@ import { useSite } from "@/state/site-store";
 export function UserMenu() {
   const { dispatch } = useSite();
   const [user, setUser] = useState<UserDto | null | undefined>(undefined);
+  const [avatarFailed, setAvatarFailed] = useState(false);
 
   useEffect(() => {
     fetchCurrentUser().then(setUser);
   }, []);
+
+  useEffect(() => {
+    setAvatarFailed(false);
+  }, [user?.avatarUrl]);
 
   if (user === undefined) return null;
 
@@ -30,11 +35,12 @@ export function UserMenu() {
 
   return (
     <div className="flex items-center gap-3">
-      {user.avatarUrl ? (
+      {user.avatarUrl && !avatarFailed ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           alt={user.name ?? user.email}
           className="h-8 w-8 rounded-full border border-cocoa-line"
+          onError={() => setAvatarFailed(true)}
           src={user.avatarUrl}
         />
       ) : null}

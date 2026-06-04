@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { SafeImage } from "@/components/common/SafeImage";
 import { getFooterArtwork } from "@/data/content";
 import { resolveAssetUrl } from "@/lib/api";
 
@@ -12,7 +12,7 @@ export async function HomeFooterArt() {
       className="pointer-events-none relative z-10 -mb-px bg-white pt-12 md:pt-16"
     >
       <div className="relative mx-auto -mb-px w-full">
-        <Image
+        <SafeImage
           alt="Zoe&Book footer illustration"
           className="block h-auto w-full"
           height={365}

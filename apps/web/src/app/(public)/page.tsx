@@ -10,7 +10,7 @@ import { NewsletterForm } from "@/components/content/newsletter-form";
 import { getCozyMomentImages } from "@/data/gallery";
 import { apiGetContent, resolveAssetUrl, type HeroSlide } from "@/lib/api";
 import { getProductsForCollection } from "@/lib/catalog";
-import Image from "next/image";
+import { SafeImage } from "@/components/common/SafeImage";
 
 type RowData = {
   eyebrow?: string;
@@ -106,7 +106,7 @@ export default async function Home() {
                 className="relative aspect-square overflow-hidden rounded-coco bg-white shadow-soft"
                 key={image.src}
               >
-                <Image
+                <SafeImage
                   alt={image.alt}
                   className="h-full w-full object-cover"
                   fill
@@ -157,7 +157,7 @@ export default async function Home() {
                 className="relative aspect-square overflow-hidden rounded-coco-sm bg-cocoa-blush shadow-soft"
                 key={image.src}
               >
-                <Image
+                <SafeImage
                   alt={image.alt}
                   className="h-full w-full object-cover"
                   fill

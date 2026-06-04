@@ -11,7 +11,7 @@ import {
   adminUploadComicImage,
   type AdminComic,
 } from "@/lib/adminApi";
-import { resolveAssetUrl } from "@/lib/api";
+import { AdminAssetImage } from "@/components/admin/AdminAssetImage";
 import {
   AdminButton,
   AdminField,
@@ -206,8 +206,7 @@ export default function AdminComicsWorldPage() {
               <div className="flex items-center gap-3" key={idx}>
                 <div className="h-16 w-16 shrink-0 overflow-hidden rounded-coco-sm border border-cocoa-line bg-white">
                   {img.src ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img alt={img.alt} className="h-full w-full object-cover" src={resolveAssetUrl(img.src)} />
+                    <AdminAssetImage alt={img.alt} className="h-full w-full object-cover" src={img.src} />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-[10px] text-cocoa-text">
                       empty

@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { SafeImage } from "@/components/common/SafeImage";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { getArticle, getBlogCategory } from "@/data/content";
@@ -45,7 +45,7 @@ export default async function ArticlePage({ params }: PageProps) {
           {article.excerpt}
         </p>
         <div className="relative mt-8 aspect-[16/9] overflow-hidden rounded-coco bg-cocoa-blush shadow-soft">
-          <Image
+          <SafeImage
             alt=""
             className="h-full w-full object-cover"
             fill

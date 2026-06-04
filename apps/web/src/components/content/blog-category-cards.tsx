@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { SafeImage } from "@/components/common/SafeImage";
 import Link from "next/link";
 import { getBlogCategories } from "@/data/content";
 import { resolveAssetUrl } from "@/lib/api";
@@ -18,7 +18,7 @@ export async function BlogCategoryCards() {
               key={category.slug}
             >
               <div className="relative aspect-[4/3] overflow-hidden rounded-coco bg-cocoa-blush shadow-soft">
-                <Image
+                <SafeImage
                   alt=""
                   className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
                   fill

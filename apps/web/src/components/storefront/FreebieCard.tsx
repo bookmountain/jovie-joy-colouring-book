@@ -1,5 +1,6 @@
 "use client";
 
+import { SafeImage } from "@/components/common/SafeImage";
 import { resolveAssetUrl } from "@/lib/api";
 import type { FreebieListItem } from "@/lib/freebies";
 
@@ -13,10 +14,15 @@ function formatBytes(n: number): string {
 export function FreebieCard({ item, onOpen }: { item: FreebieListItem; onOpen: (item: FreebieListItem) => void }) {
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl border border-cocoa-line bg-white shadow-sm">
-      <div className="aspect-[4/3] w-full overflow-hidden bg-cocoa-cream">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-cocoa-cream">
         {item.coverImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={resolveAssetUrl(item.coverImage)} alt="" loading="lazy" className="h-full w-full object-cover" />
+          <SafeImage
+            alt=""
+            className="h-full w-full object-cover"
+            fill
+            sizes="(min-width: 640px) 33vw, 100vw"
+            src={resolveAssetUrl(item.coverImage)}
+          />
         ) : null}
       </div>
       <div className="flex flex-1 flex-col gap-2 p-4">

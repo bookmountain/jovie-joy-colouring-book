@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { SafeImage } from "@/components/common/SafeImage";
 import type { Product } from "@/data/products";
 import { resolveAssetUrl } from "@/lib/api";
 
@@ -29,7 +29,7 @@ export function ProductGallery({ product }: { product: Product }) {
       className="grid gap-4"
     >
       <div className="relative aspect-square overflow-hidden rounded-[24px] bg-white shadow-soft">
-        <Image
+        <SafeImage
           alt={`${product.title} image ${activeIndex + 1}`}
           className="h-full w-full object-cover"
           fill
@@ -73,7 +73,7 @@ export function ProductGallery({ product }: { product: Product }) {
               onClick={() => setActiveIndex(index)}
               type="button"
             >
-              <Image
+              <SafeImage
                 alt={`${product.title} thumbnail ${index + 1}`}
                 className="h-full w-full object-cover"
                 fill

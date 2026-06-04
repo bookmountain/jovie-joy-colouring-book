@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AdminAssetImage } from "@/components/admin/AdminAssetImage";
 import { resolveAssetUrl } from "@/lib/api";
 import { AdminButton } from "@/components/admin/ui";
 
@@ -81,15 +82,11 @@ function ImagePreviewLightbox({ src, onClose }: { src: string; onClose: () => vo
         className={`flex flex-1 ${fit ? "items-center justify-center overflow-hidden" : "items-start justify-center overflow-auto"} p-6`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <AdminAssetImage
           alt="Full-size preview"
           className={fit ? "max-h-full max-w-full object-contain" : "h-auto w-auto max-w-none"}
           onClick={() => setMode((m) => (m === "fit" ? "actual" : "fit"))}
-          onLoad={(e) => {
-            const img = e.currentTarget;
-            setDims({ w: img.naturalWidth, h: img.naturalHeight });
-          }}
+          onLoad={setDims}
           src={src}
           style={{ cursor: fit ? "zoom-in" : "zoom-out" }}
         />
@@ -199,11 +196,10 @@ export function ImageUpload({
         onKeyDown={(e) => { if (!busy && (e.key === "Enter" || e.key === " ")) inputRef.current?.click(); }}
       >
         {resolved ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <AdminAssetImage
             alt="Uploaded asset"
             className="absolute inset-0 h-full w-full object-contain"
-            src={resolved}
+            src={value}
           />
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center gap-1 px-4 text-center text-xs text-cocoa-text">

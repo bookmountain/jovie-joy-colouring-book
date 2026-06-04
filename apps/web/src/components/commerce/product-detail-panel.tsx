@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { Minus, Plus } from "lucide-react";
+import { SafeImage } from "@/components/common/SafeImage";
 import type { Product } from "@/data/products";
 import { resolveAssetUrl } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
@@ -125,7 +125,7 @@ export function ProductDetailPanel({ product }: { product: Product }) {
               target="_blank"
             >
               {link.image ? (
-                <Image
+                <SafeImage
                   alt={link.alt ?? link.label}
                   className="h-auto max-h-9 w-full object-contain"
                   height={48}

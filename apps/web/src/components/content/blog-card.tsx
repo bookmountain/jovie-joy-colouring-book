@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { SafeImage } from "@/components/common/SafeImage";
 import Link from "next/link";
 import type { Article } from "@/data/content";
 import { resolveAssetUrl } from "@/lib/api";
@@ -7,7 +7,7 @@ export function BlogCard({ article }: { article: Article }) {
   return (
     <Link className="group block" href={`/blogs/${article.blogSlug}/${article.slug}`}>
       <div className="relative aspect-[4/3] overflow-hidden rounded-coco bg-cocoa-blush shadow-soft">
-        <Image
+        <SafeImage
           alt=""
           className="h-full w-full object-cover transition group-hover:scale-[1.03]"
           fill

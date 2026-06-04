@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { SafeImage } from "@/components/common/SafeImage";
 import Link from "next/link";
 import type { Product } from "@/data/products";
 import { resolveAssetUrl } from "@/lib/api";
@@ -21,7 +21,7 @@ export function ProductVisualStory({ product }: { product: Product }) {
                 className="relative aspect-square overflow-hidden rounded-[18px] bg-cocoa-cream shadow-soft"
                 key={image}
               >
-                <Image
+                <SafeImage
                   alt={`Review Image ${index + 1}`}
                   className="h-full w-full object-cover"
                   fill
@@ -42,7 +42,7 @@ export function ProductVisualStory({ product }: { product: Product }) {
                   className="relative aspect-square overflow-hidden rounded-[18px] bg-cocoa-blush shadow-soft"
                   key={image}
                 >
-                  <Image
+                  <SafeImage
                     alt={`Inspiration Image ${index + 1}`}
                     className="h-full w-full object-cover"
                     fill

@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { SafeImage } from "@/components/common/SafeImage";
 import { getAboutSections } from "@/data/content";
 import { resolveAssetUrl } from "@/lib/api";
 
@@ -18,7 +18,7 @@ export async function AboutPage() {
               index % 2 === 1 ? "md:order-2" : ""
             }`}
           >
-            <Image
+            <SafeImage
               alt={section.alt}
               className="h-full w-full object-cover"
               fill

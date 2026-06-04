@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { SafeImage } from "@/components/common/SafeImage";
 import { getCozyMomentImages } from "@/data/gallery";
 import { resolveAssetUrl } from "@/lib/api";
 
@@ -12,7 +12,7 @@ export async function GalleryGrid() {
           className="relative aspect-square overflow-hidden rounded-coco-sm bg-cocoa-blush shadow-soft"
           key={`${image.src}-${index}`}
         >
-          <Image
+          <SafeImage
             alt={image.alt}
             className="h-full w-full object-cover"
             fill

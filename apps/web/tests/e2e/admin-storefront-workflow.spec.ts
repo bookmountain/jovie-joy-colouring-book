@@ -1,5 +1,5 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const TOKEN = "fake-admin-token";
 const USER = {
@@ -133,6 +133,14 @@ function adminListItem(product: Product) {
     publishedAt: product.publishedAt,
     updatedAt: new Date().toISOString(),
   };
+}
+
+async function brokenImageSources(scope: Page | Locator): Promise<string[]> {
+  return scope.locator("img").evaluateAll((imgs) =>
+    imgs
+      .filter((img): img is HTMLImageElement => img instanceof HTMLImageElement && img.complete && img.naturalWidth === 0)
+      .map((img) => img.currentSrc || img.src),
+  );
 }
 
 function slugify(input: string): string {
@@ -282,6 +290,10 @@ async function startMockApi() {
       }
       if (method === "HEAD" && url.pathname.startsWith("/uploads/content/missing-")) {
         sendText(res, 404);
+        return;
+      }
+      if (method === "GET" && url.pathname.includes("missing-public-cover.png")) {
+        sendText(res, 404, "missing");
         return;
       }
       if (method === "GET" && url.pathname.startsWith("/uploads/products/")) {
@@ -502,5 +514,45 @@ test.describe("admin product changes reach the storefront", () => {
     );
 
     expect(mock.products.get(slug)?.publishedAt).toBeTruthy();
+  });
+
+  test("storefront product cards and galleries replace missing uploaded images with placeholders", async ({ page }) => {
+    const slug = "missing-public-image-book";
+    const title = "Missing Public Image Book";
+    mock.products.set(slug, {
+      id: `product-${slug}`,
+      slug,
+      title,
+      excerpt: "Published product with an upload path whose file is gone.",
+      description: ["The product should still render without a broken image."],
+      priceCents: 900,
+      compareAtPriceCents: null,
+      available: true,
+      productType: "physical",
+      images: ["/uploads/products/missing-public-cover.png"],
+      options: [{ name: "Format", values: ["Physical book"] }],
+      sourceLinks: null,
+      reviewImages: null,
+      inspirationImages: null,
+      tags: ["missing"],
+      collections: ["new-release"],
+      publishedAt: new Date().toISOString(),
+      pdfPath: null,
+    });
+
+    await page.goto("/collections/new-release");
+    const card = page.getByTestId("product-card").filter({ hasText: title });
+    await expect(card).toBeVisible();
+    await expect(card.getByText("Image unavailable").first()).toBeVisible();
+    await expect(card.locator('img[src*="missing-public-cover"]')).toHaveCount(0);
+    await expect.poll(() => brokenImageSources(card)).toEqual([]);
+
+    await card.getByLabel(title, { exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`/products/${slug}$`));
+    await expect(page.getByRole("heading", { level: 1, name: title })).toBeVisible();
+    const gallery = page.getByLabel(`${title} media gallery`);
+    await expect(gallery.getByText("Image unavailable").first()).toBeVisible();
+    await expect(page.locator('img[src*="missing-public-cover"]')).toHaveCount(0);
+    await expect.poll(() => brokenImageSources(gallery)).toEqual([]);
   });
 });

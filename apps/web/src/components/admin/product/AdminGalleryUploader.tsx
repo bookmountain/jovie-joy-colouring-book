@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { resolveAssetUrl } from "@/lib/api";
+import { AdminAssetImage } from "@/components/admin/AdminAssetImage";
 
 export type AdminGalleryUploaderProps = {
   value: string[];
@@ -58,8 +58,7 @@ export function AdminGalleryUploader({ value, onChange, upload, emptyHint }: Adm
       <div className="admin-gallery">
         {value.map((url, idx) => (
           <div key={`${url}-${idx}`} className="admin-gallery-thumb" data-primary={idx === 0 ? "true" : undefined}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img alt={`Gallery image ${idx + 1}`} src={resolveAssetUrl(url)} />
+            <AdminAssetImage alt={`Gallery image ${idx + 1}`} src={url} />
             <div className="controls">
               {idx !== 0 ? (
                 <button type="button" aria-label="set as primary" title="Set as primary" onClick={() => setPrimary(idx)}>★</button>

@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import { SafeImage } from "@/components/common/SafeImage";
 import type { Product } from "@/data/products";
 import { resolveAssetUrl } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
@@ -26,7 +26,7 @@ export function ProductCard({ product }: { product: Product }) {
         href={`/products/${product.slug}`}
       >
         <div className="relative aspect-square overflow-hidden rounded-coco-sm bg-cocoa-cream">
-          <Image
+          <SafeImage
             alt={product.title}
             className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
             fill

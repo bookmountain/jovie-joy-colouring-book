@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { X } from "lucide-react";
+import { SafeImage } from "@/components/common/SafeImage";
 import { apiCreateCheckout } from "@/lib/api";
 import { tokenStorage } from "@/lib/auth";
 import { formatCents } from "@/lib/format";
@@ -78,7 +78,7 @@ export function CartDrawer() {
               >
                 {item.image ? (
                   <div className="relative aspect-square overflow-hidden rounded-coco-sm bg-cocoa-blush">
-                    <Image
+                    <SafeImage
                       alt=""
                       className="h-full w-full object-cover"
                       fill

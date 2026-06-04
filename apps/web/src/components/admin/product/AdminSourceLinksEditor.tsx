@@ -1,9 +1,9 @@
 "use client";
 
 import { useRef } from "react";
+import { AdminAssetImage } from "@/components/admin/AdminAssetImage";
 import { AdminInput } from "@/components/admin/ui/AdminInput";
 import { AdminButton } from "@/components/admin/ui/AdminButton";
-import { resolveAssetUrl } from "@/lib/api";
 
 export type SourceLinkValue = {
   label: string;
@@ -74,7 +74,7 @@ function SourceRow({
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileRef.current?.click(); }}
       >
         {row.image
-          ? <img alt={row.alt ?? ""} src={resolveAssetUrl(row.image)} />
+          ? <AdminAssetImage alt={row.alt ?? ""} src={row.image} />
           : <span>+ image</span>}
       </div>
       <AdminInput aria-label="label" placeholder="Penguin Random House" value={row.label} onChange={(e) => patch(idx, { label: e.target.value })} />

@@ -17,6 +17,10 @@ function makeProduct(overrides: Partial<{
   priceCents: number;
   available: boolean;
   publishedAt: string | null;
+  images: string[];
+  sourceLinks: { label: string; href: string; image?: string; alt?: string }[] | null;
+  reviewImages: string[] | null;
+  inspirationImages: string[] | null;
 }> = {}) {
   const slug = overrides.slug ?? "crm-test-product";
   return {
@@ -29,11 +33,11 @@ function makeProduct(overrides: Partial<{
     compareAtPriceCents: null,
     available: overrides.available ?? true,
     productType: overrides.productType ?? "physical",
-    images: [],
+    images: overrides.images ?? [],
     options: [],
-    sourceLinks: null,
-    reviewImages: null,
-    inspirationImages: null,
+    sourceLinks: overrides.sourceLinks ?? null,
+    reviewImages: overrides.reviewImages ?? null,
+    inspirationImages: overrides.inspirationImages ?? null,
     tags: [],
     collections: [],
     publishedAt: overrides.publishedAt ?? null,
@@ -82,6 +86,14 @@ function mockAuth(page: Page) {
       contentType: "application/json",
       body: JSON.stringify(USER),
     }),
+  );
+}
+
+async function brokenImageSources(page: Page): Promise<string[]> {
+  return page.locator("img").evaluateAll((imgs) =>
+    imgs
+      .filter((img): img is HTMLImageElement => img instanceof HTMLImageElement && img.complete && img.naturalWidth === 0)
+      .map((img) => img.currentSrc || img.src),
   );
 }
 
@@ -250,6 +262,59 @@ test.describe("admin product CRM", () => {
     const bulkDone = page.waitForResponse(/\/api\/admin\/products\/bulk/);
     await page.getByRole("button", { name: /^unpublish$/i }).click();
     await bulkDone;
+  });
+
+  test("admin product list and editor replace missing uploaded images with placeholders", async ({ page }) => {
+    const missingImage = "/uploads/products/missing-cover.png";
+    const missingProduct = makeProduct({
+      slug: "missing-image-book",
+      title: "Missing Image Book",
+      images: [missingImage],
+      inspirationImages: [missingImage],
+      sourceLinks: [{
+        label: "Publisher",
+        href: "https://example.com",
+        image: missingImage,
+        alt: "Missing publisher badge",
+      }],
+    });
+    const missingListItem = makeListItem({
+      slug: missingProduct.slug,
+      title: missingProduct.title,
+      primaryImage: missingImage,
+    });
+
+    await page.route("**/uploads/products/missing-cover.png", (r) =>
+      r.fulfill({ status: 404, contentType: "text/plain", body: "missing" }),
+    );
+    await page.route(/\/api\/admin\/products\?/, (r) =>
+      r.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ items: [missingListItem], total: 1, page: 1, pageSize: 25 }),
+      }),
+    );
+    await page.route("**/api/admin/products/missing-image-book", (r) =>
+      r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(missingProduct) }),
+    );
+    await page.route("**/api/admin/collections", (r) =>
+      r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([]) }),
+    );
+    await page.route("**/api/admin/products/tags", (r) =>
+      r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([]) }),
+    );
+
+    await page.goto("/admin/products");
+    await expect(page.getByRole("heading", { level: 1, name: "Products" })).toBeVisible();
+    await expect(page.getByText("Image unavailable").first()).toBeVisible();
+    await expect(page.locator('tbody img[src*="missing-cover"]')).toHaveCount(0);
+    await expect.poll(() => brokenImageSources(page)).toEqual([]);
+
+    await page.goto("/admin/products/missing-image-book");
+    await expect(page.getByRole("heading", { level: 1, name: /missing image book/i })).toBeVisible();
+    await expect(page.getByText("Image unavailable").first()).toBeVisible();
+    await expect(page.locator('img[src*="missing-cover"]')).toHaveCount(0);
+    await expect.poll(() => brokenImageSources(page)).toEqual([]);
   });
 
   // ---------------------------------------------------------------------------

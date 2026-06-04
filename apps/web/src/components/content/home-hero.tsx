@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import { SafeImage } from "@/components/common/SafeImage";
 import { resolveAssetUrl, type HeroSlide } from "@/lib/api";
 
 type Props = {
@@ -34,7 +34,7 @@ export function HomeHero({ slides, intervalMs = 5000 }: Props) {
           className="group relative block aspect-[5/8] overflow-hidden rounded-coco-sm bg-cocoa-cream md:aspect-[2/1]"
           href={slide.href || "#"}
         >
-          <Image
+          <SafeImage
             alt={slide.label || ""}
             className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.01]"
             fill

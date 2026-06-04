@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { SafeImage } from "@/components/common/SafeImage";
 import Link from "next/link";
 import { resolveAssetUrl } from "@/lib/api";
 import { getCollectionBySlug, getProductsForCollection } from "@/lib/catalog";
@@ -32,7 +32,7 @@ export async function CollectionTiles() {
                 href={`/collections/${slug}`}
                 key={slug}
               >
-                <Image
+                <SafeImage
                   alt=""
                   className="h-full w-full object-cover opacity-80 transition duration-300 group-hover:scale-[1.03]"
                   fill

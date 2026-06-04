@@ -9,7 +9,7 @@ import {
   adminUploadGalleryImage,
   type AdminGalleryImage,
 } from "@/lib/adminApi";
-import { resolveAssetUrl } from "@/lib/api";
+import { AdminAssetImage } from "@/components/admin/AdminAssetImage";
 import { StaticPageHeaderEditor } from "@/components/admin/StaticPageHeaderEditor";
 import {
   AdminButton,
@@ -121,11 +121,10 @@ export default function AdminGalleryPage() {
           <AdminPanel className="space-y-3" key={row.id}>
             <div className="relative aspect-square overflow-hidden rounded-coco-sm border border-cocoa-line bg-white">
               {row.src ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <AdminAssetImage
                   alt={row.alt || "Gallery image"}
                   className="h-full w-full object-cover"
-                  src={resolveAssetUrl(row.src)}
+                  src={row.src}
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-xs text-cocoa-text">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { AdminAssetImage } from "@/components/admin/AdminAssetImage";
 
 export type MultiImageUploadProps = {
   value: string[];
@@ -49,8 +50,7 @@ export function MultiImageUpload({ value, onChange, upload, label }: MultiImageU
       <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
         {value.map((url, idx) => (
           <div className="group relative rounded-coco-sm border border-cocoa-line bg-white p-1" key={`${url}-${idx}`}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img alt="" className="aspect-square w-full rounded-sm object-cover" src={url} />
+            <AdminAssetImage alt="" className="aspect-square w-full rounded-sm object-cover" src={url} />
             <div className="absolute inset-x-0 bottom-0 flex justify-between bg-cocoa-ink/70 p-1 text-[10px] text-cocoa-cream opacity-0 group-hover:opacity-100">
               <button disabled={idx === 0} onClick={() => move(idx, -1)} type="button">
                 ←

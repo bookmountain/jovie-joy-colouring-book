@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { SafeImage } from "@/components/common/SafeImage";
 import { getFaqArtwork } from "@/data/content";
 import { getFaqs } from "@/data/faqs";
 import { resolveAssetUrl } from "@/lib/api";
@@ -12,7 +12,7 @@ export async function FaqPreview() {
       <div className="mx-auto max-w-[1200px] px-4 lg:px-8">
         {faqArtwork ? (
           <div className="relative aspect-[1518/476] w-full overflow-hidden md:aspect-[1195/300]">
-            <Image
+            <SafeImage
               alt="Zoe&Book FAQ illustration"
               className="h-full w-full object-contain"
               fill

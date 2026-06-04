@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import { SafeImage } from "@/components/common/SafeImage";
 import { X } from "lucide-react";
 import { fetchCatalog, getPopularProducts, searchCatalog } from "@/lib/catalog";
 import { formatMoney } from "@/lib/format";
@@ -100,7 +100,7 @@ export function SearchDrawer() {
                   onClick={() => dispatch({ type: "drawer/close" })}
                 >
                   <div className="relative aspect-square overflow-hidden rounded-coco-sm bg-cocoa-blush">
-                    <Image
+                    <SafeImage
                       alt=""
                       className="h-full w-full object-cover"
                       fill

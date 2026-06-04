@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { SafeImage } from "@/components/common/SafeImage";
 import { getFeaturedOnLinks } from "@/data/content";
 import { resolveAssetUrl } from "@/lib/api";
 
@@ -19,7 +19,7 @@ export async function FeaturedOnSection() {
               rel="noreferrer"
               target="_blank"
             >
-              <Image
+              <SafeImage
                 alt={feature.alt}
                 className="h-auto w-full transition duration-300 group-hover:scale-[1.03]"
                 height={378}

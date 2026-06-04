@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { SafeImage } from "@/components/common/SafeImage";
 import { getComicWorlds } from "@/data/content";
 import type { Comic } from "@/data/content";
 import { resolveAssetUrl } from "@/lib/api";
@@ -48,7 +48,7 @@ function ComicSection({ comic }: { comic: Comic }) {
             rel="noreferrer"
             target="_blank"
           >
-            <Image
+            <SafeImage
               alt={image.alt}
               className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
               fill
