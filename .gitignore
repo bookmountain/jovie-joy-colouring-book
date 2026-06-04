@@ -34,6 +34,7 @@ Thumbs.db
 # Build artifacts
 coverage/
 *.tsbuildinfo
+uploads/
 
 # Claude
 .claude/worktrees/*
