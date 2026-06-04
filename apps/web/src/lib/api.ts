@@ -146,10 +146,10 @@ export const apiGetArticle = (blogSlug: string, articleSlug: string) =>
   get<Article>(`/api/blogs/${blogSlug}/articles/${articleSlug}`);
 export const apiGetComics = () => get<ComicWorld[]>("/api/comics");
 export const apiGetAbout = () => get<AboutSection[]>("/api/about");
-export const apiGetGallery = () => get<GalleryImage[]>("/api/gallery");
+export const apiGetGallery = () => get<GalleryImage[]>("/api/gallery", { cache: "no-store" });
 export const apiGetPage = (slug: string) => get<StaticPage>(`/api/pages/${slug}`);
 export const apiGetFaqs = () => get<Faq[]>("/api/faqs");
-export const apiGetContent = () => get<SiteContentBundle>("/api/content");
+export const apiGetContent = () => get<SiteContentBundle>("/api/content", { cache: "no-store" });
 
 // Commerce (anonymous OK)
 export const apiNewsletterSignup = (email: string) => post<{ ok: true }>("/api/newsletter", { email });

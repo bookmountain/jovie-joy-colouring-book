@@ -184,12 +184,36 @@ function contentBundle() {
     footerLinks: [],
     socialLinks: [],
     trendingTerms: ["cozy"],
-    homeIntro: [{ key: "home.intro", type: "HomeIntro", data: { title: "Hi Friend!", body: "A cozy admin workflow fixture." }, sortIndex: 0, updatedAt: now }],
+    homeIntro: [{
+      key: "home.intro",
+      type: "HomeIntro",
+      data: {
+        title: "Hi Friend!",
+        body: "A cozy admin workflow fixture.",
+        image1: "/uploads/content/missing-home-intro-one.png",
+        image2: "/uploads/content/missing-home-intro-two.png",
+      },
+      sortIndex: 0,
+      updatedAt: now,
+    }],
     homeCozyMomentsHeader: [{ key: "home.cozy.header", type: "HomeCozyMomentsHeader", data: { heading: "Cozy Moments" }, sortIndex: 0, updatedAt: now }],
     footerContact: [],
     headerBrand: [{ key: "header.brand", type: "HeaderBrand", data: { name: "Zoe&Book", searchPlaceholder: "Search the store" }, sortIndex: 0, updatedAt: now }],
     newsletterCopy: [],
-    homeHeroSlides: [],
+    homeHeroSlides: [{
+      key: "home.hero.slides",
+      type: "HomeHeroSlides",
+      data: {
+        intervalMs: 5000,
+        slides: [{
+          label: "Missing CMS hero",
+          href: "/collections/new-release",
+          image: "/uploads/content/missing-home-hero.png",
+        }],
+      },
+      sortIndex: 0,
+      updatedAt: now,
+    }],
     homeProductRows: [
       {
         key: "home.row.new-release",
@@ -245,12 +269,35 @@ async function startMockApi() {
         sendJson(res, 200, contentBundle());
         return;
       }
-      if (method === "GET" && ["/api/gallery", "/api/blogs", "/api/faqs", "/api/comics", "/api/about"].includes(url.pathname)) {
+      if (method === "GET" && url.pathname === "/api/gallery") {
+        sendJson(res, 200, [
+          { id: "gallery-one", src: "/uploads/gallery/fallback-one.png", alt: "Gallery fallback one", sortIndex: 0 },
+          { id: "gallery-two", src: "/uploads/gallery/fallback-two.png", alt: "Gallery fallback two", sortIndex: 1 },
+        ]);
+        return;
+      }
+      if (method === "GET" && ["/api/blogs", "/api/faqs", "/api/comics", "/api/about"].includes(url.pathname)) {
         sendJson(res, 200, []);
+        return;
+      }
+      if (method === "HEAD" && url.pathname.startsWith("/uploads/content/missing-")) {
+        sendText(res, 404);
         return;
       }
       if (method === "GET" && url.pathname.startsWith("/uploads/products/")) {
         sendPng(res);
+        return;
+      }
+      if (method === "GET" && url.pathname.startsWith("/uploads/gallery/")) {
+        sendPng(res);
+        return;
+      }
+      if (method === "HEAD" && url.pathname.startsWith("/uploads/gallery/")) {
+        res.writeHead(200, {
+          ...corsHeaders(),
+          "Content-Type": "image/png",
+        });
+        res.end();
         return;
       }
       if (method === "GET" && url.pathname.startsWith("/api/pages/")) {
@@ -401,6 +448,10 @@ test.describe("admin product changes reach the storefront", () => {
     await expect(page.getByText("Draft").first()).toBeVisible();
 
     await page.goto("/");
+    await expect(page.getByLabel("Missing CMS hero")).toHaveCount(0);
+    await expect(page.locator('img[src*="missing-home"], img[srcset*="missing-home"]')).toHaveCount(0);
+    expect(await page.locator('img[src*="fallback-one"]').count()).toBeGreaterThan(0);
+    expect(await page.locator('img[src*="fallback-two"]').count()).toBeGreaterThan(0);
     await expect(page.getByTestId("product-card").filter({ hasText: title })).toHaveCount(0);
 
     await page.goto(`/admin/products/${slug}`);

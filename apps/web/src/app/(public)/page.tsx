@@ -8,7 +8,7 @@ import { HomeSection } from "@/components/content/home-section";
 import { HomeVideoSection } from "@/components/content/home-video-section";
 import { NewsletterForm } from "@/components/content/newsletter-form";
 import { getCozyMomentImages } from "@/data/gallery";
-import { apiGetContent, resolveAssetUrl } from "@/lib/api";
+import { apiGetContent, resolveAssetUrl, type HeroSlide } from "@/lib/api";
 import { getProductsForCollection } from "@/lib/catalog";
 import Image from "next/image";
 
@@ -25,6 +25,29 @@ const ROW_FALLBACKS: Record<string, RowData> = {
   "home.row.best-seller": { eyebrow: "Popular products", title: "Best Seller", href: "/collections/frontpage", collectionSlug: "frontpage", itemCount: 4 },
   "home.row.digital":     { eyebrow: "Digital books", title: "Digital", href: "/collections/digital", collectionSlug: "digital", itemCount: 4 },
 };
+
+async function resolveReachableAssetUrl(src: string | null | undefined): Promise<string | null> {
+  const resolved = resolveAssetUrl(src);
+  if (!resolved) return null;
+  if (!resolved.includes("/uploads/")) return resolved;
+
+  try {
+    const response = await fetch(resolved, { method: "HEAD", cache: "no-store" });
+    return response.ok ? resolved : null;
+  } catch {
+    return null;
+  }
+}
+
+async function keepReachableHeroSlides(slides: HeroSlide[]): Promise<HeroSlide[]> {
+  const checked = await Promise.all(
+    slides.map(async (slide) => {
+      const image = await resolveReachableAssetUrl(slide.image);
+      return image ? { ...slide, image } : null;
+    }),
+  );
+  return checked.filter((slide): slide is HeroSlide => Boolean(slide));
+}
 
 export default async function Home() {
   const bundle = await apiGetContent();
@@ -54,16 +77,21 @@ export default async function Home() {
   };
   const cozyHeader = bundle.homeCozyMomentsHeader[0]?.data?.heading ?? "Cozy Moments";
   const heroSlidesData = bundle.homeHeroSlides[0]?.data;
-  const heroSlides = heroSlidesData?.slides ?? [];
+  const heroSlides = await keepReachableHeroSlides(heroSlidesData?.slides ?? []);
   const heroIntervalMs = heroSlidesData?.intervalMs ?? 5000;
 
   const introTiles: { src: string; alt: string }[] = [];
-  if (intro.image1) introTiles.push({ src: resolveAssetUrl(intro.image1), alt: intro.title ?? "Hi Friend" });
-  if (intro.image2) introTiles.push({ src: resolveAssetUrl(intro.image2), alt: intro.title ?? "Hi Friend" });
+  const [introImage1, introImage2] = await Promise.all([
+    resolveReachableAssetUrl(intro.image1),
+    resolveReachableAssetUrl(intro.image2),
+  ]);
+  if (introImage1) introTiles.push({ src: introImage1, alt: intro.title ?? "Hi Friend" });
+  if (introImage2) introTiles.push({ src: introImage2, alt: intro.title ?? "Hi Friend" });
   if (introTiles.length < 2) {
     for (const fallback of cozyMomentImages) {
       if (introTiles.length >= 2) break;
-      introTiles.push({ src: resolveAssetUrl(fallback.src), alt: fallback.alt });
+      const fallbackSrc = await resolveReachableAssetUrl(fallback.src);
+      if (fallbackSrc) introTiles.push({ src: fallbackSrc, alt: fallback.alt });
     }
   }
 
