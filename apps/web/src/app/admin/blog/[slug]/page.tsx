@@ -14,6 +14,7 @@ import {
 import { ImageUpload } from "@/components/admin/ImageUpload";
 import {
   AdminButton,
+  AdminConfirmDialog,
   AdminField,
   AdminInput,
   AdminLabel,
@@ -21,6 +22,7 @@ import {
   AdminPanel,
   AdminTextarea,
 } from "@/components/admin/ui";
+import { notifySaved, notifyDeleted, notifyError } from "@/lib/toast";
 
 type ArticleDraft = {
   slug: string;
@@ -58,6 +60,7 @@ export default function AdminBlogArticlesPage() {
   const [newDraft, setNewDraft] = useState<ArticleDraft>({ ...EMPTY_DRAFT });
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<ArticleDraft | null>(null);
 
   useEffect(() => {
     if (!categorySlug) return;
@@ -81,19 +84,24 @@ export default function AdminBlogArticlesPage() {
         sortIndex: row.sortIndex,
       });
       update(row.slug, articleToDraft(saved));
+      notifySaved("Article");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed");
+      notifyError(e);
     }
   }
 
   async function remove(slug: string) {
-    if (!confirm(`Delete article "${slug}"?`)) return;
     setError(null);
     try {
       await adminDeleteArticle(categorySlug, slug);
       setRows((cur) => cur.filter((r) => r.slug !== slug));
+      notifyDeleted("Article");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Delete failed");
+      notifyError(e);
+    } finally {
+      setPendingDelete(null);
     }
   }
 
@@ -111,8 +119,10 @@ export default function AdminBlogArticlesPage() {
       });
       setRows((cur) => [...cur, articleToDraft(created)]);
       setNewDraft({ ...EMPTY_DRAFT });
+      notifySaved("Article");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Create failed");
+      notifyError(e);
     } finally {
       setCreating(false);
     }
@@ -181,7 +191,7 @@ export default function AdminBlogArticlesPage() {
             <AdminButton onClick={() => save(row)} type="button" variant="primary">Save</AdminButton>
             <button
               className="text-xs text-cocoa-coral underline"
-              onClick={() => remove(row.slug)}
+              onClick={() => setPendingDelete(row)}
               type="button"
             >
               Delete
@@ -189,6 +199,18 @@ export default function AdminBlogArticlesPage() {
           </div>
         </AdminPanel>
       ))}
+
+      <AdminConfirmDialog
+        open={!!pendingDelete}
+        title={`Delete "${pendingDelete?.title || pendingDelete?.slug}"?`}
+        body="This article will be permanently removed."
+        confirmLabel="Delete article"
+        destructive
+        onConfirm={() => {
+          if (pendingDelete) return remove(pendingDelete.slug);
+        }}
+        onCancel={() => setPendingDelete(null)}
+      />
 
       <AdminPanel className="space-y-3">
         <h2 className="text-lg font-bold">Add new article</h2>

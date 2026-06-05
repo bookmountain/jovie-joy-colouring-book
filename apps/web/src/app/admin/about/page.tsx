@@ -13,6 +13,7 @@ import { ImageUpload } from "@/components/admin/ImageUpload";
 import { StaticPageHeaderEditor } from "@/components/admin/StaticPageHeaderEditor";
 import {
   AdminButton,
+  AdminConfirmDialog,
   AdminField,
   AdminInput,
   AdminLabel,
@@ -20,6 +21,7 @@ import {
   AdminPanel,
   AdminTextarea,
 } from "@/components/admin/ui";
+import { notifySaved, notifyDeleted, notifyError } from "@/lib/toast";
 
 type SectionDraft = {
   id: string;
@@ -61,6 +63,7 @@ export default function AdminAboutPage() {
   const [newDraft, setNewDraft] = useState({ ...NEW_DRAFT });
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<SectionDraft | null>(null);
 
   useEffect(() => {
     adminListAboutSections()
@@ -84,19 +87,24 @@ export default function AdminAboutPage() {
         sortIndex: row.sortIndex,
       });
       update(row.id, toDraft(saved));
+      notifySaved("Section");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed");
+      notifyError(e);
     }
   }
 
   async function remove(id: string) {
-    if (!confirm("Delete this About section?")) return;
     setError(null);
     try {
       await adminDeleteAboutSection(id);
       setRows((cur) => cur.filter((r) => r.id !== id));
+      notifyDeleted("Section");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Delete failed");
+      notifyError(e);
+    } finally {
+      setPendingDelete(null);
     }
   }
 
@@ -114,8 +122,10 @@ export default function AdminAboutPage() {
       });
       setRows((cur) => [...cur, toDraft(created)]);
       setNewDraft({ ...NEW_DRAFT });
+      notifySaved("Section");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Create failed");
+      notifyError(e);
     } finally {
       setCreating(false);
     }
@@ -196,7 +206,7 @@ export default function AdminAboutPage() {
             <AdminButton onClick={() => save(row)} type="button" variant="primary">Save</AdminButton>
             <button
               className="text-xs text-cocoa-coral underline"
-              onClick={() => remove(row.id)}
+              onClick={() => setPendingDelete(row)}
               type="button"
             >
               Delete
@@ -204,6 +214,18 @@ export default function AdminAboutPage() {
           </div>
         </AdminPanel>
       ))}
+
+      <AdminConfirmDialog
+        open={!!pendingDelete}
+        title={`Delete "${pendingDelete?.title || "this section"}"?`}
+        body="This About section will be permanently removed."
+        confirmLabel="Delete section"
+        destructive
+        onConfirm={() => {
+          if (pendingDelete) return remove(pendingDelete.id);
+        }}
+        onCancel={() => setPendingDelete(null)}
+      />
 
       <AdminPanel className="space-y-3">
         <h2 className="text-lg font-bold">Add new section</h2>

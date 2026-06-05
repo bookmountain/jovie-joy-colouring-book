@@ -12,12 +12,14 @@ import {
 import { StaticPageHeaderEditor } from "@/components/admin/StaticPageHeaderEditor";
 import {
   AdminButton,
+  AdminConfirmDialog,
   AdminField,
   AdminInput,
   AdminLabel,
   AdminPageHeader,
   AdminPanel,
 } from "@/components/admin/ui";
+import { notifySaved, notifyDeleted, notifyError } from "@/lib/toast";
 
 export default function AdminComicsPage() {
   const [worlds, setWorlds] = useState<AdminComicWorld[]>([]);
@@ -25,6 +27,7 @@ export default function AdminComicsPage() {
   const [draftSort, setDraftSort] = useState(0);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<AdminComicWorld | null>(null);
 
   useEffect(() => {
     adminListComicWorlds().then(setWorlds).catch((e: Error) => setError(e.message));
@@ -41,19 +44,24 @@ export default function AdminComicsPage() {
         title: world.title, sortIndex: world.sortIndex,
       });
       update(world.id, saved);
+      notifySaved("World");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed");
+      notifyError(e);
     }
   }
 
   async function remove(id: string) {
-    if (!confirm("Delete this comic world AND all its comics?")) return;
     setError(null);
     try {
       await adminDeleteComicWorld(id);
       setWorlds((cur) => cur.filter((w) => w.id !== id));
+      notifyDeleted("World");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Delete failed");
+      notifyError(e);
+    } finally {
+      setPendingDelete(null);
     }
   }
 
@@ -65,8 +73,10 @@ export default function AdminComicsPage() {
       setWorlds((cur) => [...cur, created]);
       setDraftTitle("");
       setDraftSort(0);
+      notifySaved("World");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Create failed");
+      notifyError(e);
     } finally {
       setCreating(false);
     }
@@ -114,7 +124,7 @@ export default function AdminComicsPage() {
             <AdminButton onClick={() => save(world)} type="button" variant="primary">Save</AdminButton>
             <button
               className="text-xs text-cocoa-coral underline"
-              onClick={() => remove(world.id)}
+              onClick={() => setPendingDelete(world)}
               type="button"
             >
               Delete
@@ -122,6 +132,18 @@ export default function AdminComicsPage() {
           </div>
         </AdminPanel>
       ))}
+
+      <AdminConfirmDialog
+        open={!!pendingDelete}
+        title={`Delete "${pendingDelete?.title || "this world"}"?`}
+        body="This deletes the comic world AND all its comics. This cannot be undone."
+        confirmLabel="Delete world"
+        destructive
+        onConfirm={() => {
+          if (pendingDelete) return remove(pendingDelete.id);
+        }}
+        onCancel={() => setPendingDelete(null)}
+      />
 
       <AdminPanel className="space-y-3">
         <h2 className="text-lg font-bold">Add new world</h2>

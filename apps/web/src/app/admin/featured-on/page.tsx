@@ -12,12 +12,14 @@ import {
 import { ImageUpload } from "@/components/admin/ImageUpload";
 import {
   AdminButton,
+  AdminConfirmDialog,
   AdminField,
   AdminInput,
   AdminLabel,
   AdminPageHeader,
   AdminPanel,
 } from "@/components/admin/ui";
+import { notifySaved, notifyDeleted, notifyError } from "@/lib/toast";
 
 const EMPTY: Omit<AdminFeaturedOn, "slug"> & { slug: string } = {
   slug: "",
@@ -33,6 +35,7 @@ export default function AdminFeaturedOnPage() {
   const [draft, setDraft] = useState<AdminFeaturedOn>({ ...EMPTY });
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<AdminFeaturedOn | null>(null);
 
   useEffect(() => {
     adminListFeaturedOn().then(setRows).catch((e: Error) => setError(e.message));
@@ -53,19 +56,24 @@ export default function AdminFeaturedOnPage() {
         sortIndex: row.sortIndex,
       });
       update(row.slug, saved);
+      notifySaved("Badge");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed");
+      notifyError(e);
     }
   }
 
   async function remove(slug: string) {
-    if (!confirm(`Delete "${slug}"?`)) return;
     setError(null);
     try {
       await adminDeleteFeaturedOn(slug);
       setRows((cur) => cur.filter((r) => r.slug !== slug));
+      notifyDeleted("Badge");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Delete failed");
+      notifyError(e);
+    } finally {
+      setPendingDelete(null);
     }
   }
 
@@ -76,8 +84,10 @@ export default function AdminFeaturedOnPage() {
       const created = await adminCreateFeaturedOn(draft);
       setRows((cur) => [...cur, created]);
       setDraft({ ...EMPTY });
+      notifySaved("Badge");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Create failed");
+      notifyError(e);
     } finally {
       setCreating(false);
     }
@@ -143,7 +153,7 @@ export default function AdminFeaturedOnPage() {
             <AdminButton onClick={() => save(row)} type="button" variant="primary">Save</AdminButton>
             <button
               className="text-xs text-cocoa-coral underline"
-              onClick={() => remove(row.slug)}
+              onClick={() => setPendingDelete(row)}
               type="button"
             >
               Delete
@@ -151,6 +161,18 @@ export default function AdminFeaturedOnPage() {
           </div>
         </AdminPanel>
       ))}
+
+      <AdminConfirmDialog
+        open={!!pendingDelete}
+        title={`Delete "${pendingDelete?.label || pendingDelete?.slug}"?`}
+        body="This badge will be permanently removed."
+        confirmLabel="Delete badge"
+        destructive
+        onConfirm={() => {
+          if (pendingDelete) return remove(pendingDelete.slug);
+        }}
+        onCancel={() => setPendingDelete(null)}
+      />
 
       <AdminPanel className="space-y-3">
         <h2 className="text-lg font-bold">Add new</h2>

@@ -14,6 +14,7 @@ import { ContentBlockEditor } from "@/components/admin/ContentBlockEditor";
 import { StaticPageHeaderEditor } from "@/components/admin/StaticPageHeaderEditor";
 import {
   AdminButton,
+  AdminConfirmDialog,
   AdminField,
   AdminInput,
   AdminLabel,
@@ -21,6 +22,7 @@ import {
   AdminPanel,
   AdminTextarea,
 } from "@/components/admin/ui";
+import { notifySaved, notifyDeleted, notifyError } from "@/lib/toast";
 
 const EMPTY: AdminFaq = { slug: "", question: "", answer: "", group: null, sortIndex: 0 };
 
@@ -29,6 +31,7 @@ export default function AdminFaqPage() {
   const [draft, setDraft] = useState<AdminFaq>({ ...EMPTY });
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<AdminFaq | null>(null);
 
   const [artworkDraft, setArtworkDraft] = useState<unknown>({});
   const [artworkSaving, setArtworkSaving] = useState(false);
@@ -55,19 +58,24 @@ export default function AdminFaqPage() {
         sortIndex: row.sortIndex,
       });
       update(row.slug, saved);
+      notifySaved("FAQ");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed");
+      notifyError(e);
     }
   }
 
   async function remove(slug: string) {
-    if (!confirm(`Delete "${slug}"?`)) return;
     setError(null);
     try {
       await adminDeleteFaq(slug);
       setRows((cur) => cur.filter((r) => r.slug !== slug));
+      notifyDeleted("FAQ");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Delete failed");
+      notifyError(e);
+    } finally {
+      setPendingDelete(null);
     }
   }
 
@@ -78,8 +86,10 @@ export default function AdminFaqPage() {
       const created = await adminCreateFaq(draft);
       setRows((cur) => [...cur, created]);
       setDraft({ ...EMPTY });
+      notifySaved("FAQ");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Create failed");
+      notifyError(e);
     } finally {
       setCreating(false);
     }
@@ -90,6 +100,9 @@ export default function AdminFaqPage() {
     try {
       await adminUpsertContent("hero.artwork.faq", { type: "HeroArtwork", data: artworkDraft, sortIndex: 0 });
       setArtworkSavedAt(new Date().toLocaleTimeString());
+      notifySaved("Artwork");
+    } catch (e) {
+      notifyError(e);
     } finally {
       setArtworkSaving(false);
     }
@@ -169,7 +182,7 @@ export default function AdminFaqPage() {
             <AdminButton onClick={() => saveRow(row)} type="button" variant="primary">Save</AdminButton>
             <button
               className="text-xs text-cocoa-coral underline"
-              onClick={() => remove(row.slug)}
+              onClick={() => setPendingDelete(row)}
               type="button"
             >
               Delete
@@ -177,6 +190,19 @@ export default function AdminFaqPage() {
           </div>
         </AdminPanel>
       ))}
+
+      <AdminConfirmDialog
+        open={!!pendingDelete}
+        title={`Delete "${pendingDelete?.question || pendingDelete?.slug}"?`}
+        body="This FAQ will be permanently removed."
+        confirmLabel="Delete FAQ"
+        destructive
+        onConfirm={() => {
+          if (pendingDelete) return remove(pendingDelete.slug);
+        }}
+        onCancel={() => setPendingDelete(null)}
+      />
+
 
       <AdminPanel className="space-y-3">
         <h2 className="text-lg font-bold">Add new FAQ</h2>

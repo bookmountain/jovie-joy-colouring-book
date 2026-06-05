@@ -13,17 +13,20 @@ import { AdminAssetImage } from "@/components/admin/AdminAssetImage";
 import { StaticPageHeaderEditor } from "@/components/admin/StaticPageHeaderEditor";
 import {
   AdminButton,
+  AdminConfirmDialog,
   AdminField,
   AdminInput,
   AdminLabel,
   AdminPageHeader,
   AdminPanel,
 } from "@/components/admin/ui";
+import { notifySaved, notifyDeleted, notifyError } from "@/lib/toast";
 
 export default function AdminGalleryPage() {
   const [rows, setRows] = useState<AdminGalleryImage[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<AdminGalleryImage | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -43,19 +46,24 @@ export default function AdminGalleryPage() {
         sortIndex: row.sortIndex,
       });
       update(row.id, saved);
+      notifySaved("Image");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed");
+      notifyError(e);
     }
   }
 
   async function remove(id: string) {
-    if (!confirm("Delete this gallery image?")) return;
     setError(null);
     try {
       await adminDeleteGalleryImage(id);
       setRows((cur) => cur.filter((r) => r.id !== id));
+      notifyDeleted("Image");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Delete failed");
+      notifyError(e);
+    } finally {
+      setPendingDelete(null);
     }
   }
 
@@ -70,8 +78,10 @@ export default function AdminGalleryPage() {
         sortIndex: rows.length,
       });
       setRows((cur) => [...cur, created]);
+      notifySaved("Image");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload failed");
+      notifyError(e);
     } finally {
       setUploading(false);
     }
@@ -153,7 +163,7 @@ export default function AdminGalleryPage() {
               <AdminButton onClick={() => saveRow(row)} type="button" variant="primary">Save</AdminButton>
               <button
                 className="text-xs text-cocoa-coral underline"
-                onClick={() => remove(row.id)}
+                onClick={() => setPendingDelete(row)}
                 type="button"
               >
                 Delete
@@ -162,6 +172,18 @@ export default function AdminGalleryPage() {
           </AdminPanel>
         ))}
       </div>
+
+      <AdminConfirmDialog
+        open={!!pendingDelete}
+        title="Delete this image?"
+        body="This gallery image will be permanently removed."
+        confirmLabel="Delete image"
+        destructive
+        onConfirm={() => {
+          if (pendingDelete) return remove(pendingDelete.id);
+        }}
+        onCancel={() => setPendingDelete(null)}
+      />
     </div>
   );
 }

@@ -6,12 +6,14 @@ import { useRouter } from "next/navigation";
 import { adminCreateStaticPage, adminDeleteStaticPage, adminListStaticPages } from "@/lib/adminApi";
 import type { StaticPage } from "@/lib/api";
 import { StaticPageForm } from "@/components/admin/StaticPageForm";
-import { AdminButton, AdminPageHeader } from "@/components/admin/ui";
+import { AdminButton, AdminConfirmDialog, AdminPageHeader } from "@/components/admin/ui";
+import { notifyDeleted, notifyError } from "@/lib/toast";
 
 export default function AdminStaticPagesList() {
   const router = useRouter();
   const [pages, setPages] = useState<StaticPage[]>([]);
   const [showCreate, setShowCreate] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<StaticPage | null>(null);
 
   function reload() {
     adminListStaticPages().then(setPages);
@@ -19,9 +21,15 @@ export default function AdminStaticPagesList() {
   useEffect(reload, []);
 
   async function handleDelete(slug: string) {
-    if (!confirm(`Delete ${slug}?`)) return;
-    await adminDeleteStaticPage(slug);
-    reload();
+    try {
+      await adminDeleteStaticPage(slug);
+      notifyDeleted("Page");
+      reload();
+    } catch (e) {
+      notifyError(e);
+    } finally {
+      setPendingDelete(null);
+    }
   }
 
   return (
@@ -55,12 +63,24 @@ export default function AdminStaticPagesList() {
               <td>{p.blocks.length}</td>
               <td className="text-right">
                 <Link className="mr-3 text-cocoa-purple underline" href={`/admin/static-pages/${p.slug}`}>Edit</Link>
-                <button className="text-cocoa-coral underline" onClick={() => handleDelete(p.slug)} type="button">Delete</button>
+                <button className="text-cocoa-coral underline" onClick={() => setPendingDelete(p)} type="button">Delete</button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      <AdminConfirmDialog
+        open={!!pendingDelete}
+        title={`Delete "${pendingDelete?.title || pendingDelete?.slug}"?`}
+        body="This static page will be permanently removed."
+        confirmLabel="Delete page"
+        destructive
+        onConfirm={() => {
+          if (pendingDelete) return handleDelete(pendingDelete.slug);
+        }}
+        onCancel={() => setPendingDelete(null)}
+      />
     </div>
   );
 }
