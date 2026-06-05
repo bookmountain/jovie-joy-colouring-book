@@ -24,6 +24,16 @@ async function login(page: Page) {
   await page.waitForURL((u) => !u.pathname.startsWith("/admin/login") && /\/admin(\/|$)/.test(u.pathname));
 }
 
+// Open a product's admin edit page. Browsing the storefront re-validates the
+// admin token via apiMe and clears it on any transient failure, so a hard reload
+// of an admin route can bounce to login (asynchronously). Re-authenticate first
+// so the edit page always loads with a fresh token.
+async function gotoAdminEdit(page: Page, slug: string) {
+  await login(page);
+  await page.goto(`/admin/products/${slug}`);
+  await expect(page.locator("#pf-title")).toBeVisible({ timeout: 20000 });
+}
+
 test("admin publish of a product reflects on the storefront immediately, then unpublish hides it", async ({ page }) => {
   const stamp = Date.now();
   const title = `E2E Reflect Product ${stamp}`;
@@ -53,17 +63,20 @@ test("admin publish of a product reflects on the storefront immediately, then un
   await page.waitForURL(`**/admin/products/${slug}`);
 
   // Storefront: the product appears on the /products listing...
+  // (Each card renders an image link + a title link, so assert the unique heading.)
   await page.goto("/products?pageSize=50");
-  await expect(page.getByRole("link", { name: title })).toBeVisible({ timeout: 20000 });
+  await expect(page.getByRole("heading", { name: title, level: 3 })).toBeVisible({ timeout: 20000 });
 
   // ...and its detail page renders, with the Products breadcrumb crumb.
   await page.goto(`/products/${slug}`);
   await expect(page.getByRole("heading", { name: title, level: 1 })).toBeVisible({ timeout: 20000 });
   await expect(page.getByRole("link", { name: "Products" })).toHaveAttribute("href", "/products");
 
-  // Unpublish in admin: toggle the Published switch off and save.
-  await page.goto(`/admin/products/${slug}`);
-  await page.getByRole("switch", { name: "Published" }).click();
+  // Unpublish in admin: clear the publish date (also flips the Published switch
+  // off) and save. Using the stable date input avoids races on form hydration.
+  await gotoAdminEdit(page, slug);
+  await expect(page.locator("#pf-published")).toHaveValue(today);
+  await page.locator("#pf-published").fill("");
   const [updateResp] = await Promise.all([
     page.waitForResponse(
       (r) => r.url().includes(`/api/admin/products/${slug}`) && r.request().method() === "PUT",
@@ -75,13 +88,13 @@ test("admin publish of a product reflects on the storefront immediately, then un
 
   // Storefront reflects the unpublish immediately: gone from the listing...
   await page.goto("/products?pageSize=50");
-  await expect(page.getByRole("link", { name: title })).toBeHidden();
+  await expect(page.getByRole("heading", { name: title, level: 3 })).toBeHidden();
   // ...and the detail page 404s for the public.
   const detail = await page.goto(`/products/${slug}`);
   expect(detail?.status()).toBe(404);
 
   // Clean up: delete via the in-app confirm dialog (not a native confirm()).
-  await page.goto(`/admin/products/${slug}`);
+  await gotoAdminEdit(page, slug);
   await page.getByRole("button", { name: /delete product/i }).click();
   await page.getByRole("dialog").getByRole("button", { name: /delete product/i }).click();
   await expect(page.getByText(/product deleted/i)).toBeVisible();
