@@ -18,3 +18,4 @@ export * from "./AdminTable";
 export * from "./AdminPagination";
 export * from "./AdminModal";
 export * from "./AdminConfirmDialog";
+export * from "./AdminToaster";
