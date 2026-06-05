@@ -75,6 +75,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> opts) : DbContext(opts)
             e.Property(x => x.SourceLinks).HasColumnType("jsonb")
                 .HasConversion(v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
                                v => v == null ? null : JsonSerializer.Deserialize<List<SourceLink>>(v, (JsonSerializerOptions?)null));
+            // PublishedAt arrives from the admin form as a bare date (e.g. "2026-06-05"),
+            // which deserialises to DateTime Kind=Unspecified. Npgsql rejects that for a
+            // `timestamp with time zone` column, so force UTC on write.
+            e.Property(x => x.PublishedAt).HasConversion(
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v,
+                v => v);
         });
 
         b.Entity<Collection>(e =>
