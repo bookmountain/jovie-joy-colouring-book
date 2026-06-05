@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { adminListContent, adminDeleteContent } from "@/lib/adminApi";
 import type { ContentBlock } from "@/lib/api";
-import { AdminPageHeader } from "@/components/admin/ui";
+import { AdminConfirmDialog, AdminPageHeader } from "@/components/admin/ui";
+import { notifyDeleted, notifyError } from "@/lib/toast";
 
 const ORDER = [
   "HomeHero",
@@ -20,11 +21,24 @@ const ORDER = [
 export default function AdminContentPage() {
   const [blocks, setBlocks] = useState<ContentBlock[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<ContentBlock | null>(null);
 
   function reload() {
     adminListContent().then(setBlocks).catch((e: Error) => setError(e.message));
   }
   useEffect(reload, []);
+
+  async function remove(key: string) {
+    try {
+      await adminDeleteContent(key);
+      notifyDeleted("Block");
+      reload();
+    } catch (e) {
+      notifyError(e);
+    } finally {
+      setPendingDelete(null);
+    }
+  }
 
   if (error) return <p className="text-cocoa-coral">{error}</p>;
 
@@ -75,11 +89,7 @@ export default function AdminContentPage() {
                     </Link>
                     <button
                       className="text-cocoa-coral underline"
-                      onClick={async () => {
-                        if (!window.confirm(`Delete ${b.key}?`)) return;
-                        await adminDeleteContent(b.key);
-                        reload();
-                      }}
+                      onClick={() => setPendingDelete(b)}
                       type="button"
                     >
                       Delete
@@ -91,6 +101,18 @@ export default function AdminContentPage() {
           </div>
         ))
       )}
+
+      <AdminConfirmDialog
+        open={!!pendingDelete}
+        title={`Delete "${pendingDelete?.key}"?`}
+        body="This content block will be permanently removed from the storefront."
+        confirmLabel="Delete block"
+        destructive
+        onConfirm={() => {
+          if (pendingDelete) return remove(pendingDelete.key);
+        }}
+        onCancel={() => setPendingDelete(null)}
+      />
     </div>
   );
 }

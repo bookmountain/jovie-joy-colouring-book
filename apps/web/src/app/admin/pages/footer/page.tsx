@@ -9,7 +9,13 @@ import {
   type AdminFooterLink, type AdminSocialLink, type AdminTrendingTerm,
 } from "@/lib/adminApi";
 import { ContentBlockEditor } from "@/components/admin/ContentBlockEditor";
-import { AdminButton, AdminInput, AdminPanel, AdminPageHeader } from "@/components/admin/ui";
+import { AdminButton, AdminConfirmDialog, AdminInput, AdminPanel, AdminPageHeader } from "@/components/admin/ui";
+import { notifySaved, notifyDeleted, notifyError } from "@/lib/toast";
+
+type PendingDelete =
+  | { kind: "footer"; id: string; label: string }
+  | { kind: "social"; label: string }
+  | { kind: "term"; term: string };
 
 export default function AdminFooterPage() {
   const [contactDraft, setContactDraft] = useState<unknown>({});
@@ -23,6 +29,7 @@ export default function AdminFooterPage() {
   const [newLink, setNewLink] = useState({ groupKey: "", groupTitle: "", label: "", href: "", sortIndex: 0 });
   const [newSocial, setNewSocial] = useState({ label: "", href: "", sortIndex: 0 });
   const [newTerm, setNewTerm] = useState({ term: "", sortIndex: 0 });
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
 
   useEffect(() => {
     adminGetContent("footer.contact").then((b) => setContactDraft(b.data)).catch(() => setContactDraft({}));
@@ -36,52 +43,76 @@ export default function AdminFooterPage() {
     try {
       await adminUpsertContent("footer.contact", { type: "FooterContact", data: contactDraft, sortIndex: 0 });
       setContactSavedAt(new Date().toLocaleTimeString());
+      notifySaved("Contact");
+    } catch (e) {
+      notifyError(e);
     } finally {
       setContactSaving(false);
     }
   }
 
   async function addFooterLink() {
-    const created = await adminCreateFooterLink(newLink);
-    setFooter((cur) => [...cur, created]);
-    setNewLink({ groupKey: "", groupTitle: "", label: "", href: "", sortIndex: 0 });
+    try {
+      const created = await adminCreateFooterLink(newLink);
+      setFooter((cur) => [...cur, created]);
+      setNewLink({ groupKey: "", groupTitle: "", label: "", href: "", sortIndex: 0 });
+      notifySaved("Link");
+    } catch (e) { notifyError(e); }
   }
   async function updateFooterLink(id: string, patch: Partial<AdminFooterLink>) {
     const current = footer.find((f) => f.id === id);
     if (!current) return;
-    const updated = await adminUpdateFooterLink(id, { ...current, ...patch });
-    setFooter((cur) => cur.map((f) => (f.id === id ? updated : f)));
+    try {
+      const updated = await adminUpdateFooterLink(id, { ...current, ...patch });
+      setFooter((cur) => cur.map((f) => (f.id === id ? updated : f)));
+      notifySaved("Link");
+    } catch (e) { notifyError(e); }
   }
   async function deleteFooterLink(id: string) {
-    if (!confirm("Delete this footer link?")) return;
-    await adminDeleteFooterLink(id);
-    setFooter((cur) => cur.filter((f) => f.id !== id));
+    try {
+      await adminDeleteFooterLink(id);
+      setFooter((cur) => cur.filter((f) => f.id !== id));
+      notifyDeleted("Link");
+    } catch (e) { notifyError(e); } finally { setPendingDelete(null); }
   }
 
   async function addSocial() {
-    const created = await adminCreateSocialLink(newSocial);
-    setSocial((cur) => [...cur, created]);
-    setNewSocial({ label: "", href: "", sortIndex: 0 });
+    try {
+      const created = await adminCreateSocialLink(newSocial);
+      setSocial((cur) => [...cur, created]);
+      setNewSocial({ label: "", href: "", sortIndex: 0 });
+      notifySaved("Social link");
+    } catch (e) { notifyError(e); }
   }
   async function updateSocial(label: string, patch: { href: string; sortIndex: number }) {
-    const updated = await adminUpdateSocialLink(label, patch);
-    setSocial((cur) => cur.map((s) => (s.label === label ? updated : s)));
+    try {
+      const updated = await adminUpdateSocialLink(label, patch);
+      setSocial((cur) => cur.map((s) => (s.label === label ? updated : s)));
+      notifySaved("Social link");
+    } catch (e) { notifyError(e); }
   }
   async function deleteSocial(label: string) {
-    if (!confirm(`Delete ${label}?`)) return;
-    await adminDeleteSocialLink(label);
-    setSocial((cur) => cur.filter((s) => s.label !== label));
+    try {
+      await adminDeleteSocialLink(label);
+      setSocial((cur) => cur.filter((s) => s.label !== label));
+      notifyDeleted("Social link");
+    } catch (e) { notifyError(e); } finally { setPendingDelete(null); }
   }
 
   async function addTerm() {
-    const created = await adminCreateTrendingTerm(newTerm);
-    setTrending((cur) => [...cur, created]);
-    setNewTerm({ term: "", sortIndex: 0 });
+    try {
+      const created = await adminCreateTrendingTerm(newTerm);
+      setTrending((cur) => [...cur, created]);
+      setNewTerm({ term: "", sortIndex: 0 });
+      notifySaved("Term");
+    } catch (e) { notifyError(e); }
   }
   async function deleteTerm(term: string) {
-    if (!confirm(`Delete "${term}"?`)) return;
-    await adminDeleteTrendingTerm(term);
-    setTrending((cur) => cur.filter((t) => t.term !== term));
+    try {
+      await adminDeleteTrendingTerm(term);
+      setTrending((cur) => cur.filter((t) => t.term !== term));
+      notifyDeleted("Term");
+    } catch (e) { notifyError(e); } finally { setPendingDelete(null); }
   }
 
   return (
@@ -114,7 +145,7 @@ export default function AdminFooterPage() {
                 <td><AdminInput className="w-48" defaultValue={f.label} onBlur={(e) => updateFooterLink(f.id, { label: e.target.value })} /></td>
                 <td><AdminInput className="w-64" defaultValue={f.href} onBlur={(e) => updateFooterLink(f.id, { href: e.target.value })} /></td>
                 <td><AdminInput className="w-16" defaultValue={f.sortIndex} onBlur={(e) => updateFooterLink(f.id, { sortIndex: Number(e.target.value) })} type="number" /></td>
-                <td className="text-right"><button className="text-cocoa-coral underline" onClick={() => deleteFooterLink(f.id)} type="button">Delete</button></td>
+                <td className="text-right"><button className="text-cocoa-coral underline" onClick={() => setPendingDelete({ kind: "footer", id: f.id, label: f.label })} type="button">Delete</button></td>
               </tr>
             ))}
           </tbody>
@@ -138,7 +169,7 @@ export default function AdminFooterPage() {
                 <td className="py-2 font-semibold">{s.label}</td>
                 <td><AdminInput className="w-64" defaultValue={s.href} onBlur={(e) => updateSocial(s.label, { href: e.target.value, sortIndex: s.sortIndex })} /></td>
                 <td><AdminInput className="w-16" defaultValue={s.sortIndex} onBlur={(e) => updateSocial(s.label, { href: s.href, sortIndex: Number(e.target.value) })} type="number" /></td>
-                <td className="text-right"><button className="text-cocoa-coral underline" onClick={() => deleteSocial(s.label)} type="button">Delete</button></td>
+                <td className="text-right"><button className="text-cocoa-coral underline" onClick={() => setPendingDelete({ kind: "social", label: s.label })} type="button">Delete</button></td>
               </tr>
             ))}
           </tbody>
@@ -156,7 +187,7 @@ export default function AdminFooterPage() {
           {trending.map((t) => (
             <li key={t.term} className="flex items-center gap-2">
               <span className="flex-1">{t.term}</span>
-              <button className="text-cocoa-coral underline" onClick={() => deleteTerm(t.term)} type="button">Delete</button>
+              <button className="text-cocoa-coral underline" onClick={() => setPendingDelete({ kind: "term", term: t.term })} type="button">Delete</button>
             </li>
           ))}
         </ul>
@@ -165,6 +196,26 @@ export default function AdminFooterPage() {
           <AdminButton disabled={!newTerm.term} onClick={addTerm} type="button" variant="ghost">+ Add</AdminButton>
         </div>
       </AdminPanel>
+
+      <AdminConfirmDialog
+        open={!!pendingDelete}
+        title={
+          pendingDelete?.kind === "footer" ? `Delete footer link "${pendingDelete.label}"?`
+          : pendingDelete?.kind === "social" ? `Delete social link "${pendingDelete.label}"?`
+          : pendingDelete?.kind === "term" ? `Delete trending term "${pendingDelete.term}"?`
+          : "Delete?"
+        }
+        body="This will be permanently removed."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={() => {
+          if (!pendingDelete) return;
+          if (pendingDelete.kind === "footer") return deleteFooterLink(pendingDelete.id);
+          if (pendingDelete.kind === "social") return deleteSocial(pendingDelete.label);
+          return deleteTerm(pendingDelete.term);
+        }}
+        onCancel={() => setPendingDelete(null)}
+      />
     </div>
   );
 }

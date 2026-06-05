@@ -10,18 +10,32 @@ import {
 } from "@/lib/adminApi";
 import type { Collection } from "@/lib/api";
 import { CollectionForm } from "@/components/admin/CollectionForm";
-import { AdminButton, AdminPageHeader } from "@/components/admin/ui";
+import { AdminButton, AdminConfirmDialog, AdminPageHeader } from "@/components/admin/ui";
+import { notifyDeleted, notifyError } from "@/lib/toast";
 
 export default function AdminCollectionsList() {
   const router = useRouter();
   const [collections, setCollections] = useState<Collection[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<Collection | null>(null);
 
   function reload() {
     adminListCollections().then(setCollections).catch((e: Error) => setError(e.message));
   }
   useEffect(reload, []);
+
+  async function remove(slug: string) {
+    try {
+      await adminDeleteCollection(slug);
+      notifyDeleted("Collection");
+      reload();
+    } catch (e) {
+      notifyError(e);
+    } finally {
+      setPendingDelete(null);
+    }
+  }
 
   return (
     <div>
@@ -76,11 +90,7 @@ export default function AdminCollectionsList() {
                 </Link>
                 <button
                   className="text-cocoa-coral underline"
-                  onClick={async () => {
-                    if (!window.confirm(`Delete ${c.slug}?`)) return;
-                    await adminDeleteCollection(c.slug);
-                    reload();
-                  }}
+                  onClick={() => setPendingDelete(c)}
                   type="button"
                 >
                   Delete
@@ -90,6 +100,18 @@ export default function AdminCollectionsList() {
           ))}
         </tbody>
       </table>
+
+      <AdminConfirmDialog
+        open={!!pendingDelete}
+        title={`Delete "${pendingDelete?.title || pendingDelete?.slug}"?`}
+        body="This collection will be removed. Products in it are not deleted."
+        confirmLabel="Delete collection"
+        destructive
+        onConfirm={() => {
+          if (pendingDelete) return remove(pendingDelete.slug);
+        }}
+        onCancel={() => setPendingDelete(null)}
+      />
     </div>
   );
 }

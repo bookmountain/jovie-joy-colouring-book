@@ -23,6 +23,8 @@ import { AdminBadge } from "@/components/admin/ui/AdminBadge";
 import { AdminCheckbox } from "@/components/admin/ui/AdminCheckbox";
 import { AdminEmptyState } from "@/components/admin/ui/AdminEmptyState";
 import { PRODUCT_FORMATS } from "@/components/admin/product/AdminFormatPicker";
+import { AdminConfirmDialog } from "@/components/admin/ui/AdminConfirmDialog";
+import { notifySaved, notifyDeleted, notifyError } from "@/lib/toast";
 
 const STATUSES = [
   { value: "published", label: "Published" },
@@ -57,6 +59,7 @@ export default function AdminProductsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
   useEffect(() => { adminListCollections().then((cs) => setAllCollections(cs.map((c) => ({ slug: c.slug, title: c.title })))).catch(() => {}); }, []);
   useEffect(() => { void adminListProductTags().catch(() => {}); }, []);
@@ -95,11 +98,18 @@ export default function AdminProductsPage() {
 
   async function bulk(action: Parameters<typeof adminBulkProducts>[0]["action"], payload?: { collectionSlug?: string }) {
     if (selected.size === 0) return;
-    await adminBulkProducts({ slugs: Array.from(selected), action, payload });
-    setSelected(new Set());
-    // refresh
-    const res = await adminListProducts({ q: debouncedQ || undefined, format: formats, status: statuses, collection: collections, sort, page, pageSize });
-    setItems(res.items); setTotal(res.total);
+    const count = selected.size;
+    try {
+      await adminBulkProducts({ slugs: Array.from(selected), action, payload });
+      setSelected(new Set());
+      // refresh
+      const res = await adminListProducts({ q: debouncedQ || undefined, format: formats, status: statuses, collection: collections, sort, page, pageSize });
+      setItems(res.items); setTotal(res.total);
+      if (action === "delete") notifyDeleted(`${count} product${count === 1 ? "" : "s"}`);
+      else notifySaved("Products");
+    } catch (e) {
+      notifyError(e);
+    }
   }
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -238,8 +248,21 @@ export default function AdminProductsPage() {
         ) : null}
         <button onClick={() => void bulk("publish")}>Publish</button>
         <button onClick={() => void bulk("unpublish")}>Unpublish</button>
-        <button data-tone="danger" onClick={() => { if (window.confirm(`Delete ${selected.size} products?`)) void bulk("delete"); }}>Delete</button>
+        <button data-tone="danger" onClick={() => setBulkDeleteOpen(true)}>Delete</button>
       </AdminBulkBar>
+
+      <AdminConfirmDialog
+        open={bulkDeleteOpen}
+        title={`Delete ${selected.size} product${selected.size === 1 ? "" : "s"}?`}
+        body="The selected products will be permanently deleted. This cannot be undone."
+        confirmLabel="Delete products"
+        destructive
+        onConfirm={async () => {
+          await bulk("delete");
+          setBulkDeleteOpen(false);
+        }}
+        onCancel={() => setBulkDeleteOpen(false)}
+      />
 
       {!loading && items.length === 0 && total === 0 ? (
         <AdminEmptyState icon="📦" heading="No products yet" body="Add your first product to start cataloguing." action={<Link href="/admin/products/new"><AdminButton variant="primary">+ Add product</AdminButton></Link>} />
