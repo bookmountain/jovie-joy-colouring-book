@@ -9,6 +9,7 @@ import {
 } from "@/lib/adminApi";
 import type { Product } from "@/lib/api";
 import { ProductForm } from "@/components/admin/ProductForm";
+import { notifySaved, notifyDeleted, notifyError } from "@/lib/toast";
 
 export default function AdminProductEditPage() {
   const router = useRouter();
@@ -30,13 +31,24 @@ export default function AdminProductEditPage() {
       initial={product}
       submitLabel="Save changes"
       onSubmit={async (body) => {
-        const updated = await adminUpdateProduct(product.slug, body);
-        setProduct(updated);
+        try {
+          const updated = await adminUpdateProduct(product.slug, body);
+          setProduct(updated);
+          notifySaved("Product");
+        } catch (e) {
+          notifyError(e);
+          throw e;
+        }
       }}
       onDiscard={() => router.refresh()}
       onDelete={async () => {
-        await adminDeleteProduct(product.slug);
-        router.push("/admin/products");
+        try {
+          await adminDeleteProduct(product.slug);
+          notifyDeleted("Product");
+          router.push("/admin/products");
+        } catch (e) {
+          notifyError(e);
+        }
       }}
     />
   );

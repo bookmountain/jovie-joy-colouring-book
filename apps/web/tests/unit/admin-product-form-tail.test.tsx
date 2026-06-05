@@ -1,5 +1,5 @@
 import { describe, expect, test, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { ProductForm } from "@/components/admin/ProductForm";
 import type { Product } from "@/lib/api";
 
@@ -39,23 +39,24 @@ describe("ProductForm — source links, digital, danger", () => {
     expect(screen.getByRole("button", { name: /^upload pdf$/i })).toBeTruthy();
   });
 
-  test("danger zone Delete button invokes onDelete only after window.confirm", () => {
+  test("danger zone Delete invokes onDelete after confirming in the dialog", async () => {
     const onDelete = vi.fn();
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
     render(<ProductForm initial={physical} onSubmit={vi.fn()} submitLabel="Save" onDelete={onDelete} />);
+    // Click the danger-zone trigger (only one such button while the dialog is closed).
     fireEvent.click(screen.getByRole("button", { name: /delete product/i }));
-    expect(confirmSpy).toHaveBeenCalled();
+    // The in-app confirm dialog appears (no native window.confirm).
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: /delete product/i }));
     expect(onDelete).toHaveBeenCalled();
-    confirmSpy.mockRestore();
   });
 
-  test("danger zone Delete is skipped if user cancels confirm", () => {
+  test("danger zone Delete is skipped if the dialog is cancelled", async () => {
     const onDelete = vi.fn();
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
     render(<ProductForm initial={physical} onSubmit={vi.fn()} submitLabel="Save" onDelete={onDelete} />);
     fireEvent.click(screen.getByRole("button", { name: /delete product/i }));
+    const dialog = await screen.findByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: /cancel/i }));
     expect(onDelete).not.toHaveBeenCalled();
-    confirmSpy.mockRestore();
   });
 
   test("danger zone hidden when no initial (create mode)", () => {

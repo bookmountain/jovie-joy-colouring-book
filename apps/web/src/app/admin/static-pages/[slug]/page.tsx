@@ -6,6 +6,7 @@ import { adminGetStaticPage, adminUpdateStaticPage } from "@/lib/adminApi";
 import type { StaticPage } from "@/lib/api";
 import { StaticPageForm } from "@/components/admin/StaticPageForm";
 import { AdminPageHeader } from "@/components/admin/ui";
+import { notifySaved, notifyError } from "@/lib/toast";
 
 export default function AdminStaticPageEdit() {
   const params = useParams<{ slug: string }>();
@@ -27,9 +28,15 @@ export default function AdminStaticPageEdit() {
         <StaticPageForm
           initial={page}
           onSubmit={async (body) => {
-            const updated = await adminUpdateStaticPage(page.slug, body);
-            setPage(updated);
-            setSavedAt(new Date().toLocaleTimeString());
+            try {
+              const updated = await adminUpdateStaticPage(page.slug, body);
+              setPage(updated);
+              setSavedAt(new Date().toLocaleTimeString());
+              notifySaved("Page");
+            } catch (e) {
+              notifyError(e);
+              throw e;
+            }
           }}
           submitLabel="Save changes"
         />

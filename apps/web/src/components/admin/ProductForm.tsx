@@ -9,6 +9,7 @@ import {
 import { AdminPageHeader } from "@/components/admin/ui/AdminPageHeader";
 import { AdminPanel } from "@/components/admin/ui/AdminPanel";
 import { AdminButton } from "@/components/admin/ui/AdminButton";
+import { AdminConfirmDialog } from "@/components/admin/ui/AdminConfirmDialog";
 import { AdminBadge } from "@/components/admin/ui/AdminBadge";
 import { AdminInput } from "@/components/admin/ui/AdminInput";
 import { AdminTextarea } from "@/components/admin/ui/AdminTextarea";
@@ -106,6 +107,7 @@ export function ProductForm({ initial, onSubmit, submitLabel, onDiscard, onDelet
   const [allCollections, setAllCollections] = useState<{ slug: string; title: string }[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   useEffect(() => {
     adminListCollections().then((cs) => setAllCollections(cs.map((c) => ({ slug: c.slug, title: c.title })))).catch(() => {});
@@ -292,11 +294,23 @@ export function ProductForm({ initial, onSubmit, submitLabel, onDiscard, onDelet
                 <AdminButton
                   variant="danger"
                   size="sm"
-                  onClick={() => { if (window.confirm(`Delete "${title || initial.slug}" permanently?`)) void onDelete(); }}
+                  onClick={() => setConfirmDeleteOpen(true)}
                 >
                   Delete product
                 </AdminButton>
               </div>
+              <AdminConfirmDialog
+                open={confirmDeleteOpen}
+                title={`Delete "${title || initial.slug}" permanently?`}
+                body="Removes it from every collection. Past orders keep the original title and price."
+                confirmLabel="Delete product"
+                destructive
+                onConfirm={async () => {
+                  await onDelete();
+                  setConfirmDeleteOpen(false);
+                }}
+                onCancel={() => setConfirmDeleteOpen(false)}
+              />
             </AdminPanel>
           ) : null}
         </div>

@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { ImageUpload } from "@/components/admin/ImageUpload";
 import { adminUploadContentImage } from "@/lib/adminApi";
 import type { ContentBlockEditorProps } from "@/components/admin/ContentBlockEditor";
-import { AdminButton, AdminField, AdminInput, AdminLabel, AdminPanel } from "@/components/admin/ui";
+import { AdminButton, AdminConfirmDialog, AdminField, AdminInput, AdminLabel, AdminPanel } from "@/components/admin/ui";
 
 type Slide = {
   label: string;
@@ -32,6 +33,7 @@ export function HomeHeroSlidesBlock({ blockKey, data, onChange }: ContentBlockEd
   const d = (data ?? {}) as Data;
   const slides: Slide[] = (d.slides ?? []).map(normalizeSlide);
   const interval = d.intervalMs ?? 5000;
+  const [pendingRemove, setPendingRemove] = useState<number | null>(null);
 
   function update(next: Partial<Data>) {
     onChange({ intervalMs: interval, slides, ...next });
@@ -100,9 +102,7 @@ export function HomeHeroSlidesBlock({ blockKey, data, onChange }: ContentBlockEd
               </AdminButton>
               <button
                 className="text-xs text-cocoa-coral underline"
-                onClick={() => {
-                  if (confirm(`Remove slide ${idx + 1}?`)) removeSlide(idx);
-                }}
+                onClick={() => setPendingRemove(idx)}
                 type="button"
               >
                 Remove
@@ -142,6 +142,19 @@ export function HomeHeroSlidesBlock({ blockKey, data, onChange }: ContentBlockEd
       <AdminButton onClick={addSlide} type="button" variant="ghost">
         + Add slide
       </AdminButton>
+
+      <AdminConfirmDialog
+        open={pendingRemove !== null}
+        title={`Remove slide ${(pendingRemove ?? 0) + 1}?`}
+        body="This removes the slide from the hero carousel. Save the block to persist."
+        confirmLabel="Remove slide"
+        destructive
+        onConfirm={() => {
+          if (pendingRemove !== null) removeSlide(pendingRemove);
+          setPendingRemove(null);
+        }}
+        onCancel={() => setPendingRemove(null)}
+      />
     </div>
   );
 }

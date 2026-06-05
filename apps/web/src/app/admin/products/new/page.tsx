@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { adminCreateProduct } from "@/lib/adminApi";
 import { ProductForm } from "@/components/admin/ProductForm";
+import { notifySaved, notifyError } from "@/lib/toast";
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -11,8 +12,14 @@ export default function NewProductPage() {
       submitLabel="Create product"
       onDiscard={() => router.push("/admin/products")}
       onSubmit={async (body) => {
-        const created = await adminCreateProduct(body);
-        router.push(`/admin/products/${created.slug}`);
+        try {
+          const created = await adminCreateProduct(body);
+          notifySaved("Product");
+          router.push(`/admin/products/${created.slug}`);
+        } catch (e) {
+          notifyError(e);
+          throw e;
+        }
       }}
     />
   );
