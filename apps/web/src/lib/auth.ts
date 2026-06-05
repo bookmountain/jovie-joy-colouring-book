@@ -1,6 +1,6 @@
 "use client";
 
-import { API_URL, apiMe, type UserDto } from "@/lib/api";
+import { API_URL, ApiError, apiMe, type UserDto } from "@/lib/api";
 
 const TOKEN_KEY = "zoe-book-token";
 
@@ -27,8 +27,13 @@ export async function fetchCurrentUser(): Promise<UserDto | null> {
   if (!token) return null;
   try {
     return await apiMe(token);
-  } catch {
-    tokenStorage.clear();
+  } catch (e) {
+    // Only drop the session when the server says the token is actually invalid.
+    // Transient failures (network, 5xx) must NOT log the user out — otherwise a
+    // hiccup on /auth/me while the storefront header mounts signs an admin out.
+    if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
+      tokenStorage.clear();
+    }
     return null;
   }
 }
