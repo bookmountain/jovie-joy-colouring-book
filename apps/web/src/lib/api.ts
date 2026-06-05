@@ -1,6 +1,7 @@
 // Typed REST client for the Zoe&Book BE.
-// Content loaders default to `revalidate: 60`; product/catalog loaders opt into
-// `cache: "no-store"` so admin publish/upload changes show on the storefront.
+// All admin-editable content loaders default to `cache: "no-store"` so admin
+// create/update/delete shows on the storefront immediately. A caller can pass an
+// explicit `next: { revalidate }` to opt back into caching for truly static content.
 
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
@@ -103,8 +104,10 @@ export type CheckoutResponse = { checkoutUrl: string; orderId: string };
 async function get<T>(path: string, init?: RequestInit & { next?: { revalidate?: number } }): Promise<T> {
   const url = `${API_URL}${path}`;
   const fetchInit: RequestInit & { next?: { revalidate?: number } } = { ...init };
+  // Admin edits must reflect on the storefront immediately, so content loaders
+  // default to no-store (same convention as the catalog loaders).
   if (!fetchInit.cache && !fetchInit.next) {
-    fetchInit.next = { revalidate: 60 };
+    fetchInit.cache = "no-store";
   }
   const res = await fetch(url, fetchInit);
   if (!res.ok) throw new Error(`${url} returned ${res.status}`);
