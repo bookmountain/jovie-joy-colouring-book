@@ -6,6 +6,15 @@
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
+/** Error thrown for non-2xx API responses. Carries the HTTP status so callers
+ *  can distinguish a definitive auth failure (401/403) from a transient one. */
+export class ApiError extends Error {
+  constructor(public readonly status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 export function resolveAssetUrl(url: string | null | undefined): string {
   if (!url) return "";
   if (url.startsWith("/uploads")) return `${API_URL}${url}`;
@@ -110,7 +119,7 @@ async function get<T>(path: string, init?: RequestInit & { next?: { revalidate?:
     fetchInit.cache = "no-store";
   }
   const res = await fetch(url, fetchInit);
-  if (!res.ok) throw new Error(`${url} returned ${res.status}`);
+  if (!res.ok) throw new ApiError(res.status, `${url} returned ${res.status}`);
   return (await res.json()) as T;
 }
 
