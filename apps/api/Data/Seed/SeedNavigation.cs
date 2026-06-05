@@ -11,7 +11,7 @@ public static class SeedNavigation
 
         // Primary nav (3-level tree)
         var home = new NavLink { Label = "Home", Href = "/", SortIndex = 0 };
-        var products = new NavLink { Label = "Products", Href = "/collections", SortIndex = 1 };
+        var products = new NavLink { Label = "Products", Href = "/products", SortIndex = 1 };
         var blogs = new NavLink { Label = "Blogs", Href = "/blogs/htc", SortIndex = 2 };
         var gallery = new NavLink { Label = "Gallery", Href = "/pages/gallery", SortIndex = 3 };
         var about = new NavLink { Label = "About Us", Href = "/pages/about-us", SortIndex = 4 };
@@ -21,7 +21,7 @@ public static class SeedNavigation
         db.NavLinks.AddRange(home, products, blogs, gallery, about, comics, freebies, faqs);
         await db.SaveChangesAsync();
 
-        var pGo = new NavLink { ParentId = products.Id, Label = "Go to Products", Href = "/collections", SortIndex = 0 };
+        var pGo = new NavLink { ParentId = products.Id, Label = "Go to Products", Href = "/products", SortIndex = 0 };
         var pStick = new NavLink { ParentId = products.Id, Label = "Sticker Packs", Href = "/collections/vinyl-sticker-packs", SortIndex = 1 };
         var pPhysical = new NavLink { ParentId = products.Id, Label = "Physical Books", Href = "/collections/physical-books", SortIndex = 2 };
         var pDigital = new NavLink { ParentId = products.Id, Label = "Digital Books", Href = "/collections/digital", SortIndex = 3 };
