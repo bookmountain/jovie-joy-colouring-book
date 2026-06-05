@@ -62,3 +62,65 @@ test("admin edit of a blog category reflects on the storefront immediately, with
   await page.getByRole("button", { name: /delete category/i }).click();
   await expect(page.getByText(/category deleted/i)).toBeVisible();
 });
+
+test("admin create/edit of a blog article reflects on the storefront immediately", async ({ page }) => {
+  const cat = `e2e-reflect-cat-${Date.now()}`;
+  const article = `e2e-reflect-article-${Date.now()}`;
+  await login(page);
+
+  // Throwaway category to host the article.
+  await page.goto("/admin/blog");
+  await page.locator("#bc-new-slug").fill(cat);
+  await page.locator("#bc-new-title").fill("Reflect Category");
+  await page.getByRole("button", { name: /^create$/i }).click();
+  await expect(page.getByText(/category saved/i)).toBeVisible();
+
+  // Create an article in it.
+  await page.goto(`/admin/blog/${cat}`);
+  await page.locator("#a-new-slug").fill(article);
+  await page.locator("#a-new-title").fill("Article First Title");
+  await page.locator("#a-new-excerpt").fill("Throwaway article for the reflect e2e.");
+  await page.locator("#a-new-body").fill("Body paragraph one.\n\nBody paragraph two.");
+  const [createResp] = await Promise.all([
+    page.waitForResponse(
+      (r) => r.url().includes(`/api/admin/blogs/${cat}/articles`) && r.request().method() === "POST",
+    ),
+    page.getByRole("button", { name: /^create$/i }).click(),
+  ]);
+  expect(createResp.ok()).toBeTruthy();
+  await expect(page.getByText(/article saved/i)).toBeVisible();
+
+  // Storefront shows the article.
+  await page.goto(`/blogs/${cat}/${article}`);
+  await expect(page.getByRole("heading", { name: "Article First Title", level: 1 })).toBeVisible({ timeout: 20000 });
+
+  // Edit the article title (re-login first: storefront browsing can clear the token).
+  await login(page);
+  await page.goto(`/admin/blog/${cat}`);
+  await page.locator(`#a-title-${article}`).fill("Article Second Title");
+  const [putResp] = await Promise.all([
+    page.waitForResponse(
+      (r) => r.url().includes(`/api/admin/blogs/${cat}/articles/${article}`) && r.request().method() === "PUT",
+    ),
+    page.getByRole("button", { name: /^save$/i }).click(),
+  ]);
+  expect(putResp.status()).toBe(200);
+  await expect(page.getByText(/article saved/i)).toBeVisible();
+
+  // Storefront reflects the edit immediately.
+  await page.goto(`/blogs/${cat}/${article}`);
+  await expect(page.getByRole("heading", { name: "Article Second Title", level: 1 })).toBeVisible({ timeout: 20000 });
+
+  // Clean up: delete the article, then the category.
+  await login(page);
+  await page.goto(`/admin/blog/${cat}`);
+  await page.getByRole("button", { name: /^delete$/i }).click();
+  await page.getByRole("button", { name: /delete article/i }).click();
+  await expect(page.getByText(/article deleted/i)).toBeVisible();
+
+  await page.goto("/admin/blog");
+  const catCard = page.locator(".admin-panel").filter({ has: page.locator(`#bc-title-${cat}`) });
+  await catCard.getByRole("button", { name: /^delete$/i }).click();
+  await page.getByRole("button", { name: /delete category/i }).click();
+  await expect(page.getByText(/category deleted/i)).toBeVisible();
+});
