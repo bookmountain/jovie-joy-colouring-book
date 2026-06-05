@@ -74,10 +74,14 @@ var webAppUrl = builder.Configuration["WebAppUrl"] ?? "http://localhost:3000";
 builder.Services.AddCors(opts =>
 {
     opts.AddDefaultPolicy(policy =>
-        policy.WithOrigins(webAppUrl)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials());
+    {
+        policy.AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+        if (builder.Environment.IsDevelopment())
+            // Local dev: allow any loopback origin (Next dev :3000, Playwright :3100, etc.).
+            policy.SetIsOriginAllowed(origin => Uri.TryCreate(origin, UriKind.Absolute, out var u) && u.IsLoopback);
+        else
+            policy.WithOrigins(webAppUrl);
+    });
 });
 
 builder.Services.AddControllers();
