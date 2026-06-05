@@ -1,10 +1,15 @@
 import { test, expect, type Page } from "@playwright/test";
 
-// REAL end-to-end flow (no API mocking): requires the .NET API on :8080 (seeded)
-// and the Playwright webServer (Next on :3100). Proves an admin edit persists and
-// shows on the storefront, with toast feedback.
-// These tests mutate shared blog rows in the real DB, so run them serially.
-test.describe.configure({ mode: "serial" });
+// REAL end-to-end integration flow (no API mocking): requires the seeded .NET API
+// running on :8080 plus the Playwright webServer (Next on :3100). Proves an admin
+// edit persists and shows on the storefront, with toast feedback, on its OWN
+// throwaway category so it never mutates seed data.
+//
+// Gated behind E2E_REAL_STACK because the rest of the e2e suite is designed to run
+// WITHOUT an external API (admin-storefront-workflow self-hosts a fake API on :8080,
+// the others mock). Run this explicitly against the live stack:
+//   E2E_REAL_STACK=1 npx playwright test admin-blog-reflects
+test.skip(!process.env.E2E_REAL_STACK, "requires the real local stack (API on :8080) — set E2E_REAL_STACK=1");
 
 const ADMIN_EMAIL = "admin@joviejoy.com";
 const ADMIN_PASSWORD = "changeme123";
@@ -17,63 +22,43 @@ async function login(page: Page) {
   await page.waitForURL((u) => !u.pathname.startsWith("/admin/login") && /\/admin(\/|$)/.test(u.pathname));
 }
 
-test("editing a blog category title shows a toast and reflects on the storefront", async ({ page }) => {
+test("admin edit of a blog category reflects on the storefront immediately, with toasts", async ({ page }) => {
+  const slug = `e2e-reflect-${Date.now()}`;
   await login(page);
   await page.goto("/admin/blog");
 
-  const unique = `How to Color ${Date.now()}`;
-  // Scope to the htc category card specifically — several categories share
-  // sortIndex 0, so "the first Save button" is not necessarily htc's.
-  const htcCard = page.locator(".admin-panel").filter({ has: page.locator("#bc-title-htc") });
-  const titleInput = htcCard.locator("#bc-title-htc");
-  await titleInput.fill(unique);
-  // Confirm the controlled input actually holds the new value before saving.
-  await expect(titleInput).toHaveValue(unique);
-
-  // Click Save and wait for the PUT to complete with the value we typed.
-  const [putResp] = await Promise.all([
-    page.waitForResponse(
-      (r) => r.url().includes("/api/admin/blogs/htc") && r.request().method() === "PUT",
-    ),
-    htcCard.getByRole("button", { name: /^save$/i }).click(),
-  ]);
-  expect(putResp.status()).toBe(200);
-  expect(JSON.parse(putResp.request().postData() ?? "{}").title).toBe(unique);
-
-  // 1. Toast feedback (no more silent save)
-  await expect(page.getByText(/category saved/i)).toBeVisible();
-
-  // 2. Storefront reflects the edit immediately (no stale 60s ISR cache)
-  await page.goto("/blogs/htc");
-  await expect(page.getByRole("heading", { name: unique })).toBeVisible();
-
-  // restore the seed title so the test is idempotent
-  await page.goto("/admin/blog");
-  await htcCard.locator("#bc-title-htc").fill("How to Color");
-  await Promise.all([
-    page.waitForResponse(
-      (r) => r.url().includes("/api/admin/blogs/htc") && r.request().method() === "PUT",
-    ),
-    htcCard.getByRole("button", { name: /^save$/i }).click(),
-  ]);
-  await expect(page.getByText(/category saved/i)).toBeVisible();
-});
-
-test("delete uses a confirm dialog, not a native confirm()", async ({ page }) => {
-  await login(page);
-  await page.goto("/admin/blog");
-
-  // create a throwaway category to delete
-  const slug = `e2e-del-${Date.now()}`;
+  // Create a throwaway category.
   await page.locator("#bc-new-slug").fill(slug);
-  await page.locator("#bc-new-title").fill("Throwaway");
+  await page.locator("#bc-new-title").fill("First Title");
   await page.getByRole("button", { name: /^create$/i }).click();
   await expect(page.getByText(/category saved/i)).toBeVisible();
 
-  // The new category is appended last, so its Delete button is the last one.
-  // Clicking it opens the in-app dialog (not a native window.confirm).
-  await page.getByRole("button", { name: /^delete$/i }).last().click();
-  await expect(page.getByRole("button", { name: /delete category/i })).toBeVisible();
+  // Storefront shows the created title. (Generous timeout: the Next dev server
+  // compiles the /blogs/[slug] route on first hit, which is slow under parallel load.)
+  await page.goto(`/blogs/${slug}`);
+  await expect(page.getByRole("heading", { name: "First Title", level: 1 })).toBeVisible({ timeout: 20000 });
+
+  // Edit the title in admin, scoped to this category's card.
+  await page.goto("/admin/blog");
+  const card = page.locator(".admin-panel").filter({ has: page.locator(`#bc-title-${slug}`) });
+  await card.locator(`#bc-title-${slug}`).fill("Second Title");
+  const [putResp] = await Promise.all([
+    page.waitForResponse(
+      (r) => r.url().includes(`/api/admin/blogs/${slug}`) && r.request().method() === "PUT",
+    ),
+    card.getByRole("button", { name: /^save$/i }).click(),
+  ]);
+  expect(putResp.status()).toBe(200);
+  await expect(page.getByText(/category saved/i)).toBeVisible();
+
+  // Storefront reflects the edit immediately (no stale ISR cache).
+  await page.goto(`/blogs/${slug}`);
+  await expect(page.getByRole("heading", { name: "Second Title", level: 1 })).toBeVisible({ timeout: 20000 });
+
+  // Clean up: delete via the in-app confirm dialog (not a native confirm()).
+  await page.goto("/admin/blog");
+  const card2 = page.locator(".admin-panel").filter({ has: page.locator(`#bc-title-${slug}`) });
+  await card2.getByRole("button", { name: /^delete$/i }).click();
   await page.getByRole("button", { name: /delete category/i }).click();
   await expect(page.getByText(/category deleted/i)).toBeVisible();
 });
