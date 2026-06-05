@@ -57,8 +57,8 @@ export function AdminAssetImage({
     );
   }
 
-  // eslint-disable-next-line @next/next/no-img-element
   return (
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       alt={alt}
       className={className}

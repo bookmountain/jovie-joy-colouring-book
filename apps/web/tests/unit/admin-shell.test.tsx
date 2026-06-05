@@ -11,17 +11,24 @@ vi.mock("next/link", () => ({
 describe("AdminSidebar", () => {
   afterEach(() => cleanup());
 
-  test("renders all five groups with the locked items", () => {
+  test("renders all five groups with their nav items", () => {
     render(<AdminSidebar pathname="/admin/products" user={{ email: "a@b.c", role: "Owner" }} onSignOut={() => {}} />);
     for (const g of ["Overview", "Catalog", "Commerce", "Site content", "Editorial"]) {
       expect(screen.getByText(g)).toBeTruthy();
     }
-    for (const n of ["Dashboard", "Products", "Collections", "Orders", "Customers", "Notify me", "Subscribers", "Home page", "Header & Footer", "Announcement", "Static pages"]) {
+    // Every nav item is a real, navigable page (the Editorial items are no longer
+    // "coming soon" — Blog/Comics/Gallery/FAQ/Featured On now have full admin pages).
+    for (const n of [
+      "Dashboard", "Products", "Collections", "Orders", "Customers", "Notify me",
+      "Subscribers", "Home page", "About page", "Freebies page", "Header", "Footer",
+      "Announcement", "Blog", "Comics", "Gallery", "FAQ", "Featured On",
+    ]) {
       expect(screen.getAllByText(n).length).toBeGreaterThanOrEqual(1);
     }
+    // No item should be locked/disabled as "coming soon".
     for (const n of ["Blog", "Comics", "Gallery", "FAQ", "Featured On"]) {
       const node = screen.getByText(n).closest("[data-soon]");
-      expect(node?.getAttribute("data-soon")).toBe("true");
+      expect(node?.getAttribute("data-soon")).not.toBe("true");
     }
   });
 
