@@ -18,10 +18,33 @@ export async function adminFetch<T>(path: string, init: RequestInit = {}): Promi
   const res = await fetch(`${API_URL}${path}`, { cache: "no-store", ...init, headers });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`${init.method ?? "GET"} ${path} → ${res.status}: ${text}`);
+    throw new Error(extractAdminError(text, res.status, init.method ?? "GET", path));
   }
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
+}
+
+/**
+ * Turns an API error response into a readable message. Handles our server's
+ * { error, detail, traceId } shape and ASP.NET ProblemDetails validation
+ * ({ errors: { field: [...] } }), falling back to the raw text / status.
+ */
+function extractAdminError(text: string, status: number, method: string, path: string): string {
+  try {
+    const j = JSON.parse(text) as {
+      detail?: string; error?: string; title?: string; message?: string;
+      traceId?: string; errors?: Record<string, string[]>;
+    };
+    if (j.errors && typeof j.errors === "object") {
+      const msgs = Object.values(j.errors).flat();
+      if (msgs.length) return msgs.join(" ");
+    }
+    const msg = j.detail || j.error || j.title || j.message;
+    if (msg) return j.traceId ? `${msg} (traceId ${j.traceId})` : msg;
+  } catch {
+    // not JSON — fall through
+  }
+  return text || `${method} ${path} failed (${status})`;
 }
 
 // Products

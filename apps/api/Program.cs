@@ -88,7 +88,15 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Global error handling: log the full exception + return a JSON body with a traceId
+// instead of a bare empty 500.
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<JovieJoy.Api.Infrastructure.GlobalExceptionHandler>();
+
 var app = builder.Build();
+
+// Must run before the rest of the pipeline so it catches everything downstream.
+app.UseExceptionHandler();
 
 // ----- Migrations + seed on startup -----
 using (var scope = app.Services.CreateScope())
