@@ -20,7 +20,10 @@ public static class SeedFreebies
                 "Six hand-drawn pages, perfect for a quick afternoon.",
                 "Drop your email below and we'll send the download link.",
             },
-            CoverImage = "/uploads/freebies/covers/mini-cover.png",
+            // Use a CDN cover (same convention as SeedProducts/SeedGallery) — the
+            // previous /uploads/... path pointed at a file that never shipped and
+            // 404'd on the storefront.
+            CoverImage = "https://cdn.shopify.com/s/files/1/0602/0133/6893/files/1-little-cuddles-coloring-book.png?v=1775731802",
             FilePath = "/uploads/freebies/files/mini-coloring-book.pdf",
             FileKind = "pdf",
             FileSizeBytes = 0,
