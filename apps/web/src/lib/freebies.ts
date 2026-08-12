@@ -1,5 +1,6 @@
 import { API_URL } from "@/lib/api";
 import { adminFetch } from "@/lib/adminApi";
+import { tokenStorage } from "@/lib/auth";
 
 export type FreebieListItem = {
   slug: string;
@@ -110,4 +111,22 @@ export async function adminUploadFreebieCover(slug: string, file: File): Promise
 export async function adminUploadFreebieFile(slug: string, file: File): Promise<FreebieAdmin> {
   const fd = new FormData(); fd.append("file", file);
   return adminFetch<FreebieAdmin>(`/api/admin/freebies/${slug}/file`, { method: "POST", body: fd });
+}
+export async function adminDownloadFreebieFile(slug: string): Promise<void> {
+  const response = await fetch(`${API_URL}/api/admin/freebies/${slug}/file`, {
+    cache: "no-store",
+    headers: { Authorization: `Bearer ${tokenStorage.read() ?? ""}` },
+  });
+  if (!response.ok) throw new Error(`Could not download freebie file (${response.status})`);
+  const blob = await response.blob();
+  const disposition = response.headers.get("content-disposition") ?? "";
+  const encodedName = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+  const plainName = disposition.match(/filename="?([^";]+)"?/i)?.[1];
+  const filename = encodedName ? decodeURIComponent(encodedName) : (plainName ?? `${slug}.pdf`);
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
 }

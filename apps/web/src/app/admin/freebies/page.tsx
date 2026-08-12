@@ -34,7 +34,6 @@ export default function AdminFreebiesPage() {
   const [newOpen, setNewOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newExcerpt, setNewExcerpt] = useState("");
-  const [newPublished, setNewPublished] = useState(false);
   const [newError, setNewError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
 
@@ -51,7 +50,6 @@ export default function AdminFreebiesPage() {
   function openNew() {
     setNewTitle("");
     setNewExcerpt("");
-    setNewPublished(false);
     setNewError(null);
     setNewOpen(true);
   }
@@ -65,7 +63,7 @@ export default function AdminFreebiesPage() {
     setCreating(true);
     setNewError(null);
     try {
-      await adminCreateFreebie({ slug, title, excerpt: newExcerpt.trim(), description: [], published: newPublished });
+      await adminCreateFreebie({ slug, title, excerpt: newExcerpt.trim(), description: [], published: false });
       setNewOpen(false);
       router.push(`/admin/freebies/${slug}`);
     } catch (err) {
@@ -172,14 +170,7 @@ export default function AdminFreebiesPage() {
               className="mt-1"
             />
           </label>
-          <label className="flex items-center gap-2 text-sm font-semibold">
-            <input
-              type="checkbox"
-              checked={newPublished}
-              onChange={(e) => setNewPublished(e.target.checked)}
-            />
-            Publish immediately
-          </label>
+          <p className="text-xs text-cocoa-muted">New freebies start as drafts. Upload the downloadable file before publishing.</p>
           {newError ? <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{newError}</p> : null}
         </div>
       </AdminModal>

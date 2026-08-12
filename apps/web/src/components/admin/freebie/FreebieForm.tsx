@@ -1,16 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { API_URL } from "@/lib/api";
 import {
   adminUpdateFreebie,
   adminDeleteFreebie,
   adminUploadFreebieCover,
   adminUploadFreebieFile,
+  adminDownloadFreebieFile,
   type FreebieAdmin,
 } from "@/lib/freebies";
 import { ImageUpload } from "@/components/admin/ImageUpload";
 import { AdminPanel, AdminButton, AdminConfirmDialog } from "@/components/admin/ui";
+import { notifyError } from "@/lib/toast";
 
 export function FreebieForm({ initial, onSaved, onDeleted }: {
   initial: FreebieAdmin;
@@ -31,9 +32,11 @@ export function FreebieForm({ initial, onSaved, onDeleted }: {
   const [fileError, setFileError] = useState<string | null>(null);
   const [fileBusy, setFileBusy] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function save() {
     setSaving(true);
+    setError(null);
     try {
       await adminUpdateFreebie(initial.slug, {
         title,
@@ -42,6 +45,9 @@ export function FreebieForm({ initial, onSaved, onDeleted }: {
         published,
       });
       await onSaved();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Save failed");
+      notifyError(reason);
     } finally {
       setSaving(false);
     }
@@ -69,9 +75,15 @@ export function FreebieForm({ initial, onSaved, onDeleted }: {
   }
 
   async function destroy() {
-    await adminDeleteFreebie(initial.slug);
-    setDeleteOpen(false);
-    onDeleted();
+    setError(null);
+    try {
+      await adminDeleteFreebie(initial.slug);
+      setDeleteOpen(false);
+      onDeleted();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Delete failed");
+      notifyError(reason);
+    }
   }
 
   return (
@@ -108,7 +120,13 @@ export function FreebieForm({ initial, onSaved, onDeleted }: {
           Current: {fileMeta.path ? (
             <>
               {fileMeta.kind.toUpperCase()} · {(fileMeta.size / 1024).toFixed(0)} KB · {" "}
-              <a className="underline" href={`${API_URL}${fileMeta.path}`} target="_blank" rel="noreferrer">download a copy</a>
+              <button
+                type="button"
+                className="underline"
+                onClick={() => void adminDownloadFreebieFile(initial.slug).catch(notifyError)}
+              >
+                download a copy
+              </button>
             </>
           ) : "none"}
         </p>
@@ -130,6 +148,7 @@ export function FreebieForm({ initial, onSaved, onDeleted }: {
         <AdminButton variant="danger" onClick={() => setDeleteOpen(true)}>Delete freebie</AdminButton>
         <AdminButton onClick={save} disabled={saving}>{saving ? "Saving…" : "Save"}</AdminButton>
       </div>
+      {error ? <p className="text-sm text-cocoa-coral" role="alert">{error}</p> : null}
 
       <AdminConfirmDialog
         open={deleteOpen}

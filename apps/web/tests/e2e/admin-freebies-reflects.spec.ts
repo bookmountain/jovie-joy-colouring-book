@@ -8,8 +8,9 @@ import { test, expect, type Page } from "@playwright/test";
 //   E2E_REAL_STACK=1 npx playwright test admin-freebies-reflects
 test.skip(!process.env.E2E_REAL_STACK, "requires the real local stack (API on :8080) — set E2E_REAL_STACK=1");
 
-const ADMIN_EMAIL = "admin@joviejoy.com";
-const ADMIN_PASSWORD = "changeme123";
+const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? "";
+const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? "";
+test.skip(!ADMIN_EMAIL || !ADMIN_PASSWORD, "set explicit E2E_ADMIN_EMAIL and E2E_ADMIN_PASSWORD credentials");
 
 async function login(page: Page) {
   await page.goto("/admin/login");
