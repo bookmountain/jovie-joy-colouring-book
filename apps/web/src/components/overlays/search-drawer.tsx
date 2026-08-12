@@ -6,20 +6,21 @@ import { SafeImage } from "@/components/common/SafeImage";
 import { X } from "lucide-react";
 import { fetchCatalog, getPopularProducts, searchCatalog } from "@/lib/catalog";
 import { formatMoney } from "@/lib/format";
+import { useBundle } from "@/state/catalog-provider";
 import { useSite } from "@/state/site-store";
 import type { Product } from "@/lib/api";
-import { apiGetContent, resolveAssetUrl } from "@/lib/api";
+import { resolveAssetUrl } from "@/lib/api";
 
 export function SearchDrawer() {
+  const bundle = useBundle();
   const { state, dispatch } = useSite();
   const [catalog, setCatalog] = useState<Product[]>([]);
   const [popular, setPopular] = useState<Product[]>([]);
-  const [trendingTerms, setTrendingTerms] = useState<string[]>([]);
+  const searchPlaceholder = bundle.headerBrand[0]?.data.searchPlaceholder || "Search the store";
 
   useEffect(() => {
     fetchCatalog().then(setCatalog).catch(() => setCatalog([]));
     getPopularProducts().then(setPopular).catch(() => setPopular([]));
-    apiGetContent().then((b) => setTrendingTerms(b.trendingTerms)).catch(() => setTrendingTerms([]));
   }, []);
 
   useEffect(() => {
@@ -64,13 +65,13 @@ export function SearchDrawer() {
           onChange={(event) =>
             dispatch({ type: "search/set", query: event.target.value })
           }
-          placeholder="Search the store"
+          placeholder={searchPlaceholder}
           value={state.searchQuery}
         />
         <div className="mt-6">
           <p className="text-sm font-extrabold">Trending Now</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            {trendingTerms.map((term) => (
+            {bundle.trendingTerms.map((term) => (
               <button
                 className="rounded-full border border-cocoa-border bg-white px-3 py-1 text-sm font-bold hover:bg-cocoa-honey"
                 key={term}

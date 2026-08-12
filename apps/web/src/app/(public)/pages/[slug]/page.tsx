@@ -39,6 +39,13 @@ export default async function StaticPage({ params, searchParams }: PageProps) {
         <p className="mt-4 text-base leading-7 text-cocoa-text">{page.intro}</p>
       </div>
       <div className="mt-10">
+        {page.blocks.length > 0 ? (
+          <div className="mb-10 max-w-3xl space-y-4 text-base leading-7 text-cocoa-text">
+            {page.blocks.map((block, index) => (
+              <p key={`${index}-${block}`}>{block}</p>
+            ))}
+          </div>
+        ) : null}
         {pageSlug === "about-us" ? <AboutPage /> : null}
         {pageSlug === "comics" ? <ComicsPage /> : null}
         {pageSlug === "gallery" ? <GalleryGrid /> : null}
@@ -51,17 +58,6 @@ export default async function StaticPage({ params, searchParams }: PageProps) {
               sp?.download === "invalid" ? "invalid" : null
             }
           />
-        ) : null}
-        {pageSlug !== "about-us" &&
-        pageSlug !== "comics" &&
-        pageSlug !== "gallery" &&
-        pageSlug !== "faq" &&
-        pageSlug !== "freebies" ? (
-          <div className="max-w-3xl space-y-4 text-base leading-7 text-cocoa-text">
-            {page.blocks.map((block) => (
-              <p key={block}>{block}</p>
-            ))}
-          </div>
         ) : null}
       </div>
     </main>

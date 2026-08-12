@@ -6,6 +6,8 @@ import { adminGetContent, adminUpsertContent } from "@/lib/adminApi";
 import type { ContentBlock } from "@/lib/api";
 import { ContentBlockEditor } from "@/components/admin/ContentBlockEditor";
 import { AdminButton, AdminPanel, AdminPageHeader } from "@/components/admin/ui";
+import Link from "next/link";
+import { retiredContentBlock } from "@/lib/content-block-types";
 
 export default function AdminContentEditPage() {
   const params = useParams<{ key: string }>();
@@ -48,6 +50,36 @@ export default function AdminContentEditPage() {
 
   if (error) return <p className="text-cocoa-coral">{error}</p>;
   if (!block) return <p>Loading…</p>;
+
+  const replacement = retiredContentBlock(block.type);
+  if (replacement) {
+    return (
+      <div>
+        <AdminPageHeader title={block.key} subtitle={<>Retired type: <code>{block.type}</code></>} />
+        <AdminPanel className="mt-6 space-y-3">
+          <h2 className="text-lg font-bold">This block is no longer rendered</h2>
+          <p className="text-sm text-cocoa-text">
+            The current storefront reads this content from its dedicated CMS editor.
+            Copy anything useful from the read-only legacy data below into that editor,
+            then remove this retired record from the Content list.
+          </p>
+          <pre className="max-h-80 overflow-auto whitespace-pre-wrap rounded-coco-sm border border-cocoa-line bg-white p-3 text-xs">
+            {JSON.stringify(data, null, 2)}
+          </pre>
+          <Link className="admin-btn w-fit" data-variant="primary" href={replacement.editorHref}>
+            Open {replacement.editorLabel}
+          </Link>
+        </AdminPanel>
+        <button
+          className="mt-4 text-sm underline"
+          onClick={() => router.push("/admin/content")}
+          type="button"
+        >
+          ← Back
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div>

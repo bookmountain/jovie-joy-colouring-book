@@ -36,7 +36,7 @@ test("homepage includes the visual learning blocks from the reference layout", a
   const homeFooterArt = page.getByLabel("Homepage footer art");
   const footerIllustration = homeFooterArt.getByAltText("Zoe&Book footer illustration");
   await expect(footerIllustration).toBeVisible();
-  await expect(footerIllustration).toHaveAttribute("src", /footer-characters-desktop/);
+  await expect(footerIllustration).toHaveAttribute("src", /Destop-footer\.png/);
   await expect(
     page.locator("footer").getByAltText("Zoe&Book footer illustration"),
   ).toHaveCount(0);

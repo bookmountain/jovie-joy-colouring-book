@@ -60,7 +60,7 @@ export function Header() {
               <Search aria-hidden="true" className="h-5 w-5 text-[#727272]" />
             </button>
             <Link
-              aria-label="Zoe&Book"
+              aria-label={brand.name || "Zoe&Book"}
               className="justify-self-center font-display text-[31px] font-extrabold leading-none tracking-normal text-cocoa-ink"
               href="/"
             >
@@ -68,14 +68,6 @@ export function Header() {
             </Link>
             <div className="flex items-center justify-end gap-5 text-cocoa-ink">
               <UserMenu />
-              <button
-                aria-label="Sign in"
-                className="grid h-11 w-11 place-items-center rounded-full transition hover:bg-cocoa-cream"
-                onClick={() => dispatch({ type: "modal/open", modal: "login" })}
-                type="button"
-              >
-                <UserRound aria-hidden="true" className="h-[22px] w-[22px]" />
-              </button>
               <Link
                 aria-label={`My wish list (${state.wishlist.length})`}
                 className="relative grid h-11 w-11 place-items-center rounded-full transition hover:bg-cocoa-cream"
@@ -125,7 +117,7 @@ export function Header() {
             <Menu aria-hidden="true" className="h-5 w-5" />
           </button>
           <Link
-            aria-label="Zoe&Book"
+            aria-label={brand.name || "Zoe&Book"}
             className="flex min-w-28 items-center justify-center font-display text-[27px] font-extrabold leading-none tracking-normal text-cocoa-ink"
             href="/"
           >

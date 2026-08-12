@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { SafeImage } from "@/components/common/SafeImage";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { CollectionToolbar } from "@/components/commerce/collection-toolbar";
 import { ProductGrid } from "@/components/commerce/product-grid";
@@ -9,6 +10,7 @@ import {
   sortProducts,
   takePageSize,
 } from "@/lib/catalog";
+import { resolveAssetUrl } from "@/lib/api";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -53,6 +55,18 @@ export default async function CollectionPage({
           {collection.excerpt}
         </p>
       </div>
+      {collection.heroImage ? (
+        <div className="relative mt-8 aspect-[16/5] overflow-hidden rounded-coco bg-cocoa-blush shadow-soft">
+          <SafeImage
+            alt=""
+            className="h-full w-full object-cover"
+            fill
+            priority
+            sizes="(min-width: 1280px) 1216px, 100vw"
+            src={resolveAssetUrl(collection.heroImage)}
+          />
+        </div>
+      ) : null}
       <div className="mt-8">
         <CollectionToolbar
           count={collectionProducts.length}

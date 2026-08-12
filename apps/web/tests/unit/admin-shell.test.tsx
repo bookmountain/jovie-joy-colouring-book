@@ -21,7 +21,8 @@ describe("AdminSidebar", () => {
     for (const n of [
       "Dashboard", "Products", "Collections", "Orders", "Customers", "Notify me",
       "Subscribers", "Home page", "About page", "Freebies page", "Header", "Footer",
-      "Announcement", "Blog", "Comics", "Gallery", "FAQ", "Featured On",
+      "Navigation", "Announcement", "Newsletter", "Static pages", "Advanced content",
+      "Blog", "Comics", "Gallery", "FAQ", "Featured On",
     ]) {
       expect(screen.getAllByText(n).length).toBeGreaterThanOrEqual(1);
     }

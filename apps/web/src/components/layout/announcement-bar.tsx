@@ -12,7 +12,11 @@ export function AnnouncementBar() {
 
   const bg = ann?.backgroundImage ? resolveAssetUrl(ann.backgroundImage) : COCOWYO_PLACEHOLDER;
 
-  if (!ann || !ann.enabled) {
+  if (ann && !ann.enabled) {
+    return null;
+  }
+
+  if (!ann) {
     return (
       <div
         className="min-h-[37px] bg-cocoa-lavender bg-cover bg-center px-4 py-[7px] text-center text-[17px] font-bold leading-6 text-cocoa-ink"

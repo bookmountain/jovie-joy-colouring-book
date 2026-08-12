@@ -5,6 +5,7 @@ import { HomeCozyMomentsHeaderBlock } from "@/components/admin/blocks/HomeCozyMo
 import { FooterContactBlock } from "@/components/admin/blocks/FooterContactBlock";
 import { HeaderBrandBlock } from "@/components/admin/blocks/HeaderBrandBlock";
 import { NewsletterCopyBlock } from "@/components/admin/blocks/NewsletterCopyBlock";
+import { HomeProductRowBlock } from "@/components/admin/blocks/HomeProductRowBlock";
 
 describe("HomeIntroBlock", () => {
   test("emits updated title on change", () => {
@@ -49,5 +50,23 @@ describe("NewsletterCopyBlock", () => {
     render(<NewsletterCopyBlock blockKey="x" type="NewsletterCopy" data={{ ctaLabel: "Sub" }} onChange={onChange} />);
     fireEvent.change(screen.getByDisplayValue("Sub"), { target: { value: "Join" } });
     expect(onChange).toHaveBeenCalledWith({ ctaLabel: "Join" });
+  });
+});
+
+describe("HomeProductRowBlock", () => {
+  test("uses block-specific ids so all three Home row labels target their own inputs", () => {
+    const { rerender } = render(
+      <HomeProductRowBlock blockKey="home.row.new-release" type="HomeProductRow" data={{ title: "New" }} onChange={vi.fn()} />,
+    );
+    const firstId = screen.getByLabelText("Title").id;
+
+    rerender(
+      <HomeProductRowBlock blockKey="home.row.digital" type="HomeProductRow" data={{ title: "Digital" }} onChange={vi.fn()} />,
+    );
+    const secondId = screen.getByLabelText("Title").id;
+
+    expect(firstId).not.toBe(secondId);
+    expect(firstId).toContain("home-row-new-release");
+    expect(secondId).toContain("home-row-digital");
   });
 });

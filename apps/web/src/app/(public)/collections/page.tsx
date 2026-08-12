@@ -10,7 +10,7 @@ export default async function CollectionsPage() {
   const previews = await Promise.all(
     visible.map(async (collection) => {
       const products = await getProductsForCollection(collection.slug);
-      return { collection, image: products[0]?.images[0] };
+      return { collection, image: collection.heroImage || products[0]?.images[0] };
     }),
   );
 

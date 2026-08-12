@@ -1,18 +1,28 @@
 import { SafeImage } from "@/components/common/SafeImage";
 import Link from "next/link";
 import { resolveAssetUrl } from "@/lib/api";
-import { getCollectionBySlug, getProductsForCollection } from "@/lib/catalog";
+import { getAllCollections } from "@/data/collections";
+import { getProductsForCollection } from "@/lib/catalog";
 
 const tileSlugs = ["bold-easy", "cute-comfy", "classic", "seasonal"];
 
 export async function CollectionTiles() {
+  const collections = await getAllCollections();
+  const configuredTiles = collections.filter((collection) => collection.homepageSlot === "tile");
+  const tileCollections = configuredTiles.length > 0
+    ? configuredTiles
+    : tileSlugs.flatMap((slug) => {
+        const collection = collections.find((candidate) => candidate.slug === slug);
+        return collection ? [collection] : [];
+      });
+
   const tiles = await Promise.all(
-    tileSlugs.map(async (slug) => {
-      const [collection, products] = await Promise.all([
-        getCollectionBySlug(slug),
-        getProductsForCollection(slug),
-      ]);
-      return { slug, collection, image: products[0]?.images[0] };
+    tileCollections.map(async (collection) => {
+      const products = await getProductsForCollection(collection.slug);
+      return {
+        collection,
+        image: collection.heroImage || products[0]?.images[0],
+      };
     }),
   );
 
@@ -21,16 +31,16 @@ export async function CollectionTiles() {
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
         <h2 className="coco-heading mb-8">Collection</h2>
         <div className="grid gap-4 md:grid-cols-2">
-          {tiles.map(({ slug, collection, image }) => {
-            if (!collection || !image) {
+          {tiles.map(({ collection, image }) => {
+            if (!image) {
               return null;
             }
 
             return (
               <Link
                 className="group relative block aspect-[16/9] overflow-hidden rounded-coco bg-cocoa-blush shadow-soft"
-                href={`/collections/${slug}`}
-                key={slug}
+                href={`/collections/${collection.slug}`}
+                key={collection.slug}
               >
                 <SafeImage
                   alt=""

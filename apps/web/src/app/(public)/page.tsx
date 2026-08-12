@@ -8,19 +8,13 @@ import { HomeSection } from "@/components/content/home-section";
 import { HomeVideoSection } from "@/components/content/home-video-section";
 import { NewsletterForm } from "@/components/content/newsletter-form";
 import { getCozyMomentImages } from "@/data/gallery";
+import { getAllCollections } from "@/data/collections";
 import { apiGetContent, resolveAssetUrl, type HeroSlide } from "@/lib/api";
 import { getProductsForCollection } from "@/lib/catalog";
+import { applyHomepageCollection, type HomeRowData } from "@/lib/home-rows";
 import { SafeImage } from "@/components/common/SafeImage";
 
-type RowData = {
-  eyebrow?: string;
-  title?: string;
-  href?: string;
-  collectionSlug?: string;
-  itemCount?: number;
-};
-
-const ROW_FALLBACKS: Record<string, RowData> = {
+const ROW_FALLBACKS: Record<string, HomeRowData> = {
   "home.row.new-release": { eyebrow: "Just landed", title: "New Release", href: "/collections/new-release", collectionSlug: "new-release", itemCount: 4 },
   "home.row.best-seller": { eyebrow: "Popular products", title: "Best Seller", href: "/collections/frontpage", collectionSlug: "frontpage", itemCount: 4 },
   "home.row.digital":     { eyebrow: "Digital books", title: "Digital", href: "/collections/digital", collectionSlug: "digital", itemCount: 4 },
@@ -50,14 +44,18 @@ async function keepReachableHeroSlides(slides: HeroSlide[]): Promise<HeroSlide[]
 }
 
 export default async function Home() {
-  const bundle = await apiGetContent();
+  const [bundle, collections] = await Promise.all([
+    apiGetContent(),
+    getAllCollections(),
+  ]);
 
-  function getRow(key: string): RowData {
-    return (bundle.homeProductRows.find((b) => b.key === key)?.data ?? ROW_FALLBACKS[key]) as RowData;
+  function getRow(key: string, slot: "newrelease" | "bestseller" | "digital"): HomeRowData {
+    const configured = (bundle.homeProductRows.find((b) => b.key === key)?.data ?? ROW_FALLBACKS[key]) as HomeRowData;
+    return applyHomepageCollection(configured, collections, slot);
   }
-  const rowNewRelease = getRow("home.row.new-release");
-  const rowBestSeller = getRow("home.row.best-seller");
-  const rowDigital = getRow("home.row.digital");
+  const rowNewRelease = getRow("home.row.new-release", "newrelease");
+  const rowBestSeller = getRow("home.row.best-seller", "bestseller");
+  const rowDigital = getRow("home.row.digital", "digital");
 
   const [
     newReleaseProducts,

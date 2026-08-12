@@ -13,17 +13,12 @@ import {
   AdminPageHeader,
   AdminSelect,
 } from "@/components/admin/ui";
-
-const TYPES = [
-  "HomeHero", "Announcement", "HomeVideo", "HeroArtwork",
-  "HomeIntro", "HomeCozyMomentsHeader", "FooterContact", "HeaderBrand", "NewsletterCopy",
-  "AboutSection", "FaqEntry", "FooterGroup", "FeaturedOn",
-];
+import { ACTIVE_CONTENT_BLOCK_TYPES } from "@/lib/content-block-types";
 
 export default function AdminContentNew() {
   const router = useRouter();
   const [key, setKey] = useState("");
-  const [type, setType] = useState(TYPES[0]);
+  const [type, setType] = useState<string>(ACTIVE_CONTENT_BLOCK_TYPES[0]);
   const [sortIndex, setSortIndex] = useState(0);
   const [data, setData] = useState<unknown>({});
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +60,7 @@ export default function AdminContentNew() {
                 onChange={(e) => setType(e.target.value)}
                 value={type}
               >
-                {TYPES.map((t) => (
+                {ACTIVE_CONTENT_BLOCK_TYPES.map((t) => (
                   <option key={t}>{t}</option>
                 ))}
               </AdminSelect>

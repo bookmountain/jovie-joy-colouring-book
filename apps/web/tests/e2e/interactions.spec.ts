@@ -29,7 +29,7 @@ test("wishlist page reflects toggled products", async ({ page }) => {
 test("login and back-in-stock modals open and close", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByText("Email Address *")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Continue with Google" })).toBeVisible();
   await page.getByRole("button", { name: "Close login" }).click();
   await page.getByRole("button", { name: "Back In Stock Notification" }).click();
   await expect(page.getByText("Leave your email and we will notify")).toBeVisible();

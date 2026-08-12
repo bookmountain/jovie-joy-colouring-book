@@ -15,15 +15,16 @@ test("desktop header exposes Zoe&Book navigation and dropdowns", async ({
   page,
 }) => {
   await page.goto("/");
-  await expect(page.getByText("Welcome to cozy world")).toBeVisible();
+  await expect(page.getByText("Free worldwide shipping over $50")).toBeVisible();
   await page.getByRole("button", { name: "Products" }).click();
   await page.getByRole("button", { name: "Products" }).hover();
-  await expect(page.getByRole("link", { name: "Sticker Packs" })).toBeVisible();
+  const header = page.locator("header");
+  await expect(header.getByRole("link", { exact: true, name: "Sticker Packs" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Physical Books" })).toBeVisible();
   await page.getByRole("link", { exact: true, name: "Physical Books" }).hover();
   await expect(
     page.getByRole("link", { exact: true, name: "Paperback" }),
-  ).toHaveAttribute("href", "/collections/paperback-coloring-book");
+  ).toHaveAttribute("href", "/collections/paperback");
   await page.getByRole("button", { name: "Blogs" }).hover();
   await expect(page.getByRole("link", { name: "Go to Products" })).toBeHidden();
   await expect(
@@ -83,7 +84,7 @@ test("desktop dropdown remains usable while hovering into options", async ({
   await page.goto("/");
 
   const productsButton = page.getByRole("button", { name: "Products" });
-  const stickerPacks = page.getByRole("link", { name: "Sticker Packs" });
+  const stickerPacks = page.locator("header").getByRole("link", { exact: true, name: "Sticker Packs" });
 
   await productsButton.hover();
   await expect(stickerPacks).toBeVisible();
