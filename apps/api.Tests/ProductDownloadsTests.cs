@@ -156,6 +156,62 @@ public sealed class ProductDownloadsTests : IClassFixture<ApiFactory>, IDisposab
     }
 
     [Fact]
+    public async Task Admin_can_send_downloads_for_a_paid_digital_order()
+    {
+        var slug = $"admin-resend-{Guid.NewGuid():N}";
+        var path = $"/uploads/pdfs/{slug}.pdf";
+        var productId = await SeedProduct(slug, path, publishedAt: DateTime.UtcNow.AddDays(-1));
+        Guid orderId;
+        await using (var db = CreateContext())
+        {
+            var order = new Order
+            {
+                Email = "buyer@example.com",
+                Name = "Buyer",
+                Status = OrderStatus.Paid,
+                PaidAt = DateTime.UtcNow,
+                SubtotalCents = 500,
+                TotalCents = 500,
+                Items =
+                [
+                    new OrderItem
+                    {
+                        ProductId = productId,
+                        ProductSlug = slug,
+                        TitleAtPurchase = "Purchased pages",
+                        UnitPriceCents = 500,
+                        Quantity = 1,
+                        DigitalFilePathAtPurchase = path,
+                    },
+                ],
+            };
+            db.Orders.Add(order);
+            await db.SaveChangesAsync();
+            orderId = order.Id;
+        }
+
+        var sentBefore = _factory.Emails.ProductDownloadEmails.Count;
+        var admin = await _factory.CreateAdminClientAsync();
+        var response = await admin.PostAsync($"/api/admin/orders/{orderId}/resend-downloads", null);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<ProductDownloadDeliveryResult>();
+        Assert.NotNull(result);
+        Assert.Equal(orderId, result.OrderId);
+        Assert.Equal(1, result.GrantCount);
+        Assert.Equal(1, result.ActiveGrantCount);
+        Assert.True(result.RegeneratedExpiredLinks);
+        Assert.Equal(sentBefore + 1, _factory.Emails.ProductDownloadEmails.Count);
+
+        await using var verifyDb = CreateContext();
+        var savedOrder = await verifyDb.Orders
+            .Include(candidate => candidate.DownloadGrants)
+            .SingleAsync(candidate => candidate.Id == orderId);
+        Assert.NotNull(savedOrder.DownloadEmailSentAt);
+        Assert.Single(savedOrder.DownloadGrants);
+    }
+
+    [Fact]
     public async Task Fulfillment_releases_the_storage_lease_before_sending_email()
     {
         var slug = $"fulfillment-lease-{Guid.NewGuid():N}";

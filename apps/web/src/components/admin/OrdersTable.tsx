@@ -2,11 +2,21 @@
 
 import { Fragment, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { adminListOrders, type AdminOrder } from "@/lib/adminApi";
+import { adminListOrders, adminResendOrderDownloads, type AdminOrder } from "@/lib/adminApi";
 import { formatCents } from "@/lib/format";
 import { AdminButton, AdminSelect } from "@/components/admin/ui";
 
 const STATUSES = ["", "pending", "paid", "failed", "refunded"];
+const DELIVERY_LABELS: Record<AdminOrder["deliveryStatus"], string> = {
+  not_applicable: "—",
+  awaiting_payment: "Awaiting payment",
+  payment_failed: "Payment failed",
+  ready_to_send: "Ready to send",
+  delivered: "Delivered",
+  partially_expired: "Partially expired",
+  expired: "Expired",
+  revoked: "Revoked",
+};
 
 export function OrdersTable() {
   const searchParams = useSearchParams();
@@ -19,6 +29,9 @@ export function OrdersTable() {
   const [data, setData] = useState<{ items: AdminOrder[]; total: number; pageSize: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(initialOrder);
+  const [resending, setResending] = useState<string | null>(null);
+  const [deliveryMessage, setDeliveryMessage] = useState<string | null>(null);
+  const [deliveryError, setDeliveryError] = useState<string | null>(null);
 
   useEffect(() => {
     setSearch(initialSearch);
@@ -40,6 +53,35 @@ export function OrdersTable() {
       .catch((e: Error) => { if (!cancelled) setError(e.message); });
     return () => { cancelled = true; };
   }, [status, page, debouncedSearch]);
+
+  async function resendDownloads(order: AdminOrder) {
+    setResending(order.id);
+    setDeliveryMessage(null);
+    setDeliveryError(null);
+    try {
+      const result = await adminResendOrderDownloads(order.id);
+      setData((current) => current ? {
+        ...current,
+        items: current.items.map((item) => item.id === order.id ? {
+          ...item,
+          downloadEmailSentAt: result.downloadEmailSentAt,
+          downloadGrantCount: result.grantCount,
+          activeDownloadGrantCount: result.activeGrantCount,
+          expiredDownloadGrantCount: result.expiredGrantCount,
+          deliveryStatus: result.activeGrantCount > 0 ? "delivered" : "expired",
+        } : item),
+      } : current);
+      setDeliveryMessage(
+        result.regeneratedExpiredLinks
+          ? `Fresh download links were emailed to ${order.email}.`
+          : `Download links were emailed to ${order.email}.`,
+      );
+    } catch (reason) {
+      setDeliveryError(reason instanceof Error ? reason.message : "Could not send download links");
+    } finally {
+      setResending(null);
+    }
+  }
 
   if (error) return <p className="text-cocoa-coral">{error}</p>;
   if (!data) return <p>Loading…</p>;
@@ -75,6 +117,8 @@ export function OrdersTable() {
         </AdminSelect>
         <span className="ml-auto text-sm text-cocoa-text">{data.total} orders</span>
       </div>
+      {deliveryMessage ? <p className="text-sm text-green-700" role="status">{deliveryMessage}</p> : null}
+      {deliveryError ? <p className="text-sm text-cocoa-coral" role="alert">{deliveryError}</p> : null}
 
       <table className="w-full text-sm">
         <thead>
@@ -82,6 +126,7 @@ export function OrdersTable() {
             <th className="py-2">Created</th>
             <th className="py-2">Email</th>
             <th className="py-2">Status</th>
+            <th className="py-2">Delivery</th>
             <th className="py-2 text-right">Total</th>
             <th />
           </tr>
@@ -93,6 +138,7 @@ export function OrdersTable() {
                 <td className="py-2">{new Date(o.createdAt).toLocaleString()}</td>
                 <td className="py-2">{o.email}</td>
                 <td className="py-2">{o.status}</td>
+                <td className="py-2">{DELIVERY_LABELS[o.deliveryStatus]}</td>
                 <td className="py-2 text-right">{formatCents(o.totalCents)}</td>
                 <td className="py-2 text-right">
                   <button
@@ -106,7 +152,7 @@ export function OrdersTable() {
               </tr>
               {expanded === o.id ? (
                 <tr className="bg-cocoa-cream/50">
-                  <td className="px-4 py-2" colSpan={5}>
+                  <td className="space-y-3 px-4 py-3" colSpan={6}>
                     <ul className="space-y-1 text-xs">
                       {o.items.map((i, idx) => (
                         <li key={idx}>
@@ -114,6 +160,30 @@ export function OrdersTable() {
                         </li>
                       ))}
                     </ul>
+                    {o.digitalItemCount > 0 ? (
+                      <div className="flex flex-wrap items-center gap-3 border-t border-cocoa-line pt-3 text-xs">
+                        <span>
+                          Downloads: {o.activeDownloadGrantCount} active · {o.expiredDownloadGrantCount} expired
+                          {o.downloadEmailSentAt ? ` · emailed ${new Date(o.downloadEmailSentAt).toLocaleString()}` : " · not emailed"}
+                        </span>
+                        {o.status.toLowerCase() === "paid" ? (
+                          <AdminButton
+                            disabled={resending === o.id}
+                            onClick={() => void resendDownloads(o)}
+                            size="sm"
+                            variant="ghost"
+                          >
+                            {resending === o.id
+                              ? "Sending…"
+                              : o.deliveryStatus === "ready_to_send"
+                                ? "Send downloads"
+                                : o.deliveryStatus === "expired" || o.deliveryStatus === "partially_expired"
+                                  ? "Regenerate & send"
+                                  : "Resend downloads"}
+                          </AdminButton>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </td>
                 </tr>
               ) : null}

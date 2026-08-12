@@ -1,6 +1,11 @@
 using JovieJoy.Api.Data;
 namespace JovieJoy.Api.Infrastructure;
 
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
+public sealed class ManagesCmsMutationLockAttribute : Attribute
+{
+}
+
 /// <summary>
 /// Serializes authenticated admin mutations while they update CMS references and
 /// remove newly orphaned upload files. The process gate covers non-relational tests
@@ -11,7 +16,8 @@ public sealed class AdminMutationLockMiddleware(RequestDelegate next)
 {
     public async Task InvokeAsync(HttpContext context, AppDbContext db)
     {
-        if (!IsAdminMutation(context.Request))
+        if (!IsAdminMutation(context.Request) ||
+            context.GetEndpoint()?.Metadata.GetMetadata<ManagesCmsMutationLockAttribute>() is not null)
         {
             await next(context);
             return;

@@ -233,6 +233,12 @@ export const adminUploadGeneral = (file: File, folder?: string) => {
 export type AdminOrder = {
   id: string; email: string; status: string;
   totalCents: number; createdAt: string; paidAt: string | null;
+  downloadEmailSentAt: string | null;
+  digitalItemCount: number;
+  downloadGrantCount: number;
+  activeDownloadGrantCount: number;
+  expiredDownloadGrantCount: number;
+  deliveryStatus: "not_applicable" | "awaiting_payment" | "payment_failed" | "ready_to_send" | "delivered" | "partially_expired" | "expired" | "revoked";
   items: { productSlug: string; title: string; qty: number; unitPriceCents: number }[];
 };
 export const adminListOrders = (status?: string, page = 1, pageSize = 20, search?: string) => {
@@ -244,6 +250,19 @@ export const adminListOrders = (status?: string, page = 1, pageSize = 20, search
     `/api/admin/analytics/orders?${q}`,
   );
 };
+export type AdminProductDownloadDelivery = {
+  orderId: string;
+  downloadEmailSentAt: string;
+  grantCount: number;
+  activeGrantCount: number;
+  expiredGrantCount: number;
+  regeneratedExpiredLinks: boolean;
+};
+export const adminResendOrderDownloads = (orderId: string) =>
+  adminFetch<AdminProductDownloadDelivery>(
+    `/api/admin/orders/${encodeURIComponent(orderId)}/resend-downloads`,
+    { method: "POST" },
+  );
 export const adminAnalyticsSummary = () =>
   adminFetch<{
     totalOrders: number; paidOrders: number; totalRevenueCents: number;
