@@ -208,10 +208,11 @@ public class AdminProductsController(AppDbContext db, IUploadService uploads) : 
     [HttpDelete("{slug}")]
     public async Task<IActionResult> Delete(string slug, CancellationToken ct)
     {
-        var product = await db.Products.FirstOrDefaultAsync(p => p.Slug == slug, ct);
+        var product = await db.Products
+            .Include(p => p.ProductCollections)
+            .FirstOrDefaultAsync(p => p.Slug == slug, ct);
         if (product is null) return NotFound();
-        product.Available = false;
-        await db.SaveChangesAsync(ct);
+        await DeleteProductsAsync([product], ct);
         return NoContent();
     }
 
@@ -321,8 +322,8 @@ public class AdminProductsController(AppDbContext db, IUploadService uploads) : 
                 foreach (var p in products) { p.PublishedAt = null; p.UpdatedAt = now; }
                 break;
             case "delete":
-                foreach (var p in products) { p.Available = false; p.UpdatedAt = now; }
-                break;
+                await DeleteProductsAsync(products, ct);
+                return Ok(new { updated = products.Count });
             case "add-to-collection":
             case "remove-from-collection":
             {
@@ -349,6 +350,40 @@ public class AdminProductsController(AppDbContext db, IUploadService uploads) : 
 
         await db.SaveChangesAsync(ct);
         return Ok(new { updated = products.Count });
+    }
+
+    private async Task DeleteProductsAsync(List<Product> products, CancellationToken ct)
+    {
+        var productIds = products.Select(p => p.Id).ToHashSet();
+        var slugs = products.Select(p => p.Slug).ToHashSet(StringComparer.Ordinal);
+
+        // Keep immutable order snapshots while severing the optional live-product link.
+        // PostgreSQL also applies ON DELETE SET NULL; this explicit update keeps the
+        // behavior consistent when tests use EF's in-memory provider.
+        var orderItems = await db.OrderItems
+            .Where(i => i.ProductId.HasValue && productIds.Contains(i.ProductId.Value))
+            .ToListAsync(ct);
+        foreach (var item in orderItems) item.ProductId = null;
+
+        // These records point at slug snapshots instead of product foreign keys.
+        // Removing them prevents stale state from returning if a slug is reused.
+        var wishlists = await db.Wishlists
+            .Where(w => slugs.Contains(w.ProductSlug))
+            .ToListAsync(ct);
+        var notifyRequests = await db.NotifyMeRequests
+            .Where(n => slugs.Contains(n.ProductSlug))
+            .ToListAsync(ct);
+        db.Wishlists.RemoveRange(wishlists);
+        db.NotifyMeRequests.RemoveRange(notifyRequests);
+
+        // ProductOrder is a JSON ordering hint, so it needs explicit cleanup.
+        var collections = await db.Collections.ToListAsync(ct);
+        foreach (var collection in collections.Where(c => c.ProductOrder.Any(slugs.Contains)))
+            collection.ProductOrder = collection.ProductOrder.Where(s => !slugs.Contains(s)).ToList();
+
+        db.ProductCollections.RemoveRange(products.SelectMany(p => p.ProductCollections));
+        db.Products.RemoveRange(products);
+        await db.SaveChangesAsync(ct);
     }
 
     private async Task SyncCollectionsAsync(Product product, List<string> collectionSlugs, CancellationToken ct)

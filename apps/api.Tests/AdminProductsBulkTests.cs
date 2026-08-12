@@ -3,6 +3,8 @@ using System.Linq;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using JovieJoy.Api.Contracts;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace JovieJoy.Api.Tests;
@@ -48,7 +50,7 @@ public class AdminProductsBulkTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
-    public async Task Bulk_delete_marks_unavailable()
+    public async Task Bulk_delete_removes_products_from_admin_and_public_catalogs()
     {
         var client = await _f.CreateAdminClientAsync();
         var slugs = await _f.SeedPublishedProducts(2);
@@ -57,10 +59,15 @@ public class AdminProductsBulkTests : IClassFixture<ApiFactory>
         res.EnsureSuccessStatusCode();
         foreach (var s in slugs)
         {
-            var get = await client.GetAsync($"/api/admin/products/{s}");
-            var p = await get.Content.ReadFromJsonAsync<ProductDto>();
-            Assert.False(p!.Available);
+            Assert.Equal(System.Net.HttpStatusCode.NotFound,
+                (await client.GetAsync($"/api/admin/products/{s}")).StatusCode);
+            Assert.Equal(System.Net.HttpStatusCode.NotFound,
+                (await _f.CreateClient().GetAsync($"/api/products/{s}")).StatusCode);
         }
+
+        using var scope = _f.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<Data.AppDbContext>();
+        Assert.False(await db.Products.AnyAsync(p => slugs.Contains(p.Slug)));
     }
 
     [Fact]
