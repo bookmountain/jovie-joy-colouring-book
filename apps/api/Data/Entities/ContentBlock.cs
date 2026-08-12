@@ -19,6 +19,7 @@ public enum ContentBlockType
     NewsletterCopy,
     HomeHeroSlides,
     HomeProductRow,
+    HomeSectionVisibility,
 }
 
 public static class ContentBlockPolicy

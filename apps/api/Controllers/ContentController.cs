@@ -70,6 +70,7 @@ public class ContentController(AppDbContext db) : ControllerBase
             HeaderBrand: grab(ContentBlockType.HeaderBrand),
             NewsletterCopy: grab(ContentBlockType.NewsletterCopy),
             HomeHeroSlides: grab(ContentBlockType.HomeHeroSlides),
-            HomeProductRows: grab(ContentBlockType.HomeProductRow)));
+            HomeProductRows: grab(ContentBlockType.HomeProductRow),
+            HomeSectionVisibility: grab(ContentBlockType.HomeSectionVisibility)));
     }
 }

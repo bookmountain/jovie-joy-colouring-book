@@ -12,6 +12,7 @@ import { getAllCollections } from "@/data/collections";
 import { apiGetContent, resolveAssetUrl, type HeroSlide } from "@/lib/api";
 import { getProductsForCollection } from "@/lib/catalog";
 import { applyHomepageCollection, type HomeRowData } from "@/lib/home-rows";
+import { homeSectionIsVisible, readHomeSectionVisibility } from "@/lib/home-visibility";
 import { SafeImage } from "@/components/common/SafeImage";
 
 const ROW_FALLBACKS: Record<string, HomeRowData> = {
@@ -44,10 +45,12 @@ async function keepReachableHeroSlides(slides: HeroSlide[]): Promise<HeroSlide[]
 }
 
 export default async function Home() {
-  const [bundle, collections] = await Promise.all([
-    apiGetContent(),
-    getAllCollections(),
-  ]);
+  const bundle = await apiGetContent();
+  const visibility = readHomeSectionVisibility(bundle);
+  const show = (section: Parameters<typeof homeSectionIsVisible>[1]) =>
+    homeSectionIsVisible(visibility, section);
+  const needsProductRows = show("newRelease") || show("bestSeller") || show("digital");
+  const collections = needsProductRows ? await getAllCollections() : [];
 
   function getRow(key: string, slot: "newrelease" | "bestseller" | "digital"): HomeRowData {
     const configured = (bundle.homeProductRows.find((b) => b.key === key)?.data ?? ROW_FALLBACKS[key]) as HomeRowData;
@@ -63,10 +66,10 @@ export default async function Home() {
     digitalProducts,
     cozyMomentImages,
   ] = await Promise.all([
-    rowNewRelease.collectionSlug ? getProductsForCollection(rowNewRelease.collectionSlug) : Promise.resolve([]),
-    rowBestSeller.collectionSlug ? getProductsForCollection(rowBestSeller.collectionSlug) : Promise.resolve([]),
-    rowDigital.collectionSlug ? getProductsForCollection(rowDigital.collectionSlug) : Promise.resolve([]),
-    getCozyMomentImages(),
+    show("newRelease") && rowNewRelease.collectionSlug ? getProductsForCollection(rowNewRelease.collectionSlug) : Promise.resolve([]),
+    show("bestSeller") && rowBestSeller.collectionSlug ? getProductsForCollection(rowBestSeller.collectionSlug) : Promise.resolve([]),
+    show("digital") && rowDigital.collectionSlug ? getProductsForCollection(rowDigital.collectionSlug) : Promise.resolve([]),
+    show("intro") || show("cozyMoments") ? getCozyMomentImages() : Promise.resolve([]),
   ]);
 
   const intro = bundle.homeIntro[0]?.data ?? {
@@ -75,14 +78,18 @@ export default async function Home() {
   };
   const cozyHeader = bundle.homeCozyMomentsHeader[0]?.data?.heading ?? "Cozy Moments";
   const heroSlidesData = bundle.homeHeroSlides[0]?.data;
-  const heroSlides = await keepReachableHeroSlides(heroSlidesData?.slides ?? []);
+  const heroSlides = show("heroCarousel")
+    ? await keepReachableHeroSlides(heroSlidesData?.slides ?? [])
+    : [];
   const heroIntervalMs = heroSlidesData?.intervalMs ?? 5000;
 
   const introTiles: { src: string; alt: string }[] = [];
-  const [introImage1, introImage2] = await Promise.all([
-    resolveReachableAssetUrl(intro.image1),
-    resolveReachableAssetUrl(intro.image2),
-  ]);
+  const [introImage1, introImage2] = show("intro")
+    ? await Promise.all([
+        resolveReachableAssetUrl(intro.image1),
+        resolveReachableAssetUrl(intro.image2),
+      ])
+    : [null, null];
   if (introImage1) introTiles.push({ src: introImage1, alt: intro.title ?? "Hi Friend" });
   if (introImage2) introTiles.push({ src: introImage2, alt: intro.title ?? "Hi Friend" });
   if (introTiles.length < 2) {
@@ -95,8 +102,8 @@ export default async function Home() {
 
   return (
     <main>
-      <HomeHero intervalMs={heroIntervalMs} slides={heroSlides} />
-      <section className="bg-cocoa-cream py-12 lg:py-16">
+      {show("heroCarousel") ? <HomeHero intervalMs={heroIntervalMs} slides={heroSlides} /> : null}
+      {show("intro") ? <section className="bg-cocoa-cream py-12 lg:py-16">
         <div className="mx-auto grid max-w-6xl gap-8 px-4 md:grid-cols-[0.8fr_1.2fr] md:items-center lg:px-8">
           <div className="grid grid-cols-2 gap-3">
             {introTiles.map((image) => (
@@ -121,30 +128,30 @@ export default async function Home() {
             </p>
           </div>
         </div>
-      </section>
-      <HomeSection
+      </section> : null}
+      {show("newRelease") ? <HomeSection
         eyebrow={rowNewRelease.eyebrow ?? ""}
         href={rowNewRelease.href ?? "#"}
         products={newReleaseProducts.slice(0, rowNewRelease.itemCount ?? 4)}
         title={rowNewRelease.title ?? ""}
-      />
-      <HomeVideoSection />
-      <HomeSection
+      /> : null}
+      {show("video") ? <HomeVideoSection /> : null}
+      {show("bestSeller") ? <HomeSection
         eyebrow={rowBestSeller.eyebrow ?? ""}
         href={rowBestSeller.href ?? "#"}
         products={bestSellerProducts.slice(0, rowBestSeller.itemCount ?? 4)}
         title={rowBestSeller.title ?? ""}
-      />
-      <CollectionTiles />
-      <HomeSection
+      /> : null}
+      {show("collectionTiles") ? <CollectionTiles /> : null}
+      {show("digital") ? <HomeSection
         eyebrow={rowDigital.eyebrow ?? ""}
         href={rowDigital.href ?? "#"}
         products={digitalProducts.slice(0, rowDigital.itemCount ?? 4)}
         title={rowDigital.title ?? ""}
-      />
-      <BlogCategoryCards />
-      <FeaturedOnSection />
-      <section className="py-12 lg:py-16">
+      /> : null}
+      {show("blogPosts") ? <BlogCategoryCards /> : null}
+      {show("featuredOn") ? <FeaturedOnSection /> : null}
+      {show("cozyMoments") ? <section className="py-12 lg:py-16">
         <div className="mx-auto max-w-7xl px-4 lg:px-8">
           <h2 className="coco-heading mb-8">
             {cozyHeader}
@@ -166,10 +173,10 @@ export default async function Home() {
             ))}
           </div>
         </div>
-      </section>
-      <FaqPreview />
-      <NewsletterForm />
-      <HomeFooterArt />
+      </section> : null}
+      {show("faqPreview") ? <FaqPreview /> : null}
+      {show("newsletter") ? <NewsletterForm /> : null}
+      {show("footerArtwork") ? <HomeFooterArt /> : null}
     </main>
   );
 }

@@ -1,6 +1,7 @@
 export const ACTIVE_CONTENT_BLOCK_TYPES = [
   "HomeHeroSlides",
   "HomeProductRow",
+  "HomeSectionVisibility",
   "Announcement",
   "HomeVideo",
   "HeroArtwork",

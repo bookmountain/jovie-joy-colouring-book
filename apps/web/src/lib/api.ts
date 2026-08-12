@@ -99,6 +99,7 @@ export type SiteContentBundle = {
   newsletterCopy: ContentBlock<{ heading?: string; ctaLabel?: string; successMessage?: string }>[];
   homeHeroSlides: ContentBlock<{ intervalMs?: number; slides: HeroSlide[] }>[];
   homeProductRows: ContentBlock<{ eyebrow?: string; title?: string; href?: string; collectionSlug?: string; itemCount?: number }>[];
+  homeSectionVisibility?: ContentBlock<Record<string, boolean>>[];
 };
 
 export type HeroSlide = {

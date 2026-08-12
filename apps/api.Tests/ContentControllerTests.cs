@@ -70,4 +70,31 @@ public class ContentControllerTests : IClassFixture<ApiFactory>
         bundle.FooterGroups.Should().BeEmpty();
         bundle.HomeVideo.Should().NotBeEmpty();
     }
+
+    [Fact]
+    public async Task Bundle_exposes_explicit_homepage_section_visibility()
+    {
+        var key = $"home.visibility.{Guid.NewGuid():N}";
+        var admin = await _factory.CreateAdminClientAsync();
+        try
+        {
+            var save = await admin.PutAsJsonAsync($"/api/admin/content/{key}", new
+            {
+                type = "HomeSectionVisibility",
+                data = new { heroCarousel = false, newsletter = true },
+                sortIndex = 0,
+            });
+            save.EnsureSuccessStatusCode();
+
+            var bundle = await _factory.CreateClient().GetFromJsonAsync<SiteContentBundleDto>("/api/content");
+
+            var visibility = bundle!.HomeSectionVisibility.Single(block => block.Key == key);
+            visibility.Data.GetProperty("heroCarousel").GetBoolean().Should().BeFalse();
+            visibility.Data.GetProperty("newsletter").GetBoolean().Should().BeTrue();
+        }
+        finally
+        {
+            await admin.DeleteAsync($"/api/admin/content/{key}");
+        }
+    }
 }
