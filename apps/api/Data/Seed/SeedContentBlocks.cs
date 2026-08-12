@@ -7,28 +7,12 @@ namespace JovieJoy.Api.Data.Seed;
 
 public static class SeedContentBlocks
 {
-    private const string LegacyHeroImagePlaceholder = "/placeholders/footer-characters-desktop.png";
-
-    public static async Task RunAsync(AppDbContext db)
+    public static async Task RunAsync(AppDbContext db, bool initializeDefaults = false)
     {
         var now = DateTime.UtcNow;
 
         var blocks = new List<ContentBlock>
         {
-            new()
-            {
-                Key = "home.hero", Type = ContentBlockType.HomeHero, SortIndex = 0, UpdatedAt = now,
-                Data = JsonDocument.Parse("""
-                {
-                  "eyebrow": "New release",
-                  "title": "Cozy coloring for calm days",
-                  "subtext": "Hand-drawn pages designed for slow, warm moments.",
-                  "ctaLabel": "Shop the cozy collection",
-                  "ctaHref": "/collections/cute-comfy",
-                  "image": ""
-                }
-                """),
-            },
             new()
             {
                 // Drives the homepage hero carousel. Slide images are seeded with
@@ -172,65 +156,16 @@ public static class SeedContentBlocks
             },
         };
 
-        var existingKeys = await db.ContentBlocks.Select(b => b.Key).ToListAsync();
-        var existingKeySet = new HashSet<string>(existingKeys, StringComparer.Ordinal);
+        // The caller decides whether this is a genuinely new database before
+        // any other seeders run. A missing row — including an entirely empty
+        // table — is otherwise an intentional CMS deletion and stays deleted.
+        if (initializeDefaults && !await db.ContentBlocks.AnyAsync())
+            db.ContentBlocks.AddRange(blocks);
 
-        var missing = blocks.Where(b => !existingKeySet.Contains(b.Key)).ToList();
-        if (missing.Count > 0)
-        {
-            db.ContentBlocks.AddRange(missing);
-        }
-
-        await HealLegacyHeroImageAsync(db);
-        await BackfillEmptyHeroSlidesAsync(db, blocks);
         await MigrateLegacyHeroSlideShapeAsync(db);
         await MigrateLegacyHeroArtworkShapeAsync(db);
 
         await db.SaveChangesAsync();
-    }
-
-    private static async Task HealLegacyHeroImageAsync(AppDbContext db)
-    {
-        var hero = await db.ContentBlocks.FirstOrDefaultAsync(b => b.Key == "home.hero");
-        if (hero is null) return;
-
-        if (!hero.Data.RootElement.TryGetProperty("image", out var imageProp)) return;
-        if (imageProp.ValueKind != JsonValueKind.String) return;
-        if (imageProp.GetString() != LegacyHeroImagePlaceholder) return;
-
-        var json = hero.Data.RootElement.GetRawText();
-        var node = JsonNode.Parse(json) as JsonObject;
-        if (node is null) return;
-        node["image"] = "";
-
-        hero.Data = JsonDocument.Parse(node.ToJsonString());
-        hero.UpdatedAt = DateTime.UtcNow;
-    }
-
-    // If home.hero.slides exists but every slide image is empty (i.e. seeded by the
-    // first version of HomeHeroSlides), rewrite it with the cocowyo placeholders so
-    // the storefront isn't blank. Skipped if any image has been uploaded already.
-    private static async Task BackfillEmptyHeroSlidesAsync(AppDbContext db, List<ContentBlock> seedBlocks)
-    {
-        var existing = await db.ContentBlocks.FirstOrDefaultAsync(b => b.Key == "home.hero.slides");
-        if (existing is null) return;
-        if (!existing.Data.RootElement.TryGetProperty("slides", out var slidesProp)) return;
-        if (slidesProp.ValueKind != JsonValueKind.Array) return;
-
-        var anyImage = false;
-        foreach (var slide in slidesProp.EnumerateArray())
-        {
-            if (slide.TryGetProperty("image", out var im) && im.ValueKind == JsonValueKind.String && !string.IsNullOrEmpty(im.GetString())) { anyImage = true; break; }
-            if (slide.TryGetProperty("desktop", out var d) && d.ValueKind == JsonValueKind.String && !string.IsNullOrEmpty(d.GetString())) { anyImage = true; break; }
-            if (slide.TryGetProperty("mobile", out var m) && m.ValueKind == JsonValueKind.String && !string.IsNullOrEmpty(m.GetString())) { anyImage = true; break; }
-        }
-        if (anyImage) return;
-
-        var template = seedBlocks.FirstOrDefault(b => b.Key == "home.hero.slides");
-        if (template is null) return;
-
-        existing.Data = JsonDocument.Parse(template.Data.RootElement.GetRawText());
-        existing.UpdatedAt = DateTime.UtcNow;
     }
 
     // Rewrites legacy { desktop, mobile } slides to { image } in place.

@@ -5,9 +5,9 @@ namespace JovieJoy.Api.Data.Seed;
 
 public static class SeedBlogs
 {
-    public static async Task RunAsync(AppDbContext db)
+    public static async Task RunAsync(AppDbContext db, bool initializeDefaults = false)
     {
-        if (await db.BlogCategories.AnyAsync()) return;
+        if (!initializeDefaults || await db.BlogCategories.AnyAsync()) return;
 
         var categories = new List<BlogCategory>
         {

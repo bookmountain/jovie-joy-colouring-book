@@ -21,6 +21,16 @@ public enum ContentBlockType
     HomeProductRow,
 }
 
+public static class ContentBlockPolicy
+{
+    public static bool IsRetired(ContentBlockType type) => type is
+        ContentBlockType.HomeHero or
+        ContentBlockType.AboutSection or
+        ContentBlockType.FaqEntry or
+        ContentBlockType.FooterGroup or
+        ContentBlockType.FeaturedOn;
+}
+
 public class ContentBlock
 {
     public string Key { get; set; } = null!;            // e.g. "home.hero", "footer.group.info"

@@ -5,9 +5,9 @@ namespace JovieJoy.Api.Data.Seed;
 
 public static class SeedFreebies
 {
-    public static async Task RunAsync(AppDbContext db)
+    public static async Task RunAsync(AppDbContext db, bool initializeDefaults = false)
     {
-        if (await db.Freebies.AnyAsync())
+        if (!initializeDefaults || await db.Freebies.AnyAsync())
             return;
 
         db.Freebies.Add(new Freebie
@@ -24,11 +24,13 @@ public static class SeedFreebies
             // previous /uploads/... path pointed at a file that never shipped and
             // 404'd on the storefront.
             CoverImage = "https://cdn.shopify.com/s/files/1/0602/0133/6893/files/1-little-cuddles-coloring-book.png?v=1775731802",
-            FilePath = "/uploads/freebies/files/mini-coloring-book.pdf",
-            FileKind = "pdf",
+            // The repository intentionally does not ship customer-download files.
+            // Upload the real asset in CMS before publishing this seeded draft.
+            FilePath = "",
+            FileKind = "",
             FileSizeBytes = 0,
             SortIndex = 0,
-            Published = true,
+            Published = false,
         });
         await db.SaveChangesAsync();
     }

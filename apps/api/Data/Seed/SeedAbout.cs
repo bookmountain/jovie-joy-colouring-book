@@ -5,9 +5,9 @@ namespace JovieJoy.Api.Data.Seed;
 
 public static class SeedAbout
 {
-    public static async Task RunAsync(AppDbContext db)
+    public static async Task RunAsync(AppDbContext db, bool initializeDefaults = false)
     {
-        if (await db.AboutSections.AnyAsync()) return;
+        if (!initializeDefaults || await db.AboutSections.AnyAsync()) return;
 
         db.AboutSections.AddRange(
             new AboutSection

@@ -5,9 +5,9 @@ namespace JovieJoy.Api.Data.Seed;
 
 public static class SeedGallery
 {
-    public static async Task RunAsync(AppDbContext db)
+    public static async Task RunAsync(AppDbContext db, bool initializeDefaults = false)
     {
-        if (await db.GalleryImages.AnyAsync()) return;
+        if (!initializeDefaults || await db.GalleryImages.AnyAsync()) return;
 
         db.GalleryImages.AddRange(
             new GalleryImage { Src = "https://cdn.shopify.com/s/files/1/0602/0133/6893/files/1-cozy-christmas-coloring-book_04b4e1c3-4640-4fb9-ba1e-3ecfa5f1ad00.png?v=1775733386", Alt = "Cozy Christmas book cover", SortIndex = 0 },

@@ -5,9 +5,9 @@ namespace JovieJoy.Api.Data.Seed;
 
 public static class SeedFaqs
 {
-    public static async Task RunAsync(AppDbContext db)
+    public static async Task RunAsync(AppDbContext db, bool initializeDefaults = false)
     {
-        if (await db.Faqs.AnyAsync()) return;
+        if (!initializeDefaults || await db.Faqs.AnyAsync()) return;
 
         db.Faqs.AddRange(
             new Faq { Slug = "where-buy-physical", SortIndex = 0,

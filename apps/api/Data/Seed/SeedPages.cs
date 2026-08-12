@@ -5,9 +5,9 @@ namespace JovieJoy.Api.Data.Seed;
 
 public static class SeedPages
 {
-    public static async Task RunAsync(AppDbContext db)
+    public static async Task RunAsync(AppDbContext db, bool initializeDefaults = false)
     {
-        if (await db.StaticPages.AnyAsync()) return;
+        if (!initializeDefaults || await db.StaticPages.AnyAsync()) return;
 
         db.StaticPages.AddRange(
             new StaticPage { Slug = "about-us", Title = "About Us",

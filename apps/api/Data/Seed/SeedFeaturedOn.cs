@@ -5,9 +5,9 @@ namespace JovieJoy.Api.Data.Seed;
 
 public static class SeedFeaturedOn
 {
-    public static async Task RunAsync(AppDbContext db)
+    public static async Task RunAsync(AppDbContext db, bool initializeDefaults = false)
     {
-        if (await db.FeaturedOnLinks.AnyAsync()) return;
+        if (!initializeDefaults || await db.FeaturedOnLinks.AnyAsync()) return;
 
         db.FeaturedOnLinks.AddRange(
             new FeaturedOnLink { Slug = "penguin", Label = "Penguin Random House",

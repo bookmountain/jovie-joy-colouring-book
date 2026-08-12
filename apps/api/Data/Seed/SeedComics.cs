@@ -5,9 +5,9 @@ namespace JovieJoy.Api.Data.Seed;
 
 public static class SeedComics
 {
-    public static async Task RunAsync(AppDbContext db)
+    public static async Task RunAsync(AppDbContext db, bool initializeDefaults = false)
     {
-        if (await db.ComicWorlds.AnyAsync()) return;
+        if (!initializeDefaults || await db.ComicWorlds.AnyAsync()) return;
 
         var spookyCutie = new ComicWorld { Title = "Spooky Cutie World", SortIndex = 0 };
         var cozyFriend = new ComicWorld { Title = "Cozy Friend World", SortIndex = 1 };

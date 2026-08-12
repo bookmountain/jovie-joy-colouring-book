@@ -5,9 +5,9 @@ namespace JovieJoy.Api.Data.Seed;
 
 public static class SeedNavigation
 {
-    public static async Task RunAsync(AppDbContext db)
+    public static async Task RunAsync(AppDbContext db, bool initializeDefaults = false)
     {
-        if (await db.NavLinks.AnyAsync()) return;
+        if (!initializeDefaults || await db.NavLinks.AnyAsync()) return;
 
         // Primary nav (3-level tree)
         var home = new NavLink { Label = "Home", Href = "/", SortIndex = 0 };

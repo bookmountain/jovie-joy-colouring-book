@@ -5,9 +5,9 @@ namespace JovieJoy.Api.Data.Seed;
 
 public static class SeedProducts
 {
-    public static async Task RunAsync(AppDbContext db)
+    public static async Task RunAsync(AppDbContext db, bool initializeDefaults = false)
     {
-        if (await db.Products.AnyAsync()) return;
+        if (!initializeDefaults || await db.Products.AnyAsync()) return;
 
         var defaultOptions = new List<ProductOption> { new("Format", new List<string> { "Default Title" }) };
 
@@ -503,7 +503,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "digital", "little cuddles", "combo" },
-                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2025-04-09"), DateTimeKind.Utc),
+                PublishedAt = null,
             },
             // 19
             new Product
@@ -531,7 +531,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "digital", "little cuddles", "combo" },
-                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2025-04-09"), DateTimeKind.Utc),
+                PublishedAt = null,
             },
             // 20
             new Product
@@ -559,7 +559,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "digital", "little cuddles", "combo" },
-                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2025-04-09"), DateTimeKind.Utc),
+                PublishedAt = null,
             },
             // 21
             new Product
@@ -587,7 +587,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "digital", "little cuddles", "combo" },
-                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2025-04-09"), DateTimeKind.Utc),
+                PublishedAt = null,
             },
             // 22
             new Product
@@ -615,7 +615,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "digital", "cozy friends", "printable" },
-                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2025-04-10"), DateTimeKind.Utc),
+                PublishedAt = null,
             },
             // 23
             new Product
@@ -643,7 +643,7 @@ public static class SeedProducts
                 ReviewImages = null,
                 InspirationImages = null,
                 Tags = new List<string> { "digital", "spooky cuties", "seasonal" },
-                PublishedAt = DateTime.SpecifyKind(DateTime.Parse("2025-04-10"), DateTimeKind.Utc),
+                PublishedAt = null,
             },
             // 24
             new Product
