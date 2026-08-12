@@ -11,7 +11,10 @@ namespace JovieJoy.Api.Controllers.Admin;
 [ApiController]
 [Route("api/admin/gallery")]
 [Authorize(Policy = "AdminOnly")]
-public class AdminGalleryController(AppDbContext db, IUploadService uploads) : ControllerBase
+public class AdminGalleryController(
+    AppDbContext db,
+    IUploadService uploads,
+    IAssetCleanupService assetCleanup) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<GalleryImageDto>>> List(CancellationToken ct)
@@ -39,11 +42,13 @@ public class AdminGalleryController(AppDbContext db, IUploadService uploads) : C
     {
         var row = await db.GalleryImages.FirstOrDefaultAsync(g => g.Id == id, ct);
         if (row is null) return NotFound();
+        var previousSrc = row.Src;
 
         row.Src = req.Src ?? "";
         row.Alt = req.Alt ?? "";
         row.SortIndex = req.SortIndex;
         await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync([previousSrc], ct);
         return Ok(GalleryImageDto.From(row));
     }
 
@@ -54,6 +59,7 @@ public class AdminGalleryController(AppDbContext db, IUploadService uploads) : C
         if (row is null) return NotFound();
         db.GalleryImages.Remove(row);
         await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync([row.Src], ct);
         return NoContent();
     }
 

@@ -35,6 +35,7 @@ public class ProductsControllerTests : IClassFixture<ApiFactory>
                 Slug = slug, Title = "Test Seed", Excerpt = "x",
                 Description = new List<string> { "y" }, PriceCents = 100,
                 ProductType = ProductType.Digital, PublishedAt = DateTime.UtcNow,
+                PdfPath = "/uploads/pdfs/test-seed.pdf",
             });
             await db.SaveChangesAsync();
         }

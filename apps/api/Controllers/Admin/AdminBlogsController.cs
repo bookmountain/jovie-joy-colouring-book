@@ -11,7 +11,10 @@ namespace JovieJoy.Api.Controllers.Admin;
 [ApiController]
 [Route("api/admin/blogs")]
 [Authorize(Policy = "AdminOnly")]
-public class AdminBlogsController(AppDbContext db, IUploadService uploads) : ControllerBase
+public class AdminBlogsController(
+    AppDbContext db,
+    IUploadService uploads,
+    IAssetCleanupService assetCleanup) : ControllerBase
 {
     // ----- Categories -----
 
@@ -44,19 +47,26 @@ public class AdminBlogsController(AppDbContext db, IUploadService uploads) : Con
     {
         var row = await db.BlogCategories.FirstOrDefaultAsync(c => c.Slug == slug, ct);
         if (row is null) return NotFound();
+        var previousImage = row.Image;
         row.Title = req.Title; row.Excerpt = req.Excerpt ?? "";
         row.Image = req.Image ?? ""; row.SortIndex = req.SortIndex;
         await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync([previousImage], ct);
         return Ok(BlogCategoryDto.From(row));
     }
 
     [HttpDelete("{slug}")]
     public async Task<IActionResult> DeleteCategory(string slug, CancellationToken ct)
     {
-        var row = await db.BlogCategories.FirstOrDefaultAsync(c => c.Slug == slug, ct);
+        var row = await db.BlogCategories
+            .Include(category => category.Articles)
+            .FirstOrDefaultAsync(category => category.Slug == slug, ct);
         if (row is null) return NotFound();
+        var candidateImages = row.Articles.Select(article => article.Image).ToList();
+        candidateImages.Add(row.Image);
         db.BlogCategories.Remove(row);
         await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync(candidateImages, ct);
         return NoContent();
     }
 
@@ -110,10 +120,12 @@ public class AdminBlogsController(AppDbContext db, IUploadService uploads) : Con
     {
         var row = await db.Articles.FirstOrDefaultAsync(a => a.BlogSlug == categorySlug && a.Slug == articleSlug, ct);
         if (row is null) return NotFound();
+        var previousImage = row.Image;
         row.Title = req.Title; row.Excerpt = req.Excerpt ?? "";
         row.Image = req.Image ?? ""; row.Body = req.Body ?? new List<string>();
         row.SortIndex = req.SortIndex;
         await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync([previousImage], ct);
         return Ok(ArticleDto.From(row));
     }
 
@@ -124,6 +136,7 @@ public class AdminBlogsController(AppDbContext db, IUploadService uploads) : Con
         if (row is null) return NotFound();
         db.Articles.Remove(row);
         await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync([row.Image], ct);
         return NoContent();
     }
 

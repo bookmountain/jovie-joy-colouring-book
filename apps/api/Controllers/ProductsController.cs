@@ -1,5 +1,6 @@
 using JovieJoy.Api.Contracts;
 using JovieJoy.Api.Data;
+using JovieJoy.Api.Data.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,7 +13,11 @@ public class ProductsController(AppDbContext db) : ControllerBase
     private static IQueryable<Data.Entities.Product> Published(IQueryable<Data.Entities.Product> query)
     {
         var now = DateTime.UtcNow;
-        return query.Where(p => p.PublishedAt != null && p.PublishedAt <= now);
+        return query.Where(p =>
+            p.PublishedAt != null &&
+            p.PublishedAt <= now &&
+            (p.ProductType != ProductType.Digital ||
+             !string.IsNullOrEmpty(p.PdfPath)));
     }
 
     [HttpGet]
@@ -43,7 +48,7 @@ public class ProductsController(AppDbContext db) : ControllerBase
         };
 
         var products = await query.ToListAsync(ct);
-        return Ok(products.Select(p => ProductDto.From(p)));
+        return Ok(products.Select(p => ProductDto.FromPublic(p)));
     }
 
     [HttpGet("{slug}")]
@@ -53,9 +58,13 @@ public class ProductsController(AppDbContext db) : ControllerBase
         var product = await db.Products
             .AsNoTracking()
             .Include(p => p.ProductCollections).ThenInclude(pc => pc.Collection)
-            .Where(p => p.PublishedAt != null && p.PublishedAt <= now)
+            .Where(p =>
+                p.PublishedAt != null &&
+                p.PublishedAt <= now &&
+                (p.ProductType != ProductType.Digital ||
+                 !string.IsNullOrEmpty(p.PdfPath)))
             .FirstOrDefaultAsync(p => p.Slug == slug, ct);
 
-        return product is null ? NotFound() : Ok(ProductDto.From(product));
+        return product is null ? NotFound() : Ok(ProductDto.FromPublic(product));
     }
 }

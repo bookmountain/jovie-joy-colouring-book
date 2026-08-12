@@ -15,7 +15,7 @@ namespace JovieJoy.Api.Controllers.Admin;
 public class AdminFreebiesController(
     AppDbContext db,
     IUploadService uploads,
-    IWebHostEnvironment env,
+    IAssetCleanupService assetCleanup,
     IEmailSender emailSender,
     IOptions<FreebiesOptions> opts,
     ILogger<AdminFreebiesController> logger) : ControllerBase
@@ -51,6 +51,8 @@ public class AdminFreebiesController(
     {
         if (string.IsNullOrWhiteSpace(req.Slug) || string.IsNullOrWhiteSpace(req.Title))
             return BadRequest(new { error = "Slug and Title are required" });
+        if (req.Published == true)
+            return BadRequest(new { error = "Create the freebie as a draft, upload its file, then publish it." });
         if (await db.Freebies.AnyAsync(x => x.Slug == req.Slug, ct))
             return Conflict(new { error = $"Slug '{req.Slug}' already in use" });
 
@@ -74,6 +76,8 @@ public class AdminFreebiesController(
     {
         var row = await db.Freebies.FirstOrDefaultAsync(f => f.Slug == slug, ct);
         if (row is null) return NotFound();
+        if (req.Published && string.IsNullOrWhiteSpace(row.FilePath))
+            return BadRequest(new { error = "Upload a PDF or ZIP file before publishing this freebie." });
         row.Title = string.IsNullOrWhiteSpace(req.Title) ? row.Title : req.Title;
         row.Excerpt = req.Excerpt ?? "";
         row.Description = req.Description ?? new List<string>();
@@ -88,11 +92,13 @@ public class AdminFreebiesController(
     {
         var row = await db.Freebies.Include(f => f.Requests).FirstOrDefaultAsync(f => f.Slug == slug, ct);
         if (row is null) return NotFound();
+        var previousAssets = new[] { row.CoverImage, row.FilePath };
         // Eager-load + remove children so behaviour is identical under both the
         // relational FK cascade (production) and the InMemory provider (tests).
         if (row.Requests.Count > 0) db.FreebieRequests.RemoveRange(row.Requests);
         db.Freebies.Remove(row);
         await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync(previousAssets, ct);
         return NoContent();
     }
 
@@ -112,63 +118,132 @@ public class AdminFreebiesController(
 
     [HttpPost("{slug}/cover")]
     [RequestSizeLimit(10 * 1024 * 1024)]
-    public async Task<ActionResult<FreebieAdminDto>> UploadCover(string slug, IFormFile file, CancellationToken ct)
+    public async Task<ActionResult<FreebieAdminDto>> UploadCover(
+        string slug,
+        [FromForm] IFormFile? file,
+        CancellationToken ct)
     {
         var row = await db.Freebies.FirstOrDefaultAsync(f => f.Slug == slug, ct);
         if (row is null) return NotFound();
+        if (file is null)
+            return BadRequest(new { error = "A non-empty cover image is required" });
+        if (!UploadService.ImageFileNameMatchesContentType(file))
+            return BadRequest(new { error = "The cover image extension and content type must match" });
+
+        var previousCover = row.CoverImage;
+        var previousUpdatedAt = row.UpdatedAt;
+        string url;
         try
         {
-            var url = await uploads.SaveImageAsync(file, "freebies/covers", slug, ct);
-            uploads.DeleteIfLocal(row.CoverImage);
-            row.CoverImage = url;
-            row.UpdatedAt = DateTime.UtcNow;
-            await db.SaveChangesAsync(ct);
-            var count = await db.FreebieRequests.CountAsync(r => r.FreebieId == row.Id, ct);
-            return Ok(FreebieAdminDto.From(row, count, null));
+            url = await uploads.SaveImageAsync(file, "freebies/covers", slug, ct);
         }
         catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+
+        row.CoverImage = url;
+        row.UpdatedAt = DateTime.UtcNow;
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch
+        {
+            row.CoverImage = previousCover;
+            row.UpdatedAt = previousUpdatedAt;
+            db.Entry(row).State = EntityState.Unchanged;
+            uploads.DeleteIfLocal(url);
+            throw;
+        }
+        await assetCleanup.DeleteUnreferencedAsync([previousCover], ct);
+        var count = await db.FreebieRequests.CountAsync(r => r.FreebieId == row.Id, ct);
+        return Ok(FreebieAdminDto.From(row, count, null));
     }
 
     [HttpPost("{slug}/file")]
     [RequestSizeLimit(50 * 1024 * 1024)]
-    public async Task<ActionResult<FreebieAdminDto>> UploadFile(string slug, IFormFile file, CancellationToken ct)
+    public async Task<ActionResult<FreebieAdminDto>> UploadFile(
+        string slug,
+        [FromForm] IFormFile? file,
+        CancellationToken ct)
     {
         var row = await db.Freebies.FirstOrDefaultAsync(f => f.Slug == slug, ct);
         if (row is null) return NotFound();
+        if (file is null)
+            return BadRequest(new { error = "A non-empty PDF or ZIP file is required" });
 
-        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-        var kind = ext switch
+        CustomerDownloadUpload upload;
+        try
         {
-            ".pdf" => "pdf",
-            ".zip" => "zip",
-            _ => null,
-        };
-        if (kind is null) return BadRequest(new { error = "Only .pdf or .zip accepted" });
-        if (file.Length > opts.Value.MaxFileSizeMb * 1024L * 1024L)
-            return BadRequest(new { error = $"File exceeds {opts.Value.MaxFileSizeMb}MB" });
-
-        var dir = Path.Combine(env.ContentRootPath, "uploads", "freebies", "files");
-        Directory.CreateDirectory(dir);
-        var fileName = $"{slug}_{Path.GetRandomFileName()}{ext}";
-        var abs = Path.Combine(dir, fileName);
-        await using (var stream = System.IO.File.Create(abs))
-            await file.CopyToAsync(stream, ct);
-
-        // remove old file if any
-        if (!string.IsNullOrEmpty(row.FilePath))
+            upload = await uploads.SaveCustomerDownloadAsync(
+                file,
+                "freebies/files",
+                slug,
+                opts.Value.MaxFileSizeMb * 1024L * 1024L,
+                allowZip: true,
+                ct);
+        }
+        catch (InvalidOperationException ex)
         {
-            var oldAbs = Path.Combine(env.ContentRootPath, row.FilePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-            if (System.IO.File.Exists(oldAbs)) System.IO.File.Delete(oldAbs);
+            return BadRequest(new { error = ex.Message });
         }
 
-        row.FilePath = $"/uploads/freebies/files/{fileName}";
-        row.FileKind = kind;
-        row.FileSizeBytes = file.Length;
+        var previousFilePath = row.FilePath;
+        var previousFileKind = row.FileKind;
+        var previousFileSizeBytes = row.FileSizeBytes;
+        var previousUpdatedAt = row.UpdatedAt;
+        row.FilePath = upload.Url;
+        row.FileKind = upload.Kind;
+        row.FileSizeBytes = upload.SizeBytes;
         row.UpdatedAt = DateTime.UtcNow;
-        await db.SaveChangesAsync(ct);
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch
+        {
+            row.FilePath = previousFilePath;
+            row.FileKind = previousFileKind;
+            row.FileSizeBytes = previousFileSizeBytes;
+            row.UpdatedAt = previousUpdatedAt;
+            db.Entry(row).State = EntityState.Unchanged;
+            uploads.DeleteIfLocal(upload.Url);
+            throw;
+        }
+        await assetCleanup.DeleteUnreferencedAsync([previousFilePath], ct);
 
         var count = await db.FreebieRequests.CountAsync(r => r.FreebieId == row.Id, ct);
         return Ok(FreebieAdminDto.From(row, count, null));
+    }
+
+    [HttpGet("{slug}/file")]
+    public async Task<IActionResult> DownloadFile(
+        string slug,
+        [FromServices] IWebHostEnvironment env,
+        CancellationToken ct)
+    {
+        var row = await db.Freebies.AsNoTracking().FirstOrDefaultAsync(f => f.Slug == slug, ct);
+        if (row is null) return NotFound();
+        if (string.IsNullOrWhiteSpace(row.FilePath) ||
+            !row.FilePath.StartsWith("/uploads/freebies/files/", StringComparison.Ordinal) ||
+            row.FilePath.Contains('\\'))
+            return NotFound(new { error = "download_unavailable" });
+
+        var uploadsRoot = Path.GetFullPath(Path.Combine(env.ContentRootPath, "uploads"));
+        var relative = row.FilePath["/uploads/".Length..].Replace('/', Path.DirectorySeparatorChar);
+        var absolute = Path.GetFullPath(Path.Combine(uploadsRoot, relative));
+        var prefix = uploadsRoot + Path.DirectorySeparatorChar;
+        if (!absolute.StartsWith(
+                prefix,
+                OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal) ||
+            !System.IO.File.Exists(absolute))
+            return NotFound(new { error = "download_unavailable" });
+
+        var kind = row.FileKind == "zip" ? "zip" : "pdf";
+        var contentType = kind == "zip" ? "application/zip" : "application/pdf";
+        var downloadName = $"{row.Slug}.{kind}";
+        return File(
+            new FileStream(absolute, FileMode.Open, FileAccess.Read, FileShare.Read),
+            contentType,
+            downloadName);
     }
 
     [HttpGet("{slug}/requests")]
@@ -194,11 +269,9 @@ public class AdminFreebiesController(
             .FirstOrDefaultAsync(r => r.Id == id && r.Freebie.Slug == slug, ct);
         if (row is null) return NotFound();
 
-        row.Token = FreebieTokens.Generate();
-        row.ExpiresAt = DateTime.UtcNow.AddDays(opts.Value.DownloadTtlDays);
-        await db.SaveChangesAsync(ct);
-
-        var url = $"{opts.Value.BaseUrl.TrimEnd('/')}/api/freebies/download/{row.Token}";
+        var stagedToken = FreebieTokens.Generate();
+        var stagedExpiry = DateTime.UtcNow.AddDays(opts.Value.DownloadTtlDays);
+        var url = $"{opts.Value.BaseUrl.TrimEnd('/')}/api/freebies/download/{stagedToken}";
         try
         {
             await emailSender.SendFreebieDownloadAsync(row.Email, row.Freebie, url, ct);
@@ -208,6 +281,9 @@ public class AdminFreebiesController(
             logger.LogError(ex, "Freebie resend failed for {Slug} → {Email}", slug, row.Email);
             return StatusCode(StatusCodes.Status502BadGateway, new { error = "email_send_failed" });
         }
+        row.Token = stagedToken;
+        row.ExpiresAt = stagedExpiry;
+        await db.SaveChangesAsync(ct);
         return Ok(new { ok = true });
     }
 }

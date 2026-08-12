@@ -4,6 +4,7 @@ using JovieJoy.Api.Data;
 using JovieJoy.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace JovieJoy.Api.Controllers;
@@ -52,6 +53,7 @@ public class AuthController(
 
     // Admin login — email + password
     [HttpPost("admin/login")]
+    [EnableRateLimiting("admin-login")]
     public async Task<ActionResult<AuthResponse>> AdminLogin(
         [FromBody] AdminLoginRequest req,
         CancellationToken ct)

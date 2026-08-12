@@ -27,8 +27,7 @@ public class ApiFactory : WebApplicationFactory<Program>
     private readonly string _dbName = $"test-db-{Guid.NewGuid():N}";
     private readonly string _contentRoot = Path.Combine(
         Path.GetTempPath(),
-        "jovie-joy-api-tests",
-        Guid.NewGuid().ToString("N"));
+        $"jovie-joy-api-tests-{Guid.NewGuid():N}");
 
     protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
     {
@@ -46,6 +45,11 @@ public class ApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Stripe:WebhookSecret", "whsec_dummy");
         builder.UseSetting("Stripe:SuccessUrl", "http://localhost/success");
         builder.UseSetting("Stripe:CancelUrl", "http://localhost/cancel");
+        // Most controller suites share one factory across many test methods, so
+        // keep anonymous endpoint limits out of their way. Dedicated rate-limit
+        // tests override these values with small limits.
+        builder.UseSetting("RateLimiting:Checkout:PermitLimit", "1000");
+        builder.UseSetting("RateLimiting:FreebieRequest:PermitLimit", "1000");
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<DbContextOptions<AppDbContext>>();
@@ -68,6 +72,7 @@ public class ApiFactory : WebApplicationFactory<Program>
     }
 
     public FakeEmailSender Emails => Services.GetRequiredService<FakeEmailSender>();
+    public string ContentRoot => _contentRoot;
 
     /// <summary>
     /// Returns an HttpClient pre-authorised as an admin user via a locally-issued JWT.

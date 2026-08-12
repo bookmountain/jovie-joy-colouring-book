@@ -44,6 +44,42 @@ public class AdminFreebiesControllerTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task Create_rejects_published_freebie_before_a_file_can_be_uploaded()
+    {
+        var admin = await _factory.CreateAdminClientAsync();
+
+        var response = await admin.PostAsJsonAsync("/api/admin/freebies", new
+        {
+            slug = $"published-without-file-{Guid.NewGuid():N}",
+            title = "Incomplete freebie",
+            published = true,
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Update_rejects_publishing_a_freebie_without_a_file()
+    {
+        var slug = $"publish-without-file-{Guid.NewGuid():N}";
+        await _factory.SeedFreebie(slug, published: false, filePath: "");
+        var admin = await _factory.CreateAdminClientAsync();
+
+        var response = await admin.PutAsJsonAsync($"/api/admin/freebies/{slug}", new
+        {
+            title = "Incomplete freebie",
+            excerpt = "",
+            description = Array.Empty<string>(),
+            published = true,
+        });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        (await db.Freebies.SingleAsync(freebie => freebie.Slug == slug)).Published.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task Update_writes_changes()
     {
         await _factory.SeedFreebie("upd-1", published: true);
@@ -96,6 +132,35 @@ public class AdminFreebiesControllerTests : IClassFixture<ApiFactory>
         var db2 = s2.ServiceProvider.GetRequiredService<AppDbContext>();
         (await db2.Freebies.AnyAsync(f => f.Slug == "del-1")).Should().BeFalse();
         (await db2.FreebieRequests.AnyAsync(r => r.Token == "t-del")).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Delete_removes_local_cover_and_download_file()
+    {
+        var coverPath = Path.Combine(_factory.ContentRoot, "uploads", "freebies", "covers", "delete-cover.png");
+        var filePath = Path.Combine(_factory.ContentRoot, "uploads", "freebies", "files", "delete-file.pdf");
+        Directory.CreateDirectory(Path.GetDirectoryName(coverPath)!);
+        Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
+        await File.WriteAllBytesAsync(coverPath, [1, 2, 3, 4]);
+        await File.WriteAllBytesAsync(filePath, [1, 2, 3, 4]);
+        await _factory.SeedFreebie(
+            "del-assets",
+            filePath: "/uploads/freebies/files/delete-file.pdf");
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var row = await db.Freebies.SingleAsync(f => f.Slug == "del-assets");
+            row.CoverImage = "/uploads/freebies/covers/delete-cover.png";
+            await db.SaveChangesAsync();
+        }
+
+        var admin = await _factory.CreateAdminClientAsync();
+        var response = await admin.DeleteAsync("/api/admin/freebies/del-assets");
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        File.Exists(coverPath).Should().BeFalse();
+        File.Exists(filePath).Should().BeFalse();
     }
 
     [Fact]

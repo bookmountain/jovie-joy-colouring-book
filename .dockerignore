@@ -1,8 +1,14 @@
 uploads
 apps/api/uploads
+apps/api/.env
+apps/api/.env.local
 
 **/bin
 **/obj
 apps/web/node_modules
 apps/web/.next
 apps/web/test-results
+apps/web/playwright-report
+apps/web/coverage
+**/*.tsbuildinfo
+.git

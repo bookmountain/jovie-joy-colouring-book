@@ -1,5 +1,6 @@
 using JovieJoy.Api.Contracts;
 using JovieJoy.Api.Data;
+using JovieJoy.Api.Data.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -33,7 +34,11 @@ public class CollectionsController(AppDbContext db) : ControllerBase
         var now = DateTime.UtcNow;
         var members = collection.ProductCollections
             .Select(pc => pc.Product)
-            .Where(p => p.PublishedAt != null && p.PublishedAt <= now)
+            .Where(p =>
+                p.PublishedAt != null &&
+                p.PublishedAt <= now &&
+                (p.ProductType != ProductType.Digital ||
+                 !string.IsNullOrEmpty(p.PdfPath)))
             .ToList();
 
         List<Data.Entities.Product> ordered;
@@ -61,6 +66,6 @@ public class CollectionsController(AppDbContext db) : ControllerBase
 
         return Ok(new CollectionWithProductsDto(
             CollectionDto.From(collection, ordered.Select(p => p.Slug)),
-            ordered.Select(p => ProductDto.From(p)).ToList()));
+            ordered.Select(p => ProductDto.FromPublic(p)).ToList()));
     }
 }

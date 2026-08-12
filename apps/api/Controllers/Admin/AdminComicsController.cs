@@ -11,7 +11,10 @@ namespace JovieJoy.Api.Controllers.Admin;
 [ApiController]
 [Route("api/admin/comics")]
 [Authorize(Policy = "AdminOnly")]
-public class AdminComicsController(AppDbContext db, IUploadService uploads) : ControllerBase
+public class AdminComicsController(
+    AppDbContext db,
+    IUploadService uploads,
+    IAssetCleanupService assetCleanup) : ControllerBase
 {
     // ----- Worlds -----
 
@@ -51,8 +54,10 @@ public class AdminComicsController(AppDbContext db, IUploadService uploads) : Co
     {
         var row = await db.ComicWorlds.Include(w => w.Comics).FirstOrDefaultAsync(w => w.Id == id, ct);
         if (row is null) return NotFound();
+        var imageUrls = row.Comics.SelectMany(c => c.Images).Select(i => i.Src).ToList();
         db.ComicWorlds.Remove(row);
         await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync(imageUrls, ct);
         return NoContent();
     }
 
@@ -95,12 +100,14 @@ public class AdminComicsController(AppDbContext db, IUploadService uploads) : Co
     {
         var row = await db.Comics.FirstOrDefaultAsync(c => c.Id == comicId && c.WorldId == worldId, ct);
         if (row is null) return NotFound();
+        var previousImages = row.Images.Select(image => image.Src).ToList();
         row.Title = req.Title;
         row.Description = req.Description ?? "";
         row.HasDownload = req.HasDownload;
         row.Images = req.Images?.Select(i => new ComicImage(i.Src, i.Alt)).ToList() ?? new List<ComicImage>();
         row.SortIndex = req.SortIndex;
         await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync(previousImages, ct);
         return Ok(ComicDto.From(row));
     }
 
@@ -111,6 +118,7 @@ public class AdminComicsController(AppDbContext db, IUploadService uploads) : Co
         if (row is null) return NotFound();
         db.Comics.Remove(row);
         await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync(row.Images.Select(image => image.Src), ct);
         return NoContent();
     }
 

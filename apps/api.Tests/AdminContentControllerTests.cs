@@ -21,7 +21,7 @@ public class AdminContentControllerTests : IClassFixture<ApiFactory>
         // Upsert creates the block.
         var create = await client.PutAsJsonAsync($"/api/admin/content/{key}", new
         {
-            type = "HomeHero",
+            type = "HomeVideo",
             data = new { title = "Original" },
             sortIndex = 0,
         });
@@ -30,7 +30,7 @@ public class AdminContentControllerTests : IClassFixture<ApiFactory>
         // Upsert again updates it.
         var update = await client.PutAsJsonAsync($"/api/admin/content/{key}", new
         {
-            type = "HomeHero",
+            type = "HomeVideo",
             data = new { title = "Renamed" },
             sortIndex = 3,
         });
@@ -44,6 +44,29 @@ public class AdminContentControllerTests : IClassFixture<ApiFactory>
         Assert.Equal(HttpStatusCode.NoContent, del.StatusCode);
         var after = await client.GetAsync($"/api/admin/content/{key}");
         Assert.Equal(HttpStatusCode.NotFound, after.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("HomeHero")]
+    [InlineData("AboutSection")]
+    [InlineData("FaqEntry")]
+    [InlineData("FooterGroup")]
+    [InlineData("FeaturedOn")]
+    public async Task Retired_content_types_cannot_be_written(string type)
+    {
+        var client = await _f.CreateAdminClientAsync();
+        var key = $"retired.block.{Guid.NewGuid():N}";
+
+        var response = await client.PutAsJsonAsync($"/api/admin/content/{key}", new
+        {
+            type,
+            data = new { title = "Ignored" },
+            sortIndex = 0,
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("retired", body, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

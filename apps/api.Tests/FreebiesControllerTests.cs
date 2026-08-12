@@ -48,6 +48,23 @@ public class FreebiesControllerTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task Published_freebie_without_a_file_is_hidden_and_cannot_collect_email()
+    {
+        var slug = $"missing-file-{Guid.NewGuid():N}";
+        await _factory.SeedFreebie(slug, published: true, filePath: "");
+        var client = _factory.CreateClient();
+
+        var items = await client.GetFromJsonAsync<List<FreebieListItemDto>>("/api/freebies");
+        items.Should().NotContain(item => item.Slug == slug);
+        (await client.GetAsync($"/api/freebies/{slug}")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await client.PostAsJsonAsync($"/api/freebies/{slug}/request", new
+        {
+            email = "buyer@example.com",
+            optIn = true,
+        })).StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
     public async Task Request_creates_row_and_sends_email()
     {
         await _factory.SeedFreebie("req-1");

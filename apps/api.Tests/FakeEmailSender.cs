@@ -13,4 +13,16 @@ public class FakeEmailSender : IEmailSender
         Sent.Add((to, f.Slug, url));
         return Task.CompletedTask;
     }
+
+    public List<(string To, string? Name, IReadOnlyList<ProductDownloadEmailItem> Downloads)> ProductDownloadEmails { get; } = [];
+
+    public Task SendProductDownloadsAsync(
+        string to,
+        string? customerName,
+        IReadOnlyList<ProductDownloadEmailItem> downloads,
+        CancellationToken ct)
+    {
+        ProductDownloadEmails.Add((to, customerName, downloads));
+        return Task.CompletedTask;
+    }
 }

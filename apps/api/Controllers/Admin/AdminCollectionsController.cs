@@ -11,7 +11,10 @@ namespace JovieJoy.Api.Controllers.Admin;
 [ApiController]
 [Route("api/admin/collections")]
 [Authorize(Policy = "AdminOnly")]
-public class AdminCollectionsController(AppDbContext db, IUploadService uploads) : ControllerBase
+public class AdminCollectionsController(
+    AppDbContext db,
+    IUploadService uploads,
+    IAssetCleanupService assetCleanup) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<CollectionDto>>> List(CancellationToken ct)
@@ -48,9 +51,9 @@ public class AdminCollectionsController(AppDbContext db, IUploadService uploads)
             ProductOrder = req.ProductOrder, SortIndex = req.SortIndex,
         };
         db.Collections.Add(collection);
-        await db.SaveChangesAsync(ct);
-
+        await ClearSingletonSlotAsync(collection, ct);
         await SyncMembersAsync(collection, req.ProductOrder, ct);
+        await db.SaveChangesAsync(ct);
         return CreatedAtAction(nameof(Get), new { slug = collection.Slug },
             CollectionDto.From(collection, req.ProductOrder));
     }
@@ -69,6 +72,7 @@ public class AdminCollectionsController(AppDbContext db, IUploadService uploads)
     {
         var c = await db.Collections.FirstOrDefaultAsync(c => c.Slug == slug, ct);
         if (c is null) return NotFound();
+        var previousHeroImage = c.HeroImage;
 
         if (!Enum.TryParse<SortKey>(req.DefaultSort, ignoreCase: true, out var sort))
             return BadRequest(new { error = $"Unknown sort '{req.DefaultSort}'" });
@@ -87,9 +91,10 @@ public class AdminCollectionsController(AppDbContext db, IUploadService uploads)
         c.ProductOrder = req.ProductOrder;
         c.SortIndex = req.SortIndex;
         c.UpdatedAt = DateTime.UtcNow;
-        await db.SaveChangesAsync(ct);
-
+        await ClearSingletonSlotAsync(c, ct);
         await SyncMembersAsync(c, req.ProductOrder, ct);
+        await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync([previousHeroImage], ct);
         return Ok(CollectionDto.From(c, req.ProductOrder));
     }
 
@@ -100,6 +105,7 @@ public class AdminCollectionsController(AppDbContext db, IUploadService uploads)
         if (c is null) return NotFound();
         db.Collections.Remove(c);
         await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync([c.HeroImage], ct);
         return NoContent();
     }
 
@@ -109,24 +115,68 @@ public class AdminCollectionsController(AppDbContext db, IUploadService uploads)
     {
         var c = await db.Collections.FirstOrDefaultAsync(c => c.Slug == slug, ct);
         if (c is null) return NotFound();
+
+        string url;
         try
         {
-            uploads.DeleteIfLocal(c.HeroImage);
-            var url = await uploads.SaveImageAsync(file, "collections", slug, ct);
-            c.HeroImage = url;
-            await db.SaveChangesAsync(ct);
-            return Ok(new UploadResponse(url));
+            url = await uploads.SaveImageAsync(file, "collections", slug, ct);
         }
         catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+
+        var previousHeroImage = c.HeroImage;
+        try
+        {
+            c.HeroImage = url;
+            await db.SaveChangesAsync(ct);
+        }
+        catch
+        {
+            c.HeroImage = previousHeroImage;
+            db.Entry(c).State = EntityState.Unchanged;
+            // The random URL was never committed or returned, so no CMS row can
+            // legitimately reference it. Delete it directly and preserve the
+            // original persistence exception.
+            uploads.DeleteIfLocal(url);
+            throw;
+        }
+
+        await assetCleanup.DeleteUnreferencedAsync([previousHeroImage], ct);
+        return Ok(new UploadResponse(url));
     }
 
     private async Task SyncMembersAsync(Collection collection, List<string> productSlugs, CancellationToken ct)
     {
         var products = await db.Products.Where(p => productSlugs.Contains(p.Slug)).ToListAsync(ct);
         var existing = await db.ProductCollections.Where(pc => pc.CollectionId == collection.Id).ToListAsync(ct);
-        db.ProductCollections.RemoveRange(existing);
-        foreach (var p in products)
-            db.ProductCollections.Add(new ProductCollection { ProductId = p.Id, CollectionId = collection.Id });
-        await db.SaveChangesAsync(ct);
+        var desiredIds = products.Select(product => product.Id).ToHashSet();
+        db.ProductCollections.RemoveRange(existing.Where(row => !desiredIds.Contains(row.ProductId)));
+
+        var existingIds = existing.Select(row => row.ProductId).ToHashSet();
+        foreach (var product in products.Where(product => !existingIds.Contains(product.Id)))
+        {
+            db.ProductCollections.Add(new ProductCollection
+            {
+                ProductId = product.Id,
+                Product = product,
+                CollectionId = collection.Id,
+                Collection = collection,
+            });
+        }
+    }
+
+    private async Task ClearSingletonSlotAsync(Collection selected, CancellationToken ct)
+    {
+        if (selected.HomepageSlot is null or HomepageSlot.Tile) return;
+
+        var conflicts = await db.Collections
+            .Where(collection =>
+                collection.Id != selected.Id &&
+                collection.HomepageSlot == selected.HomepageSlot)
+            .ToListAsync(ct);
+        foreach (var conflict in conflicts)
+        {
+            conflict.HomepageSlot = null;
+            conflict.UpdatedAt = DateTime.UtcNow;
+        }
     }
 }

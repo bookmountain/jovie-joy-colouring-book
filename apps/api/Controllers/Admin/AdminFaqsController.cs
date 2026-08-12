@@ -1,6 +1,7 @@
 using JovieJoy.Api.Contracts;
 using JovieJoy.Api.Data;
 using JovieJoy.Api.Data.Entities;
+using JovieJoy.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +11,9 @@ namespace JovieJoy.Api.Controllers.Admin;
 [ApiController]
 [Route("api/admin/faqs")]
 [Authorize(Policy = "AdminOnly")]
-public class AdminFaqsController(AppDbContext db) : ControllerBase
+public class AdminFaqsController(
+    AppDbContext db,
+    IAssetCleanupService assetCleanup) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<FaqDto>>> List(CancellationToken ct)
@@ -43,12 +46,14 @@ public class AdminFaqsController(AppDbContext db) : ControllerBase
     {
         var row = await db.Faqs.FirstOrDefaultAsync(f => f.Slug == slug, ct);
         if (row is null) return NotFound();
+        var previousHrefs = row.Links?.Select(link => link.Href).ToList() ?? [];
 
         row.Question = req.Question;
         row.Answer = req.Answer ?? "";
         row.Group = string.IsNullOrWhiteSpace(req.Group) ? null : req.Group;
         row.SortIndex = req.SortIndex;
         await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync(previousHrefs, ct);
         return Ok(FaqDto.From(row));
     }
 
@@ -57,8 +62,10 @@ public class AdminFaqsController(AppDbContext db) : ControllerBase
     {
         var row = await db.Faqs.FirstOrDefaultAsync(f => f.Slug == slug, ct);
         if (row is null) return NotFound();
+        var previousHrefs = row.Links?.Select(link => link.Href).ToList() ?? [];
         db.Faqs.Remove(row);
         await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync(previousHrefs, ct);
         return NoContent();
     }
 }

@@ -11,7 +11,10 @@ namespace JovieJoy.Api.Controllers.Admin;
 [ApiController]
 [Route("api/admin/featured-on")]
 [Authorize(Policy = "AdminOnly")]
-public class AdminFeaturedOnController(AppDbContext db, IUploadService uploads) : ControllerBase
+public class AdminFeaturedOnController(
+    AppDbContext db,
+    IUploadService uploads,
+    IAssetCleanupService assetCleanup) : ControllerBase
 {
     private static FeaturedOnDto ToDto(FeaturedOnLink f) =>
         new(f.Slug, f.Label, f.Href, f.Image, f.Alt, f.SortIndex);
@@ -46,6 +49,7 @@ public class AdminFeaturedOnController(AppDbContext db, IUploadService uploads) 
     {
         var row = await db.FeaturedOnLinks.FirstOrDefaultAsync(f => f.Slug == slug, ct);
         if (row is null) return NotFound();
+        var previousAssets = new[] { row.Image, row.Href };
 
         row.Label = req.Label;
         row.Href = req.Href ?? "";
@@ -53,6 +57,7 @@ public class AdminFeaturedOnController(AppDbContext db, IUploadService uploads) 
         row.Alt = req.Alt ?? "";
         row.SortIndex = req.SortIndex;
         await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync(previousAssets, ct);
         return Ok(ToDto(row));
     }
 
@@ -61,8 +66,10 @@ public class AdminFeaturedOnController(AppDbContext db, IUploadService uploads) 
     {
         var row = await db.FeaturedOnLinks.FirstOrDefaultAsync(f => f.Slug == slug, ct);
         if (row is null) return NotFound();
+        var previousAssets = new[] { row.Image, row.Href };
         db.FeaturedOnLinks.Remove(row);
         await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync(previousAssets, ct);
         return NoContent();
     }
 

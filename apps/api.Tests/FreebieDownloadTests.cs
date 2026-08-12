@@ -57,6 +57,26 @@ public class FreebieDownloadTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task Direct_file_url_is_blocked_but_admin_can_download_a_copy()
+    {
+        var (_, absolute) = await SeedRequest("dl-protected", DateTime.UtcNow.AddDays(1));
+        var relative = "/uploads/" + Path.GetRelativePath(
+            Path.Combine(_factory.ContentRoot, "uploads"), absolute).Replace(Path.DirectorySeparatorChar, '/');
+
+        var publicResponse = await _factory.CreateClient().GetAsync(relative);
+        publicResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        var admin = await _factory.CreateAdminClientAsync();
+        admin.DefaultRequestHeaders.Add("Origin", "http://localhost:3000");
+        var adminResponse = await admin.GetAsync("/api/admin/freebies/dl-protected/file");
+        adminResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        adminResponse.Content.Headers.ContentDisposition!.DispositionType.Should().Be("attachment");
+        adminResponse.Headers.GetValues("Access-Control-Expose-Headers")
+            .Should().Contain(value => value.Contains("Content-Disposition", StringComparison.OrdinalIgnoreCase));
+        (await adminResponse.Content.ReadAsByteArrayAsync()).Should().Equal([1, 2, 3, 4]);
+    }
+
+    [Fact]
     public async Task Expired_token_redirects_to_expired_banner()
     {
         var (token, _) = await SeedRequest("dl-2", DateTime.UtcNow.AddDays(-1));

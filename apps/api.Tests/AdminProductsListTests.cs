@@ -47,7 +47,7 @@ public class AdminProductsListTests : IClassFixture<ApiFactory>
     public async Task List_with_format_filter_only_returns_matching()
     {
         var client = await _f.CreateAdminClientAsync();
-        await SeedAsync(client, "list-fmt-d", productType: "digital");
+        await SeedAsync(client, "list-fmt-d", productType: "digital", publishedAt: null);
         var res = await client.GetAsync("/api/admin/products?format=digital");
         res.EnsureSuccessStatusCode();
         var body = await res.Content.ReadFromJsonAsync<AdminProductListResponse>();
@@ -67,6 +67,22 @@ public class AdminProductsListTests : IClassFixture<ApiFactory>
         var body = await res.Content.ReadFromJsonAsync<AdminProductListResponse>();
         var prices = body!.Items.Select(p => p.PriceCents).ToList();
         Assert.Equal(prices.OrderByDescending(p => p).ToList(), prices);
+    }
+
+    [Fact]
+    public async Task List_sort_uses_slug_as_a_stable_tiebreaker_for_pagination()
+    {
+        var client = await _f.CreateAdminClientAsync();
+        var title = $"Identical title {Guid.NewGuid():N}";
+        await SeedAsync(client, "zz-stable-sort", title: title);
+        await SeedAsync(client, "aa-stable-sort", title: title);
+
+        var response = await client.GetAsync($"/api/admin/products?q={Uri.EscapeDataString(title)}&sort=title_asc&pageSize=100");
+        response.EnsureSuccessStatusCode();
+        var body = await response.Content.ReadFromJsonAsync<AdminProductListResponse>();
+        var slugs = body!.Items.Select(product => product.Slug).ToList();
+
+        Assert.Equal(slugs.OrderBy(slug => slug, StringComparer.Ordinal).ToList(), slugs);
     }
 
     [Fact]

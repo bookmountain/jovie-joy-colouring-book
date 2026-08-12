@@ -15,25 +15,11 @@ public class StripeService(IConfiguration config) : IStripeService
         var successUrl = config["Stripe:SuccessUrl"]!;
         var cancelUrl = config["Stripe:CancelUrl"]!;
 
-        var lineItems = order.Items.Select(i => new SessionLineItemOptions
-        {
-            PriceData = new SessionLineItemPriceDataOptions
-            {
-                Currency = order.Currency,
-                UnitAmount = i.UnitPriceCents,
-                ProductData = new SessionLineItemPriceDataProductDataOptions
-                {
-                    Name = i.TitleAtPurchase,
-                    Metadata = new Dictionary<string, string> { ["product_slug"] = i.ProductSlug },
-                },
-            },
-            Quantity = i.Quantity,
-        }).ToList();
+        var lineItems = BuildLineItems(order);
 
         var options = new SessionCreateOptions
         {
             Mode = "payment",
-            PaymentMethodTypes = ["card"],
             LineItems = lineItems,
             CustomerEmail = order.Email,
             SuccessUrl = successUrl,
@@ -42,19 +28,79 @@ public class StripeService(IConfiguration config) : IStripeService
             {
                 ["order_id"] = order.Id.ToString(),
             },
-            // Discounts via Stripe coupons would be better long-term; for now
-            // we pre-compute the discount and pass the already-discounted totals.
-            // If DiscountCents > 0, we subtract from one line item below.
         };
-
-        // Apply discount as a single negative adjustment if present.
-        // Stripe doesn't love negative line items, so we use their `discounts` API
-        // only if a coupon is configured — otherwise just charge the discounted
-        // subtotal by scaling line items. For simplicity here, we charge the
-        // discounted total as-is and rely on the webhook to confirm the amount.
-        // (In production: set up real Stripe Coupon objects tied to your promos.)
 
         var service = new SessionService();
         return await service.CreateAsync(options, cancellationToken: ct);
     }
+
+    public static List<SessionLineItemOptions> BuildLineItems(Order order)
+    {
+        var remainingDiscount = order.DiscountCents;
+        var lineItems = new List<SessionLineItemOptions>();
+        foreach (var item in order.Items)
+        {
+            if (item.UnitPriceCents <= 0 || item.Quantity <= 0)
+                throw new InvalidOperationException("Stripe line items require a positive price and quantity.");
+
+            var discountedUnits = Math.Min(
+                item.Quantity,
+                remainingDiscount / item.UnitPriceCents);
+            if (discountedUnits > 0)
+            {
+                lineItems.Add(new SessionLineItemOptions
+                {
+                    PriceData = CreatePriceData(order.Currency, item, 0),
+                    Quantity = discountedUnits,
+                });
+                remainingDiscount -= discountedUnits * item.UnitPriceCents;
+            }
+
+            var remainingUnits = item.Quantity - discountedUnits;
+            if (remainingUnits > 0)
+            {
+                var partialDiscount = Math.Min(remainingDiscount, item.UnitPriceCents);
+                if (partialDiscount > 0)
+                {
+                    lineItems.Add(CreateLineItem(order.Currency, item, item.UnitPriceCents - partialDiscount, 1));
+                    remainingDiscount -= partialDiscount;
+                    remainingUnits -= 1;
+                }
+                if (remainingUnits > 0)
+                    lineItems.Add(CreateLineItem(order.Currency, item, item.UnitPriceCents, remainingUnits));
+            }
+        }
+
+        var stripeTotal = lineItems.Aggregate(
+            0L,
+            (total, line) => checked(total +
+                (line.PriceData!.UnitAmount ?? 0) * (line.Quantity ?? 0)));
+        if (remainingDiscount != 0 || stripeTotal != order.TotalCents)
+            throw new InvalidOperationException("The Stripe charge total does not match the order total.");
+        return lineItems;
+    }
+
+    private static SessionLineItemOptions CreateLineItem(
+        string currency,
+        OrderItem item,
+        long amount,
+        long quantity) => new()
+    {
+        PriceData = CreatePriceData(currency, item, amount),
+        Quantity = quantity,
+    };
+
+    private static SessionLineItemPriceDataOptions CreatePriceData(
+        string currency,
+        OrderItem item,
+        long amount) => new()
+    {
+        Currency = currency,
+        UnitAmount = amount,
+        ProductData = new SessionLineItemPriceDataProductDataOptions
+        {
+            Name = item.TitleAtPurchase,
+            Metadata = new Dictionary<string, string> { ["product_slug"] = item.ProductSlug },
+        },
+    };
 }

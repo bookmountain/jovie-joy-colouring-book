@@ -1,6 +1,7 @@
 using JovieJoy.Api.Contracts;
 using JovieJoy.Api.Data;
 using JovieJoy.Api.Data.Entities;
+using JovieJoy.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +11,9 @@ namespace JovieJoy.Api.Controllers.Admin;
 [ApiController]
 [Route("api/admin/social-links")]
 [Authorize(Policy = "AdminOnly")]
-public class AdminSocialLinksController(AppDbContext db) : ControllerBase
+public class AdminSocialLinksController(
+    AppDbContext db,
+    IAssetCleanupService assetCleanup) : ControllerBase
 {
     public record SocialLinkDto(string Label, string Href, int SortIndex);
 
@@ -41,8 +44,10 @@ public class AdminSocialLinksController(AppDbContext db) : ControllerBase
             return BadRequest(new { error = "Href is required" });
         var row = await db.SocialLinks.FirstOrDefaultAsync(s => s.Label == label, ct);
         if (row is null) return NotFound();
+        var previousHref = row.Href;
         row.Href = req.Href; row.SortIndex = req.SortIndex;
         await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync([previousHref], ct);
         return Ok(new SocialLinkDto(row.Label, row.Href, row.SortIndex));
     }
 
@@ -53,6 +58,7 @@ public class AdminSocialLinksController(AppDbContext db) : ControllerBase
         if (row is null) return NotFound();
         db.SocialLinks.Remove(row);
         await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync([row.Href], ct);
         return NoContent();
     }
 }

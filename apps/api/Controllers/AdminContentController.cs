@@ -12,7 +12,10 @@ namespace JovieJoy.Api.Controllers;
 [ApiController]
 [Route("api/admin/content")]
 [Authorize(Policy = "AdminOnly")]
-public class AdminContentController(AppDbContext db, IUploadService uploads) : ControllerBase
+public class AdminContentController(
+    AppDbContext db,
+    IUploadService uploads,
+    IAssetCleanupService assetCleanup) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ContentBlockDto>>> List(CancellationToken ct)
@@ -33,8 +36,16 @@ public class AdminContentController(AppDbContext db, IUploadService uploads) : C
     {
         if (!Enum.TryParse<ContentBlockType>(req.Type, ignoreCase: true, out var type))
             return BadRequest(new { error = $"Unknown content block type '{req.Type}'" });
+        if (ContentBlockPolicy.IsRetired(type))
+            return BadRequest(new
+            {
+                error = $"Content block type '{type}' is retired. Use its dedicated CMS editor instead.",
+            });
 
         var existing = await db.ContentBlocks.FirstOrDefaultAsync(b => b.Key == key, ct);
+        var previousAssets = existing is null
+            ? Array.Empty<string>()
+            : AssetCleanupService.LocalUrls(existing.Data.RootElement);
         var json = JsonDocument.Parse(req.Data.GetRawText());
         if (existing is null)
         {
@@ -48,6 +59,7 @@ public class AdminContentController(AppDbContext db, IUploadService uploads) : C
             existing.UpdatedAt = DateTime.UtcNow;
         }
         await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync(previousAssets, ct);
 
         var saved = await db.ContentBlocks.AsNoTracking().FirstAsync(b => b.Key == key, ct);
         return Ok(ContentBlockDto.From(saved));
@@ -58,8 +70,10 @@ public class AdminContentController(AppDbContext db, IUploadService uploads) : C
     {
         var b = await db.ContentBlocks.FirstOrDefaultAsync(b => b.Key == key, ct);
         if (b is null) return NotFound();
+        var candidateAssets = AssetCleanupService.LocalUrls(b.Data.RootElement);
         db.ContentBlocks.Remove(b);
         await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync(candidateAssets, ct);
         return NoContent();
     }
 

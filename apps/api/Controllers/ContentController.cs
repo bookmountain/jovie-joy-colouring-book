@@ -14,6 +14,10 @@ public class ContentController(AppDbContext db) : ControllerBase
     public async Task<ActionResult<SiteContentBundleDto>> GetBundle(CancellationToken ct)
     {
         var blocks = await db.ContentBlocks.AsNoTracking().OrderBy(b => b.SortIndex).ToListAsync(ct);
+        // Older releases stored About, FAQ, footer and Featured On data in
+        // generic JSON blocks. Dedicated typed tables now own those surfaces;
+        // never expose stale retired copies through the anonymous bundle.
+        blocks = blocks.Where(block => !ContentBlockPolicy.IsRetired(block.Type)).ToList();
         var navRoots = await db.NavLinks.AsNoTracking()
             .Include(n => n.Children).ThenInclude(c => c.Children)
             .Where(n => n.ParentId == null)

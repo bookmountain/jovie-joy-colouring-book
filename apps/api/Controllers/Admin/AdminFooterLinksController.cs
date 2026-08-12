@@ -1,6 +1,7 @@
 using JovieJoy.Api.Contracts;
 using JovieJoy.Api.Data;
 using JovieJoy.Api.Data.Entities;
+using JovieJoy.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +11,9 @@ namespace JovieJoy.Api.Controllers.Admin;
 [ApiController]
 [Route("api/admin/footer-links")]
 [Authorize(Policy = "AdminOnly")]
-public class AdminFooterLinksController(AppDbContext db) : ControllerBase
+public class AdminFooterLinksController(
+    AppDbContext db,
+    IAssetCleanupService assetCleanup) : ControllerBase
 {
     public record FooterLinkDto(Guid Id, string GroupKey, string GroupTitle, string Label, string Href, int SortIndex);
 
@@ -45,9 +48,11 @@ public class AdminFooterLinksController(AppDbContext db) : ControllerBase
 
         var row = await db.FooterLinks.FirstOrDefaultAsync(f => f.Id == id, ct);
         if (row is null) return NotFound();
+        var previousHref = row.Href;
         row.GroupKey = req.GroupKey; row.GroupTitle = req.GroupTitle;
         row.Label = req.Label; row.Href = req.Href; row.SortIndex = req.SortIndex;
         await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync([previousHref], ct);
         return Ok(new FooterLinkDto(row.Id, row.GroupKey, row.GroupTitle, row.Label, row.Href, row.SortIndex));
     }
 
@@ -58,6 +63,7 @@ public class AdminFooterLinksController(AppDbContext db) : ControllerBase
         if (row is null) return NotFound();
         db.FooterLinks.Remove(row);
         await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync([row.Href], ct);
         return NoContent();
     }
 }

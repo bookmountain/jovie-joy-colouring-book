@@ -10,6 +10,7 @@ services:
       - ./apps/api/.env
     environment:
       ConnectionStrings__Default: Host=${POSTGRES_HOST:-shared-postgres};Port=${POSTGRES_PORT:-5432};Database=${POSTGRES_DB:?POSTGRES_DB required in apps/api/.env};Username=${POSTGRES_USER:?POSTGRES_USER required in apps/api/.env};Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required in apps/api/.env}
+      Freebies__BaseUrl: ${PUBLIC_API_URL:?PUBLIC_API_URL required in apps/api/.env}
     ports:
       - "5080:8080"
     volumes:

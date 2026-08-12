@@ -3,7 +3,6 @@ using JovieJoy.Api.Data;
 using JovieJoy.Api.Data.Entities;
 using JovieJoy.Api.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,8 +14,10 @@ namespace JovieJoy.Api.Controllers;
 public class AdminProductsController(
     AppDbContext db,
     IUploadService uploads,
-    IWebHostEnvironment env) : ControllerBase
+    IAssetCleanupService assetCleanup) : ControllerBase
 {
+    public const int MaxBulkProducts = 100;
+
     [HttpGet]
     public async Task<ActionResult<AdminProductListResponse>> List(
         [FromQuery] string? q,
@@ -52,12 +53,12 @@ public class AdminProductsController(
 
         query = sort switch
         {
-            "title_asc" => query.OrderBy(p => p.Title),
-            "title_desc" => query.OrderByDescending(p => p.Title),
-            "price_asc" => query.OrderBy(p => p.PriceCents),
-            "price_desc" => query.OrderByDescending(p => p.PriceCents),
-            "updated_asc" => query.OrderBy(p => p.UpdatedAt),
-            _ => query.OrderByDescending(p => p.UpdatedAt),
+            "title_asc" => query.OrderBy(p => p.Title).ThenBy(p => p.Slug),
+            "title_desc" => query.OrderByDescending(p => p.Title).ThenBy(p => p.Slug),
+            "price_asc" => query.OrderBy(p => p.PriceCents).ThenBy(p => p.Slug),
+            "price_desc" => query.OrderByDescending(p => p.PriceCents).ThenBy(p => p.Slug),
+            "updated_asc" => query.OrderBy(p => p.UpdatedAt).ThenBy(p => p.Slug),
+            _ => query.OrderByDescending(p => p.UpdatedAt).ThenBy(p => p.Slug),
         };
 
         // Materialize before client-side filters (q, tag, status) that cannot
@@ -137,22 +138,27 @@ public class AdminProductsController(
     }
 
     [HttpGet("{slug}")]
-    public async Task<ActionResult<ProductDto>> Get(string slug, CancellationToken ct)
+    public async Task<ActionResult<AdminProductDto>> Get(string slug, CancellationToken ct)
     {
         var p = await db.Products.AsNoTracking()
             .Include(p => p.ProductCollections).ThenInclude(pc => pc.Collection)
             .FirstOrDefaultAsync(p => p.Slug == slug, ct);
-        return p is null ? NotFound() : Ok(ProductDto.From(p));
+        return p is null ? NotFound() : Ok(AdminProductDto.From(p));
     }
 
     [HttpPost]
-    public async Task<ActionResult<ProductDto>> Create([FromBody] CreateProductRequest req, CancellationToken ct)
+    public async Task<ActionResult<AdminProductDto>> Create([FromBody] CreateProductRequest req, CancellationToken ct)
     {
         if (await db.Products.AnyAsync(p => p.Slug == req.Slug, ct))
             return Conflict(new { error = $"Slug '{req.Slug}' already in use" });
 
         if (!Enum.TryParse<ProductType>(req.ProductType, ignoreCase: true, out var pt))
             return BadRequest(new { error = $"Unknown productType '{req.ProductType}'" });
+        if (pt == ProductType.Digital && req.PublishedAt.HasValue)
+            return BadRequest(new
+            {
+                error = "Create digital products as drafts, upload the PDF, then publish them.",
+            });
 
         var product = new Product
         {
@@ -168,14 +174,36 @@ public class AdminProductsController(
             PublishedAt = req.PublishedAt,
         };
         db.Products.Add(product);
-        await db.SaveChangesAsync(ct);
-
         await SyncCollectionsAsync(product, req.CollectionSlugs, ct);
-        return CreatedAtAction(nameof(Get), new { slug = product.Slug }, ProductDto.From(product));
+        await db.SaveChangesAsync(ct);
+        return CreatedAtAction(nameof(Get), new { slug = product.Slug }, AdminProductDto.From(product));
+    }
+
+    [HttpPost("import")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(ProductCsvImportService.MaxMultipartBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = ProductCsvImportService.MaxMultipartBytes)]
+    public async Task<ActionResult<ProductCsvImportResponse>> ImportCsv(
+        [FromForm] IFormFile? file,
+        [FromQuery] string mode = "create",
+        [FromQuery] bool dryRun = true,
+        CancellationToken ct = default)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(new { error = "A non-empty CSV file is required." });
+        if (file.Length > ProductCsvImportService.MaxFileBytes)
+            return BadRequest(new { error = "The CSV file must be 2 MB or smaller." });
+        if (!file.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { error = "The import file must use the .csv extension." });
+
+        await using var stream = file.OpenReadStream();
+        var importer = new ProductCsvImportService(db, assetCleanup);
+        var result = await importer.ImportAsync(stream, mode, dryRun, ct);
+        return result.Valid ? Ok(result) : UnprocessableEntity(result);
     }
 
     [HttpPut("{slug}")]
-    public async Task<ActionResult<ProductDto>> Update(string slug, [FromBody] UpdateProductRequest req, CancellationToken ct)
+    public async Task<ActionResult<AdminProductDto>> Update(string slug, [FromBody] UpdateProductRequest req, CancellationToken ct)
     {
         var product = await db.Products
             .Include(p => p.ProductCollections)
@@ -184,6 +212,12 @@ public class AdminProductsController(
 
         if (!Enum.TryParse<ProductType>(req.ProductType, ignoreCase: true, out var pt))
             return BadRequest(new { error = $"Unknown productType '{req.ProductType}'" });
+        if (pt == ProductType.Digital &&
+            req.PublishedAt.HasValue &&
+            string.IsNullOrWhiteSpace(product.PdfPath))
+            return BadRequest(new { error = "Upload the digital product PDF before publishing." });
+
+        var previousAssets = ProductAssetPaths(product).ToList();
 
         product.Title = req.Title;
         product.Excerpt = req.Excerpt;
@@ -203,10 +237,10 @@ public class AdminProductsController(
         product.Tags = req.Tags;
         product.PublishedAt = req.PublishedAt;
         product.UpdatedAt = DateTime.UtcNow;
-        await db.SaveChangesAsync(ct);
-
         await SyncCollectionsAsync(product, req.CollectionSlugs, ct);
-        return Ok(ProductDto.From(product));
+        await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync(previousAssets, ct);
+        return Ok(AdminProductDto.From(product));
     }
 
     [HttpDelete("{slug}")]
@@ -221,7 +255,7 @@ public class AdminProductsController(
     }
 
     [HttpPost("{slug}/duplicate")]
-    public async Task<ActionResult<ProductDto>> Duplicate(string slug, CancellationToken ct)
+    public async Task<ActionResult<AdminProductDto>> Duplicate(string slug, CancellationToken ct)
     {
         var source = await db.Products
             .Include(p => p.ProductCollections)
@@ -257,77 +291,172 @@ public class AdminProductsController(
         db.Products.Add(copy);
         await db.SaveChangesAsync(ct);
 
-        return CreatedAtAction(nameof(Get), new { slug = copy.Slug }, ProductDto.From(copy));
+        return CreatedAtAction(nameof(Get), new { slug = copy.Slug }, AdminProductDto.From(copy));
     }
 
     [HttpPost("{slug}/images")]
     [RequestSizeLimit(20 * 1024 * 1024)]
-    public async Task<ActionResult<UploadResponse>> UploadImage(string slug, IFormFile file, CancellationToken ct)
+    public async Task<ActionResult<UploadResponse>> UploadImage(
+        string slug,
+        IFormFile file,
+        CancellationToken ct,
+        [FromQuery] string intent = "gallery")
     {
         var product = await db.Products.FirstOrDefaultAsync(p => p.Slug == slug, ct);
         if (product is null) return NotFound();
+
+        var attachToGallery = intent.Equals("gallery", StringComparison.OrdinalIgnoreCase);
+        if (!attachToGallery && !intent.Equals("asset", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { error = "Image intent must be 'gallery' or 'asset'." });
+
+        string url;
         try
         {
-            var url = await uploads.SaveImageAsync(file, "products", slug, ct);
-            product.Images = product.Images.Append(url).ToList();
-            await db.SaveChangesAsync(ct);
-            return Ok(new UploadResponse(url));
+            url = await uploads.SaveImageAsync(file, "products", slug, ct);
         }
         catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+
+        // Inspiration, review, and source-link editors stage uploads until the
+        // enclosing product form is saved. The default remains gallery for
+        // backwards compatibility with existing API clients.
+        if (!attachToGallery)
+            return Ok(new UploadResponse(url));
+
+        var previousImages = product.Images;
+        try
+        {
+            product.Images = product.Images.Append(url).ToList();
+            await db.SaveChangesAsync(ct);
+        }
+        catch
+        {
+            product.Images = previousImages;
+            db.Entry(product).State = EntityState.Unchanged;
+            // The random URL was never committed or returned, so no CMS row can
+            // legitimately reference it. Delete it directly and preserve the
+            // original persistence exception.
+            uploads.DeleteIfLocal(url);
+            throw;
+        }
+        return Ok(new UploadResponse(url));
+    }
+
+    [HttpDelete("assets")]
+    public async Task<IActionResult> DeleteStagedAsset([FromQuery] string? url, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(url) ||
+            !url.StartsWith("/uploads/products/", StringComparison.Ordinal))
+            return BadRequest(new { error = "A staged product upload URL is required." });
+
+        // This is reference-aware, so a late discard cannot delete an asset that
+        // another successful CMS save has already adopted.
+        await assetCleanup.DeleteUnreferencedAsync([url], ct);
+        return NoContent();
     }
 
     [HttpPost("{slug}/pdf")]
     [RequestSizeLimit(50 * 1024 * 1024)]
-    public async Task<ActionResult<ProductDto>> UploadPdf(string slug, IFormFile file, CancellationToken ct)
+    public async Task<ActionResult<AdminProductDto>> UploadPdf(
+        string slug,
+        [FromForm] IFormFile? file,
+        CancellationToken ct)
     {
         var product = await db.Products.FirstOrDefaultAsync(p => p.Slug == slug, ct);
         if (product is null) return NotFound();
 
-        if (file.ContentType != "application/pdf" && !file.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
-            return BadRequest(new { error = "Only PDF files are accepted" });
+        if (file is null)
+            return BadRequest(new { error = "A non-empty PDF file is required" });
 
-        var dir = Path.Combine(env.ContentRootPath, "uploads", "pdfs");
-        Directory.CreateDirectory(dir);
-        var fileName = $"{slug}_{Path.GetRandomFileName()}.pdf";
-        var filePath = Path.Combine(dir, fileName);
-        await using (var stream = System.IO.File.Create(filePath))
-            await file.CopyToAsync(stream, ct);
-
-        if (!string.IsNullOrEmpty(product.PdfPath))
+        CustomerDownloadUpload upload;
+        try
         {
-            var oldPath = Path.Combine(env.ContentRootPath, product.PdfPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-            if (System.IO.File.Exists(oldPath)) System.IO.File.Delete(oldPath);
+            upload = await uploads.SaveCustomerDownloadAsync(
+                file,
+                "pdfs",
+                slug,
+                50L * 1024 * 1024,
+                allowZip: false,
+                ct);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
         }
 
-        product.PdfPath = $"/uploads/pdfs/{fileName}";
-        await db.SaveChangesAsync(ct);
-        return Ok(ProductDto.From(product));
+        var previousPdf = product.PdfPath;
+        product.PdfPath = upload.Url;
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch
+        {
+            product.PdfPath = previousPdf;
+            db.Entry(product).State = EntityState.Unchanged;
+            uploads.DeleteIfLocal(upload.Url);
+            throw;
+        }
+        await assetCleanup.DeleteUnreferencedAsync([previousPdf], ct);
+        return Ok(AdminProductDto.From(product));
     }
 
     [HttpPost("bulk")]
-    public async Task<ActionResult<object>> Bulk([FromBody] AdminProductBulkRequest req, CancellationToken ct)
+    public async Task<ActionResult<AdminProductBulkResponse>> Bulk([FromBody] AdminProductBulkRequest req, CancellationToken ct)
     {
         if (req.Slugs is null || req.Slugs.Count == 0)
+            return BadRequest(new { error = "slugs required" });
+        if (req.Slugs.Count > MaxBulkProducts)
+            return BadRequest(new { error = $"A bulk action can target at most {MaxBulkProducts} products." });
+
+        var requestedSlugs = req.Slugs
+            .Select(slug => slug?.Trim() ?? "")
+            .Where(slug => slug.Length > 0)
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+        if (requestedSlugs.Count == 0)
             return BadRequest(new { error = "slugs required" });
 
         var products = await db.Products
             .Include(p => p.ProductCollections)
-            .Where(p => req.Slugs.Contains(p.Slug))
+            .Where(p => requestedSlugs.Contains(p.Slug))
             .ToListAsync(ct);
-        if (products.Count == 0) return Ok(new { updated = 0 });
+        var foundSlugs = products.Select(product => product.Slug).ToHashSet(StringComparer.Ordinal);
+        var missing = requestedSlugs.Where(slug => !foundSlugs.Contains(slug)).ToList();
+        if (products.Count == 0)
+            return Ok(new AdminProductBulkResponse(0, missing));
 
         var now = DateTime.UtcNow;
         switch (req.Action)
         {
             case "publish":
+                var incompleteDigitalSlugs = products
+                    .Where(product => product.ProductType == ProductType.Digital &&
+                                      string.IsNullOrWhiteSpace(product.PdfPath))
+                    .Select(product => product.Slug)
+                    .OrderBy(slug => slug, StringComparer.Ordinal)
+                    .ToList();
+                if (incompleteDigitalSlugs.Count > 0)
+                {
+                    return BadRequest(new
+                    {
+                        error = "Upload a PDF before publishing digital products.",
+                        slugs = incompleteDigitalSlugs,
+                    });
+                }
                 foreach (var p in products) { p.PublishedAt = p.PublishedAt ?? now; p.UpdatedAt = now; }
                 break;
             case "unpublish":
                 foreach (var p in products) { p.PublishedAt = null; p.UpdatedAt = now; }
                 break;
+            case "mark-available":
+                foreach (var p in products) { p.Available = true; p.UpdatedAt = now; }
+                break;
+            case "mark-unavailable":
+                foreach (var p in products) { p.Available = false; p.UpdatedAt = now; }
+                break;
             case "delete":
                 await DeleteProductsAsync(products, ct);
-                return Ok(new { updated = products.Count });
+                return Ok(new AdminProductBulkResponse(products.Count, missing));
             case "add-to-collection":
             case "remove-from-collection":
             {
@@ -353,7 +482,7 @@ public class AdminProductsController(
         }
 
         await db.SaveChangesAsync(ct);
-        return Ok(new { updated = products.Count });
+        return Ok(new AdminProductBulkResponse(products.Count, missing));
     }
 
     private async Task DeleteProductsAsync(List<Product> products, CancellationToken ct)
@@ -388,15 +517,40 @@ public class AdminProductsController(
         db.ProductCollections.RemoveRange(products.SelectMany(p => p.ProductCollections));
         db.Products.RemoveRange(products);
         await db.SaveChangesAsync(ct);
+
+        await assetCleanup.DeleteUnreferencedAsync(products.SelectMany(ProductAssetPaths), ct);
     }
+
+    private static IEnumerable<string?> ProductAssetPaths(Product product) =>
+        product.Images.Cast<string?>()
+            .Concat(product.ReviewImages ?? [])
+            .Concat(product.InspirationImages ?? [])
+            .Concat((product.SourceLinks ?? []).Select(source => source.Image))
+            .Concat((product.SourceLinks ?? []).Select(source => (string?)source.Href))
+            .Append(product.PdfPath);
 
     private async Task SyncCollectionsAsync(Product product, List<string> collectionSlugs, CancellationToken ct)
     {
         var collections = await db.Collections.Where(c => collectionSlugs.Contains(c.Slug)).ToListAsync(ct);
-        var existing = await db.ProductCollections.Where(pc => pc.ProductId == product.Id).ToListAsync(ct);
-        db.ProductCollections.RemoveRange(existing);
-        foreach (var c in collections)
-            db.ProductCollections.Add(new ProductCollection { ProductId = product.Id, CollectionId = c.Id });
-        await db.SaveChangesAsync(ct);
+        var desiredIds = collections.Select(collection => collection.Id).ToHashSet();
+        var existing = product.ProductCollections.ToList();
+
+        foreach (var membership in existing.Where(row => !desiredIds.Contains(row.CollectionId)))
+        {
+            product.ProductCollections.Remove(membership);
+            db.ProductCollections.Remove(membership);
+        }
+
+        var existingIds = existing.Select(row => row.CollectionId).ToHashSet();
+        foreach (var collection in collections.Where(collection => !existingIds.Contains(collection.Id)))
+        {
+            db.ProductCollections.Add(new ProductCollection
+            {
+                ProductId = product.Id,
+                Product = product,
+                CollectionId = collection.Id,
+                Collection = collection,
+            });
+        }
     }
 }

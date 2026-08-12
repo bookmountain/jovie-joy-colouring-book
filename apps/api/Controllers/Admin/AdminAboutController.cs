@@ -11,7 +11,10 @@ namespace JovieJoy.Api.Controllers.Admin;
 [ApiController]
 [Route("api/admin/about")]
 [Authorize(Policy = "AdminOnly")]
-public class AdminAboutController(AppDbContext db, IUploadService uploads) : ControllerBase
+public class AdminAboutController(
+    AppDbContext db,
+    IUploadService uploads,
+    IAssetCleanupService assetCleanup) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<AboutSectionDto>>> List(CancellationToken ct)
@@ -44,6 +47,7 @@ public class AdminAboutController(AppDbContext db, IUploadService uploads) : Con
     {
         var row = await db.AboutSections.FirstOrDefaultAsync(s => s.Id == id, ct);
         if (row is null) return NotFound();
+        var previousImage = row.Image;
         row.Title = req.Title;
         row.Body = req.Body ?? new List<string>();
         row.Image = req.Image ?? "";
@@ -51,6 +55,7 @@ public class AdminAboutController(AppDbContext db, IUploadService uploads) : Con
         row.Background = req.Background ?? "";
         row.SortIndex = req.SortIndex;
         await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync([previousImage], ct);
         return Ok(AboutSectionDto.From(row));
     }
 
@@ -61,6 +66,7 @@ public class AdminAboutController(AppDbContext db, IUploadService uploads) : Con
         if (row is null) return NotFound();
         db.AboutSections.Remove(row);
         await db.SaveChangesAsync(ct);
+        await assetCleanup.DeleteUnreferencedAsync([row.Image], ct);
         return NoContent();
     }
 
