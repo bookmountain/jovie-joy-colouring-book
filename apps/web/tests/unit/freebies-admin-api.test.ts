@@ -25,7 +25,7 @@ describe("admin freebie file download", () => {
       configurable: true,
       value: vi.fn(),
     });
-    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function () {
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) {
       downloadedName = this.download;
     });
   });
