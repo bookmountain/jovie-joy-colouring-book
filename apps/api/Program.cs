@@ -143,18 +143,10 @@ builder.Services.AddScoped<IStripeService, StripeService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddHttpClient();
 
-builder.Services.AddOptions<ResendOptions>()
-    .Bind(builder.Configuration.GetSection("Resend"))
-    .Validate(options =>
-        builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Test") ||
-        !string.IsNullOrWhiteSpace(options.ApiKey),
-        "Resend__ApiKey is required outside Development/Test.")
-    .Validate(options =>
-        builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Test") ||
-        (!string.IsNullOrWhiteSpace(options.FromName) &&
-         System.Net.Mail.MailAddress.TryCreate(options.FromAddress, out _)),
-        "Resend__FromName and a valid Resend__FromAddress are required outside Development/Test.")
-    .ValidateOnStart();
+// Missing production email configuration must fail the individual delivery
+// attempt, not take the catalog and CMS offline. ResendEmailSender enforces the
+// API key at the send boundary, and callers preserve a retryable delivery state.
+builder.Services.Configure<ResendOptions>(builder.Configuration.GetSection("Resend"));
 builder.Services.Configure<FreebiesOptions>(builder.Configuration.GetSection("Freebies"));
 builder.Services.Configure<ProductDownloadsOptions>(builder.Configuration.GetSection("ProductDownloads"));
 builder.Services.AddOptions<FreebiesOptions>()
