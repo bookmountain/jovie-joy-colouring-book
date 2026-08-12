@@ -426,6 +426,7 @@ async function stopServer(server: Server) {
 
 test.describe("admin product changes reach the storefront", () => {
   test.describe.configure({ mode: "serial" });
+  test.skip(Boolean(process.env.E2E_REAL_STACK), "uses its own API fixture on port 8080");
 
   let mock: Awaited<ReturnType<typeof startMockApi>>;
 

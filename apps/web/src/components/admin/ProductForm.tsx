@@ -1,9 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Product } from "@/lib/api";
 import {
+  adminDeleteStagedProductAsset,
   adminListCollections,
+  adminUploadGeneral,
+  adminUploadProductImage,
+  adminUploadProductPdf,
   type AdminProductWriteBody,
 } from "@/lib/adminApi";
 import { AdminPageHeader } from "@/components/admin/ui/AdminPageHeader";
@@ -23,7 +27,6 @@ import {
 } from "@/components/admin/product/AdminFormatPicker";
 import { AdminGalleryUploader } from "@/components/admin/product/AdminGalleryUploader";
 import { AdminSourceLinksEditor, type SourceLinkValue } from "@/components/admin/product/AdminSourceLinksEditor";
-import { adminUploadGeneral, adminUploadProductImage, adminUploadProductPdf } from "@/lib/adminApi";
 
 export type ProductFormProps = {
   initial?: Product;
@@ -108,14 +111,65 @@ export function ProductForm({ initial, onSubmit, submitLabel, onDiscard, onDelet
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const stagedUploads = useRef(new Set<string>());
 
   useEffect(() => {
     adminListCollections().then((cs) => setAllCollections(cs.map((c) => ({ slug: c.slug, title: c.title })))).catch(() => {});
   }, []);
 
-  const uploadImage = initial
-    ? (file: File) => adminUploadProductImage(initial.slug, file)
-    : (file: File) => adminUploadGeneral(file, "products");
+  useEffect(() => () => {
+    const pending = [...stagedUploads.current];
+    stagedUploads.current.clear();
+    for (const url of pending)
+      void adminDeleteStagedProductAsset(url).catch(() => {});
+  }, []);
+
+  async function uploadStagedImage(file: File) {
+    const result = initial
+      ? await adminUploadProductImage(initial.slug, file, "asset")
+      : await adminUploadGeneral(file, "products");
+    stagedUploads.current.add(result.url);
+    return result;
+  }
+
+  const uploadGalleryImage = initial
+    ? (file: File) => adminUploadProductImage(initial.slug, file, "gallery")
+    : uploadStagedImage;
+
+  function cleanupRemovedStagedUploads(previous: string[], next: string[]) {
+    const retained = new Set(next);
+    for (const url of previous) {
+      if (!retained.has(url) && stagedUploads.current.delete(url))
+        void adminDeleteStagedProductAsset(url).catch(() => {});
+    }
+  }
+
+  async function handleDiscard() {
+    const pending = [...stagedUploads.current];
+    stagedUploads.current.clear();
+    await Promise.allSettled(pending.map((url) => adminDeleteStagedProductAsset(url)));
+    // `router.refresh()` preserves client component state, so restore the form
+    // explicitly before delegating to the page-level discard behavior.
+    setSlug(initial?.slug ?? "");
+    setTitle(initial?.title ?? "");
+    setExcerpt(initial?.excerpt ?? "");
+    setDescription(initial?.description.join("\n\n") ?? "");
+    setPriceDollars(centsToDollars(initial?.priceCents ?? 0));
+    setCompareDollars(centsToDollars(initial?.compareAtPriceCents ?? null));
+    setAvailable(initial?.available ?? true);
+    setProductFormat((initial?.productType as ProductFormat) ?? "physical");
+    setTags(initial?.tags ?? []);
+    setTagInput("");
+    setCollectionSlugs(initial?.collections ?? []);
+    setPublishedAt(initial?.publishedAt?.slice(0, 10) ?? "");
+    setImages(initial?.images ?? []);
+    setInspirationImages(initial?.inspirationImages ?? []);
+    setReviewImages(initial?.reviewImages ?? []);
+    setSourceLinks(initial?.sourceLinks ?? []);
+    setPdfPath(initial?.pdfPath ?? null);
+    setError(null);
+    onDiscard?.();
+  }
 
   const status = deriveStatus(available, publishedAt || null);
 
@@ -132,6 +186,10 @@ export function ProductForm({ initial, onSubmit, submitLabel, onDiscard, onDelet
 
   async function handleSubmit() {
     setError(null);
+    if (productFormat === "digital" && publishedAt && !pdfPath) {
+      setError("Upload the digital product PDF before publishing. Save it as a draft first.");
+      return;
+    }
     setSubmitting(true);
     try {
       const body: AdminProductWriteBody = {
@@ -153,6 +211,8 @@ export function ProductForm({ initial, onSubmit, submitLabel, onDiscard, onDelet
       };
       // NB: do NOT send `options` — BE preserves/defaults
       await onSubmit(body);
+      // A successful create/update has adopted every staged URL in the body.
+      stagedUploads.current.clear();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
     } finally {
@@ -172,7 +232,7 @@ export function ProductForm({ initial, onSubmit, submitLabel, onDiscard, onDelet
         }
         actions={
           <>
-            {onDiscard ? <AdminButton variant="ghost" onClick={onDiscard}>Discard</AdminButton> : null}
+            {onDiscard ? <AdminButton variant="ghost" onClick={() => void handleDiscard()}>Discard</AdminButton> : null}
             <AdminButton variant="primary" disabled={submitting} onClick={handleSubmit}>
               {submitting ? "Saving…" : submitLabel}
             </AdminButton>
@@ -216,19 +276,53 @@ export function ProductForm({ initial, onSubmit, submitLabel, onDiscard, onDelet
           </AdminPanel>
 
           <AdminPanel sectionTag="Media — Product gallery" hint="Carousel customers see on the product page. Drag to reorder. The primary (★) is used everywhere there's a thumbnail.">
-            <AdminGalleryUploader value={images} onChange={setImages} upload={uploadImage} emptyHint="No images yet — add at least one." />
+            <AdminGalleryUploader
+              value={images}
+              onChange={(next) => {
+                cleanupRemovedStagedUploads(images, next);
+                setImages(next);
+              }}
+              upload={uploadGalleryImage}
+              emptyHint="No images yet — add at least one."
+            />
           </AdminPanel>
 
           <AdminPanel sectionTag="Media — Inspiration gallery" hint="Styled lifestyle photography shown in the 'story' section of the PDP. Optional.">
-            <AdminGalleryUploader value={inspirationImages} onChange={setInspirationImages} upload={uploadImage} emptyHint="Optional — adds a styled gallery on the product page." />
+            <AdminGalleryUploader
+              value={inspirationImages}
+              onChange={(next) => {
+                cleanupRemovedStagedUploads(inspirationImages, next);
+                setInspirationImages(next);
+              }}
+              upload={uploadStagedImage}
+              emptyHint="Optional — adds a styled gallery on the product page."
+            />
           </AdminPanel>
 
           <AdminPanel sectionTag="Media — Customer photos" hint="Social-proof shots from customers / press. Optional.">
-            <AdminGalleryUploader value={reviewImages} onChange={setReviewImages} upload={uploadImage} emptyHint="Optional — appears in the 'Real cozy moments' section." />
+            <AdminGalleryUploader
+              value={reviewImages}
+              onChange={(next) => {
+                cleanupRemovedStagedUploads(reviewImages, next);
+                setReviewImages(next);
+              }}
+              upload={uploadStagedImage}
+              emptyHint="Optional — appears in the 'Real cozy moments' section."
+            />
           </AdminPanel>
 
           <AdminPanel sectionTag={`Source links — "Buy from publisher" buttons`} hint="External retailer / language-edition links rendered as image buttons on the PDP.">
-            <AdminSourceLinksEditor value={sourceLinks} onChange={setSourceLinks} upload={uploadImage} />
+            <AdminSourceLinksEditor
+              value={sourceLinks}
+              onChange={(next) => {
+                cleanupRemovedStagedUploads(
+                  sourceLinks.flatMap((row) => row.image ? [row.image] : []),
+                  next.flatMap((row) => row.image ? [row.image] : []),
+                );
+                setSourceLinks(next);
+              }}
+              upload={uploadStagedImage}
+            />
           </AdminPanel>
 
           {productFormat === "digital" ? (

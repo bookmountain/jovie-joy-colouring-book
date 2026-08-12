@@ -42,7 +42,8 @@ export type Product = {
   tags: string[];
   collections: string[];
   publishedAt: string;
-  pdfPath: string | null;
+  /** Admin responses include this; public catalog responses intentionally omit it. */
+  pdfPath?: string | null;
 };
 
 export type Collection = {

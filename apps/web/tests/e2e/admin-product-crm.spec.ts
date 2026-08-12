@@ -21,6 +21,7 @@ function makeProduct(overrides: Partial<{
   sourceLinks: { label: string; href: string; image?: string; alt?: string }[] | null;
   reviewImages: string[] | null;
   inspirationImages: string[] | null;
+  pdfPath: string | null;
 }> = {}) {
   const slug = overrides.slug ?? "crm-test-product";
   return {
@@ -41,7 +42,7 @@ function makeProduct(overrides: Partial<{
     tags: [],
     collections: [],
     publishedAt: overrides.publishedAt ?? null,
-    pdfPath: null,
+    pdfPath: overrides.pdfPath ?? null,
   };
 }
 
@@ -123,7 +124,8 @@ test.describe("admin product CRM", () => {
       priceCents: 499,
       publishedAt: null, // starts as draft
     });
-    const publishedProduct = { ...createdProduct, publishedAt: new Date().toISOString() };
+    const fulfilledProduct = { ...createdProduct, pdfPath: `/uploads/pdfs/${slug}.pdf` };
+    const publishedProduct = { ...fulfilledProduct, publishedAt: new Date().toISOString() };
 
     // --- mock collections (sidebar needs this) ---
     await page.route("**/api/admin/collections", (r) =>
@@ -165,6 +167,13 @@ test.describe("admin product CRM", () => {
         });
       }
     });
+    await page.route(`**/api/admin/products/${slug}/pdf`, (r) =>
+      r.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(fulfilledProduct),
+      }),
+    );
 
     await page.goto("/admin/products/new");
 
@@ -189,6 +198,13 @@ test.describe("admin product CRM", () => {
 
     // Status badge should show "Draft" (publishedAt is null)
     await expect(page.getByText("Draft").first()).toBeVisible();
+
+    await page.locator("#pf-pdf-input").setInputFiles({
+      name: "digital-product.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.from("%PDF-1.4\n%%EOF\n"),
+    });
+    await expect(page.getByText(`${slug}.pdf`)).toBeVisible();
 
     // Now flip Published switch → ON to set publishedAt
     await page.getByRole("switch", { name: /published/i }).click();
@@ -238,12 +254,22 @@ test.describe("admin product CRM", () => {
         body: JSON.stringify({ updated: 1 }),
       });
     });
+    await page.route("**/uploads/products/cozy-cover.png", (r) =>
+      r.fulfill({
+        status: 200,
+        contentType: "image/png",
+        body: Buffer.from(
+          "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=",
+          "base64",
+        ),
+      }),
+    );
 
     await page.goto("/admin/products");
     await expect(page.getByRole("heading", { level: 1, name: "Products" })).toBeVisible();
     await expect(page.locator("tbody img")).toHaveAttribute(
       "src",
-      "http://localhost:8080/uploads/products/cozy-cover.png",
+      /http:\/\/(?:localhost|127\.0\.0\.1):8080\/uploads\/products\/cozy-cover\.png/,
     );
 
     // Search — wait for the debounced query to fire

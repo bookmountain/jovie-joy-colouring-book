@@ -23,6 +23,7 @@ import { AdminBadge } from "@/components/admin/ui/AdminBadge";
 import { AdminCheckbox } from "@/components/admin/ui/AdminCheckbox";
 import { AdminEmptyState } from "@/components/admin/ui/AdminEmptyState";
 import { PRODUCT_FORMATS } from "@/components/admin/product/AdminFormatPicker";
+import { ProductCsvImportDialog } from "@/components/admin/product/ProductCsvImportDialog";
 import { AdminConfirmDialog } from "@/components/admin/ui/AdminConfirmDialog";
 import { notifySaved, notifyDeleted, notifyError } from "@/lib/toast";
 
@@ -60,6 +61,8 @@ export default function AdminProductsPage() {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkWarning, setBulkWarning] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   useEffect(() => { adminListCollections().then((cs) => setAllCollections(cs.map((c) => ({ slug: c.slug, title: c.title })))).catch(() => {}); }, []);
   useEffect(() => { void adminListProductTags().catch(() => {}); }, []);
@@ -70,6 +73,10 @@ export default function AdminProductsPage() {
   }, [q]);
 
   useEffect(() => {
+    // A changed result scope must not retain hidden bulk selections from the
+    // previous query/page; every destructive or repair action stays reviewable.
+    setSelected(new Set());
+    setBulkWarning(null);
     setLoading(true);
     setError(null);
     adminListProducts({ q: debouncedQ || undefined, format: formats, status: statuses, collection: collections, sort, page, pageSize })
@@ -84,6 +91,7 @@ export default function AdminProductsPage() {
   }
 
   function toggleSelect(slug: string) {
+    setBulkWarning(null);
     setSelected((cur) => {
       const next = new Set(cur);
       if (next.has(slug)) next.delete(slug); else next.add(slug);
@@ -92,23 +100,41 @@ export default function AdminProductsPage() {
   }
   const allSelected = items.length > 0 && items.every((i) => selected.has(i.slug));
   function toggleSelectAll() {
+    setBulkWarning(null);
     if (allSelected) setSelected(new Set());
     else setSelected(new Set(items.map((i) => i.slug)));
   }
 
   async function bulk(action: Parameters<typeof adminBulkProducts>[0]["action"], payload?: { collectionSlug?: string }) {
     if (selected.size === 0) return;
-    const count = selected.size;
+    const requestedSlugs = Array.from(selected);
     try {
-      await adminBulkProducts({ slugs: Array.from(selected), action, payload });
-      setSelected(new Set());
+      const result = await adminBulkProducts({ slugs: requestedSlugs, action, payload });
+      setSelected(new Set(result.missing));
+      setBulkWarning(result.missing.length > 0
+        ? `${result.missing.length} selected product${result.missing.length === 1 ? " no longer exists" : "s no longer exist"} and ${result.missing.length === 1 ? "was" : "were"} not changed: ${result.missing.join(", ")}. Clear the retained selection after reviewing it.`
+        : null);
       // refresh
       const res = await adminListProducts({ q: debouncedQ || undefined, format: formats, status: statuses, collection: collections, sort, page, pageSize });
       setItems(res.items); setTotal(res.total);
-      if (action === "delete") notifyDeleted(`${count} product${count === 1 ? "" : "s"}`);
-      else notifySaved("Products");
+      if (result.updated > 0) {
+        if (action === "delete") notifyDeleted(`${result.updated} product${result.updated === 1 ? "" : "s"}`);
+        else notifySaved(`${result.updated} product${result.updated === 1 ? "" : "s"}`);
+      }
     } catch (e) {
+      setBulkWarning(e instanceof Error ? e.message : "The bulk action failed. No selections were cleared.");
       notifyError(e);
+    }
+  }
+
+  async function refreshAfterImport(count: number) {
+    try {
+      const res = await adminListProducts({ q: debouncedQ || undefined, format: formats, status: statuses, collection: collections, sort, page, pageSize });
+      setItems(res.items);
+      setTotal(res.total);
+      notifySaved(`${count} product${count === 1 ? "" : "s"} imported`);
+    } catch (reason) {
+      notifyError(reason);
     }
   }
 
@@ -203,7 +229,7 @@ export default function AdminProductsPage() {
         subtitle={`${total} products · ${counts.pub} published · ${counts.draft} drafts · ${counts.oos} out of stock (on this page)`}
         actions={
           <>
-            <AdminButton variant="ghost" disabled>Import CSV</AdminButton>
+            <AdminButton onClick={() => setImportOpen(true)} variant="ghost">Import CSV</AdminButton>
             <Link href="/admin/products/new"><AdminButton variant="primary">+ New product</AdminButton></Link>
           </>
         }
@@ -234,7 +260,7 @@ export default function AdminProductsPage() {
         </select>
       </AdminToolbar>
 
-      <AdminBulkBar selectedCount={selected.size} onClear={() => setSelected(new Set())}>
+      <AdminBulkBar selectedCount={selected.size} onClear={() => { setSelected(new Set()); setBulkWarning(null); }}>
         {allCollections.length > 0 ? (
           <select
             aria-label="add to collection"
@@ -248,8 +274,16 @@ export default function AdminProductsPage() {
         ) : null}
         <button onClick={() => void bulk("publish")}>Publish</button>
         <button onClick={() => void bulk("unpublish")}>Unpublish</button>
+        <button onClick={() => void bulk("mark-available")}>In stock</button>
+        <button onClick={() => void bulk("mark-unavailable")}>Out of stock</button>
         <button data-tone="danger" onClick={() => setBulkDeleteOpen(true)}>Delete</button>
       </AdminBulkBar>
+
+      {bulkWarning ? (
+        <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900" role="alert">
+          {bulkWarning}
+        </p>
+      ) : null}
 
       <AdminConfirmDialog
         open={bulkDeleteOpen}
@@ -283,6 +317,12 @@ export default function AdminProductsPage() {
       )}
 
       {error ? <p style={{ color: "#a3392a", marginTop: 12 }}>{error}</p> : null}
+
+      <ProductCsvImportDialog
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImported={refreshAfterImport}
+      />
     </div>
   );
 }

@@ -7,6 +7,7 @@ vi.mock("@/lib/adminApi", () => ({
     { slug: "new", title: "New Release" },
     { slug: "best", title: "Best Sellers" },
   ],
+  adminDeleteStagedProductAsset: async () => undefined,
   adminUploadGeneral: async (_f: File, _folder?: string) => ({ url: "/u/x.png" }),
   adminUploadProductImage: async (_s: string, _f: File) => ({ url: "/u/x.png" }),
   adminUploadProductPdf: async () => ({}),

@@ -5,6 +5,7 @@ import type { Product } from "@/lib/api";
 
 vi.mock("@/lib/adminApi", () => ({
   adminListCollections: async () => [],
+  adminDeleteStagedProductAsset: async () => undefined,
   adminUploadGeneral: async () => ({ url: "/u/x.png" }),
   adminUploadProductImage: async () => ({ url: "/u/x.png" }),
   adminUploadProductPdf: async (_s: string, _f: File) => ({ pdfPath: "/uploads/pdfs/x.pdf" }),
@@ -37,6 +38,16 @@ describe("ProductForm — source links, digital, danger", () => {
     render(<ProductForm initial={{ ...physical, productType: "digital" }} onSubmit={vi.fn()} submitLabel="Save" />);
     expect(screen.getByText(/no pdf uploaded yet/i)).toBeTruthy();
     expect(screen.getByRole("button", { name: /^upload pdf$/i })).toBeTruthy();
+  });
+
+  test("does not publish a digital product before its PDF is uploaded", () => {
+    const onSubmit = vi.fn();
+    render(<ProductForm initial={{ ...physical, productType: "digital" }} onSubmit={onSubmit} submitLabel="Save" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByText(/upload the digital product pdf before publishing/i)).toBeTruthy();
   });
 
   test("danger zone Delete invokes onDelete after confirming in the dialog", async () => {

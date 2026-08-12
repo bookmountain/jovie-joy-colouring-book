@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Collection, Product } from "@/lib/api";
+import type { Collection } from "@/lib/api";
 import {
-  adminListProducts,
+  adminListAllProducts,
   adminUploadCollectionHero,
   adminUploadGeneral,
   type AdminCollectionWriteBody,
@@ -43,7 +43,7 @@ export function CollectionForm({ initial, onSubmit, submitLabel }: Props) {
   const [homepageSlot, setHomepageSlot] = useState<string>(initial?.homepageSlot ?? "");
   const [sortIndex, setSortIndex] = useState(initial?.sortIndex ?? 0);
   const [productOrder, setProductOrder] = useState<string[]>(initial?.productSlugs ?? []);
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Array<{ slug: string; title: string }>>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,8 +51,8 @@ export function CollectionForm({ initial, onSubmit, submitLabel }: Props) {
     // Fetch the full catalog (not the default 25/page) so every product is
     // pickable from the "Add product" picker, including stores with hundreds
     // of items where the cap would otherwise hide most of them.
-    adminListProducts({ pageSize: 1000 })
-      .then((r) => setAllProducts(r.items as unknown as Product[]))
+    adminListAllProducts()
+      .then(setAllProducts)
       .catch((e: Error) => setError(e.message));
   }, []);
 
@@ -141,7 +141,7 @@ export function CollectionForm({ initial, onSubmit, submitLabel }: Props) {
             </AdminSelect>
           </AdminField>
           <AdminField>
-            <AdminLabel htmlFor="col-slot">Homepage slot</AdminLabel>
+            <AdminLabel htmlFor="col-slot">Homepage placement</AdminLabel>
             <AdminSelect
               id="col-slot"
               onChange={(e) => setHomepageSlot(e.target.value)}
@@ -153,6 +153,9 @@ export function CollectionForm({ initial, onSubmit, submitLabel }: Props) {
                 </option>
               ))}
             </AdminSelect>
+            <p className="text-xs text-cocoa-text">
+              Row headings are edited under Home. New release, bestseller, and digital accept one collection each; tiles accept several.
+            </p>
           </AdminField>
           <AdminField>
             <AdminLabel htmlFor="col-sortindex">Sort index</AdminLabel>
