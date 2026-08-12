@@ -1,0 +1,8 @@
+uploads
+apps/api/uploads
+
+**/bin
+**/obj
+apps/web/node_modules
+apps/web/.next
+apps/web/test-results

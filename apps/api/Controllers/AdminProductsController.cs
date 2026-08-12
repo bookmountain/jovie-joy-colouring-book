@@ -3,6 +3,7 @@ using JovieJoy.Api.Data;
 using JovieJoy.Api.Data.Entities;
 using JovieJoy.Api.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,7 +12,10 @@ namespace JovieJoy.Api.Controllers;
 [ApiController]
 [Route("api/admin/products")]
 [Authorize(Policy = "AdminOnly")]
-public class AdminProductsController(AppDbContext db, IUploadService uploads) : ControllerBase
+public class AdminProductsController(
+    AppDbContext db,
+    IUploadService uploads,
+    IWebHostEnvironment env) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<AdminProductListResponse>> List(
@@ -282,7 +286,7 @@ public class AdminProductsController(AppDbContext db, IUploadService uploads) : 
         if (file.ContentType != "application/pdf" && !file.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
             return BadRequest(new { error = "Only PDF files are accepted" });
 
-        var dir = Path.Combine(Directory.GetCurrentDirectory(), "uploads", "pdfs");
+        var dir = Path.Combine(env.ContentRootPath, "uploads", "pdfs");
         Directory.CreateDirectory(dir);
         var fileName = $"{slug}_{Path.GetRandomFileName()}.pdf";
         var filePath = Path.Combine(dir, fileName);
@@ -291,7 +295,7 @@ public class AdminProductsController(AppDbContext db, IUploadService uploads) : 
 
         if (!string.IsNullOrEmpty(product.PdfPath))
         {
-            var oldPath = Path.Combine(Directory.GetCurrentDirectory(), product.PdfPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            var oldPath = Path.Combine(env.ContentRootPath, product.PdfPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
             if (System.IO.File.Exists(oldPath)) System.IO.File.Delete(oldPath);
         }
 

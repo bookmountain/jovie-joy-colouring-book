@@ -34,7 +34,10 @@ Thumbs.db
 # Build artifacts
 coverage/
 *.tsbuildinfo
-uploads/
+# API runtime uploads: local/test content root and production Docker bind mount.
+# Keep these paths anchored so unrelated source folders named "uploads" remain trackable.
+/apps/api/uploads/
+/uploads/
 
 # Claude
 .claude/worktrees/*

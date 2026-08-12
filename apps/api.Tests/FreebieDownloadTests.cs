@@ -23,6 +23,7 @@ public class FreebieDownloadTests : IClassFixture<ApiFactory>
         var fileName = $"{Guid.NewGuid():N}.pdf";
         var abs = Path.Combine(dir, fileName);
         await File.WriteAllBytesAsync(abs, new byte[] { 1, 2, 3, 4 });
+        abs.Should().StartWith(Path.GetTempPath());
         var rel = $"/uploads/freebies/files/{fileName}";
 
         var freebieId = await _factory.SeedFreebie(slug, published: published, filePath: rel);

@@ -25,9 +25,18 @@ public class ApiFactory : WebApplicationFactory<Program>
     // Each factory instance gets its own isolated in-memory database so that
     // test classes using IClassFixture<ApiFactory> do not share state.
     private readonly string _dbName = $"test-db-{Guid.NewGuid():N}";
+    private readonly string _contentRoot = Path.Combine(
+        Path.GetTempPath(),
+        "jovie-joy-api-tests",
+        Guid.NewGuid().ToString("N"));
 
     protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
     {
+        // Upload endpoints resolve files relative to ContentRootPath. Point the
+        // entire test host at an isolated OS temp directory so no test can write
+        // PDFs or images into the source checkout.
+        Directory.CreateDirectory(_contentRoot);
+        builder.UseContentRoot(_contentRoot);
         builder.UseEnvironment("Test");
         builder.UseSetting("ConnectionStrings:Default", "Host=ignored;Database=ignored;Username=ignored;Password=ignored");
         builder.UseSetting("Jwt:Secret", JwtSecret);
@@ -49,6 +58,13 @@ public class ApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<FakeEmailSender>();
             services.AddSingleton<IEmailSender>(sp => sp.GetRequiredService<FakeEmailSender>());
         });
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        if (disposing && Directory.Exists(_contentRoot))
+            Directory.Delete(_contentRoot, recursive: true);
     }
 
     public FakeEmailSender Emails => Services.GetRequiredService<FakeEmailSender>();
