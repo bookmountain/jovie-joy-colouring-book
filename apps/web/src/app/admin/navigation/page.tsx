@@ -13,6 +13,7 @@ import {
   AdminInput,
   AdminPageHeader,
   AdminPanel,
+  AdminSwitch,
 } from "@/components/admin/ui";
 import { notifyError, notifySaved } from "@/lib/toast";
 
@@ -32,7 +33,11 @@ function sortAndNormalize(items: AdminNavigationItem[]): AdminNavigationItem[] {
       .sort((left, right) => left.sortIndex - right.sortIndex || left.label.localeCompare(right.label))
       .forEach((item, index) => sortById.set(item.id, index));
   }
-  return items.map((item) => ({ ...item, sortIndex: sortById.get(item.id) ?? 0 }));
+  return items.map((item) => ({
+    ...item,
+    enabled: item.enabled !== false,
+    sortIndex: sortById.get(item.id) ?? 0,
+  }));
 }
 
 function buildTree(items: AdminNavigationItem[]): NavigationBranch[] {
@@ -115,6 +120,17 @@ function NavigationRow({
           />
         </div>
         <div className="admin-navigation-actions">
+          <div className="flex items-center gap-2 pr-1">
+            <span className="text-xs font-semibold text-cocoa-text">
+              {branch.enabled ? "Visible" : "Hidden"}
+            </span>
+            <AdminSwitch
+              aria-label={`${branch.enabled ? "Hide" : "Show"} ${branch.label || "link"} on storefront`}
+              checked={branch.enabled}
+              onChange={(enabled) => onUpdate(branch.id, { enabled })}
+              title={branch.enabled ? "Visible; click to hide" : "Hidden; click to show"}
+            />
+          </div>
           <AdminButton
             aria-label={`Move ${branch.label || "link"} up`}
             disabled={branch.sortIndex === 0}
@@ -207,6 +223,7 @@ export default function AdminNavigationPage() {
         label: "New link",
         href: "/",
         sortIndex: siblings.length,
+        enabled: true,
       }];
     });
   }
@@ -259,7 +276,7 @@ export default function AdminNavigationPage() {
       <AdminPageHeader
         crumb="Site content"
         title="Navigation"
-        subtitle="Edit the desktop and mobile storefront menus. Links support up to three levels."
+        subtitle="Edit the desktop and mobile storefront menus. Switching off a normal local content link also makes that route return Not Found; Home and checkout/account utilities stay accessible. Content remains saved. Links support up to three levels."
         actions={<AdminButton onClick={() => add(null)} type="button" variant="ghost">+ Top-level link</AdminButton>}
       />
 

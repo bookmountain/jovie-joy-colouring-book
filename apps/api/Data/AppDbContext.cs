@@ -249,6 +249,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> opts) : DbContext(opts)
         {
             e.ToTable("nav_links");
             e.HasKey(x => x.Id);
+            e.Property(x => x.Enabled).HasDefaultValue(true);
             e.HasOne(x => x.Parent).WithMany(p => p.Children).HasForeignKey(x => x.ParentId).OnDelete(DeleteBehavior.Cascade);
         });
 

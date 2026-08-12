@@ -11,6 +11,7 @@ import {
   getProductBySlug,
   getRelatedProducts,
 } from "@/lib/catalog";
+import { requireNavigationRoute } from "@/lib/require-navigation-route";
 
 type PageProps = {
   params: Promise<{ slug: string; productSlug: string }>;
@@ -18,6 +19,7 @@ type PageProps = {
 
 export default async function CollectionProductPage({ params }: PageProps) {
   const { slug: collectionSlug, productSlug } = await params;
+  await requireNavigationRoute(`/collections/${collectionSlug}/products/${productSlug}`);
   const [product, collection, allProducts] = await Promise.all([
     getProductBySlug(productSlug),
     getCollectionBySlug(collectionSlug),

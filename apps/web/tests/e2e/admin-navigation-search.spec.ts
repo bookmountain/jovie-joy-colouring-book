@@ -15,6 +15,7 @@ const root = {
   label: "Books",
   href: "/products",
   sortIndex: 0,
+  enabled: true,
 };
 const child = {
   id: "00000000-0000-0000-0000-000000000002",
@@ -22,6 +23,7 @@ const child = {
   label: "Physical books",
   href: "/collections/physical",
   sortIndex: 0,
+  enabled: true,
 };
 
 async function login(page: Page) {
@@ -69,13 +71,14 @@ test.describe("navigation CMS and admin quick search", () => {
     await page.goto("/admin/navigation");
     await expect(page.getByRole("heading", { level: 1, name: "Navigation" })).toBeVisible();
     await page.locator('input[value="Books"]').fill("Books & Gifts");
+    await page.getByRole("switch", { name: "Hide Books & Gifts on storefront" }).click();
     await page.getByRole("button", { name: "Save navigation" }).click();
     await expect(page.getByText(/navigation saved/i)).toBeVisible();
 
     expect(saveBody).not.toBeNull();
     expect(saveBody!.expectedRevision).toBe("revision-1");
     expect(saveBody!.items).toEqual(expect.arrayContaining([
-      expect.objectContaining({ id: root.id, label: "Books & Gifts", parentId: null }),
+      expect.objectContaining({ id: root.id, label: "Books & Gifts", parentId: null, enabled: false }),
       expect.objectContaining({ id: child.id, parentId: root.id }),
     ]));
   });

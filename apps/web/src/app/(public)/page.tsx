@@ -9,7 +9,8 @@ import { HomeVideoSection } from "@/components/content/home-video-section";
 import { NewsletterForm } from "@/components/content/newsletter-form";
 import { getCozyMomentImages } from "@/data/gallery";
 import { getAllCollections } from "@/data/collections";
-import { apiGetContent, resolveAssetUrl, type HeroSlide } from "@/lib/api";
+import { resolveAssetUrl, type HeroSlide } from "@/lib/api";
+import { getSiteContent } from "@/data/site-content";
 import { getProductsForCollection } from "@/lib/catalog";
 import { applyHomepageCollection, type HomeRowData } from "@/lib/home-rows";
 import { homeSectionIsVisible, readHomeSectionVisibility } from "@/lib/home-visibility";
@@ -45,7 +46,7 @@ async function keepReachableHeroSlides(slides: HeroSlide[]): Promise<HeroSlide[]
 }
 
 export default async function Home() {
-  const bundle = await apiGetContent();
+  const bundle = await getSiteContent();
   const visibility = readHomeSectionVisibility(bundle);
   const show = (section: Parameters<typeof homeSectionIsVisible>[1]) =>
     homeSectionIsVisible(visibility, section);

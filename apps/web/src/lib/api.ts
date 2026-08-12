@@ -71,7 +71,7 @@ export type StaticPage = { slug: string; title: string; intro: string; blocks: s
 export type FaqLink = { label: string; href: string };
 export type Faq = { slug: string; question: string; answer: string; links: FaqLink[] | null; group: string | null; sortIndex: number };
 
-export type NavLink = { id: string; label: string; href: string; children: NavLink[] };
+export type NavLink = { id: string; label: string; href: string; enabled?: boolean; children: NavLink[] };
 export type FooterLinkItem = { label: string; href: string };
 export type FooterLinkGroup = { key: string; title: string; links: FooterLinkItem[] };
 export type SocialLink = { label: string; href: string };

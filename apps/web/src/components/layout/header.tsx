@@ -8,11 +8,12 @@ import { useBundle } from "@/state/catalog-provider";
 import { useSite } from "@/state/site-store";
 import { MegaMenu } from "./mega-menu";
 import { MobileMenu } from "./mobile-menu";
+import { visibleNavigation } from "@/lib/navigation-visibility";
 
 export function Header() {
   const { cartCount, state, dispatch } = useSite();
   const bundle = useBundle();
-  const primaryNavigation = bundle.navigation;
+  const primaryNavigation = visibleNavigation(bundle.navigation);
   const brand = bundle.headerBrand[0]?.data ?? { name: "Zoe&Book", searchPlaceholder: "Search the store" };
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const closeMenuTimer = useRef<ReturnType<typeof setTimeout> | null>(null);

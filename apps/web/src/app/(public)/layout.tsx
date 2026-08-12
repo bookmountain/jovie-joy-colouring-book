@@ -1,4 +1,4 @@
-import { apiGetContent } from "@/lib/api";
+import { getSiteContent } from "@/data/site-content";
 import { AnnouncementBar } from "@/components/layout/announcement-bar";
 import { CartDrawer } from "@/components/commerce/cart-drawer";
 import { Footer } from "@/components/layout/footer";
@@ -19,7 +19,7 @@ export default async function PublicLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const bundle = await apiGetContent();
+  const bundle = await getSiteContent();
 
   return (
     <SiteProviders bundle={bundle}>

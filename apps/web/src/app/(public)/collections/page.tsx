@@ -3,8 +3,10 @@ import Link from "next/link";
 import { getAllCollections } from "@/data/collections";
 import { resolveAssetUrl } from "@/lib/api";
 import { getProductsForCollection } from "@/lib/catalog";
+import { requireNavigationRoute } from "@/lib/require-navigation-route";
 
 export default async function CollectionsPage() {
+  await requireNavigationRoute("/collections");
   const all = await getAllCollections();
   const visible = all.filter((collection) => collection.slug !== "all");
   const previews = await Promise.all(

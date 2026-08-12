@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AnnouncementBar } from "@/components/layout/announcement-bar";
 import { CollectionTiles } from "@/components/content/collection-tiles";
@@ -118,6 +118,7 @@ describe("CMS storefront regressions", () => {
     vi.clearAllMocks();
     window.localStorage.clear();
     mocks.fetchCatalog.mockResolvedValue([]);
+    mocks.apiGetContent.mockResolvedValue(bundle());
     mocks.fetchCurrentUser.mockResolvedValue(null);
     mocks.getAllCollections.mockResolvedValue([]);
     mocks.getCollectionBySlug.mockResolvedValue(undefined);
@@ -338,6 +339,57 @@ describe("CMS storefront regressions", () => {
     }
     expect(screen.queryByRole("link", { name: "Zoe&Book" })).not.toBeInTheDocument();
     expect(mocks.fetchCurrentUser).toHaveBeenCalledTimes(1);
+  });
+
+  it("hides disabled header branches and renders all three levels in the mobile menu", async () => {
+    render(
+      <BundleProvider
+        bundle={bundle({
+          navigation: [
+            {
+              id: "products",
+              label: "Products",
+              href: "/products",
+              enabled: true,
+              children: [{
+                id: "physical",
+                label: "Physical books",
+                href: "/collections/physical-books",
+                enabled: true,
+                children: [{
+                  id: "paperback",
+                  label: "Paperback",
+                  href: "/collections/paperback",
+                  enabled: true,
+                  children: [],
+                }],
+              }],
+            },
+            {
+              id: "gallery",
+              label: "Gallery",
+              href: "/pages/gallery",
+              enabled: false,
+              children: [],
+            },
+          ],
+        })}
+      >
+        <SiteProvider>
+          <Header />
+        </SiteProvider>
+      </BundleProvider>,
+    );
+
+    await waitFor(() => expect(mocks.fetchCurrentUser).toHaveBeenCalled());
+    expect(screen.queryByRole("link", { name: "Gallery" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Open menu" }));
+    const menu = screen.getByText("Menu").closest("aside");
+    expect(menu).not.toBeNull();
+    expect(within(menu!).getByRole("link", { name: "Products" })).toBeInTheDocument();
+    expect(within(menu!).getByRole("link", { name: "Physical books" })).toBeInTheDocument();
+    expect(within(menu!).getByRole("link", { name: "Paperback" })).toBeInTheDocument();
+    expect(within(menu!).queryByRole("link", { name: "Gallery" })).not.toBeInTheDocument();
   });
 
   it.each([

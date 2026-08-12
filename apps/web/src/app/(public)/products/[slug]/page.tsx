@@ -7,6 +7,7 @@ import { RecentlyViewed } from "@/components/commerce/recently-viewed";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { getAllProducts } from "@/data/products";
 import { getProductBySlug, getRelatedProducts } from "@/lib/catalog";
+import { requireNavigationRoute } from "@/lib/require-navigation-route";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -14,6 +15,7 @@ type PageProps = {
 
 export default async function ProductPage({ params }: PageProps) {
   const { slug } = await params;
+  await requireNavigationRoute(`/products/${slug}`);
   const [product, allProducts] = await Promise.all([
     getProductBySlug(slug),
     getAllProducts(),

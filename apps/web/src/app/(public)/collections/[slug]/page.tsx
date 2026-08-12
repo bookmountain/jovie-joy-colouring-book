@@ -11,6 +11,7 @@ import {
   takePageSize,
 } from "@/lib/catalog";
 import { resolveAssetUrl } from "@/lib/api";
+import { requireNavigationRoute } from "@/lib/require-navigation-route";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -30,6 +31,7 @@ export default async function CollectionPage({
   searchParams,
 }: PageProps) {
   const { slug } = await params;
+  await requireNavigationRoute(`/collections/${slug}`);
   const query = (await searchParams) ?? {};
   const [collection, collectionProducts] = await Promise.all([
     getCollectionBySlug(slug),

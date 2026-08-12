@@ -5,7 +5,8 @@ public record AdminNavigationItemDto(
     Guid? ParentId,
     string Label,
     string Href,
-    int SortIndex);
+    int SortIndex,
+    bool? Enabled = null);
 
 public record AdminNavigationResponse(
     IReadOnlyList<AdminNavigationItemDto> Items,

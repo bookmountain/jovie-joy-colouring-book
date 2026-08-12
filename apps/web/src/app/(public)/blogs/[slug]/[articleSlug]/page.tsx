@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { getArticle, getBlogCategory } from "@/data/content";
 import { resolveAssetUrl } from "@/lib/api";
+import { requireNavigationRoute } from "@/lib/require-navigation-route";
 
 type PageProps = {
   params: Promise<{ slug: string; articleSlug: string }>;
@@ -15,6 +16,7 @@ const blogSlugAliases: Record<string, string> = {
 
 export default async function ArticlePage({ params }: PageProps) {
   const { slug, articleSlug } = await params;
+  await requireNavigationRoute(`/blogs/${slug}/${articleSlug}`);
   const blogSlug = blogSlugAliases[slug] ?? slug;
 
   let article;

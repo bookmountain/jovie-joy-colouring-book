@@ -4,6 +4,7 @@ import { ProductGrid } from "@/components/commerce/product-grid";
 import { type SortKey } from "@/data/collections";
 import { getAllProducts } from "@/data/products";
 import { sortProducts, takePageSize } from "@/lib/catalog";
+import { requireNavigationRoute } from "@/lib/require-navigation-route";
 
 type PageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -18,6 +19,7 @@ function readParam(
 }
 
 export default async function ProductsPage({ searchParams }: PageProps) {
+  await requireNavigationRoute("/products");
   const query = (await searchParams) ?? {};
   const allProducts = await getAllProducts();
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useBundle } from "@/state/catalog-provider";
+import { navigationRouteIsEnabled } from "@/lib/navigation-visibility";
 
 export function Footer() {
   const bundle = useBundle();
@@ -42,7 +43,7 @@ export function Footer() {
           <div key={group.title}>
             <h2 className="text-base font-extrabold">{group.title}</h2>
             <ul className="mt-4 grid gap-2 text-sm text-cocoa-text">
-              {group.links.map((link) => (
+              {group.links.filter((link) => navigationRouteIsEnabled(bundle.navigation, link.href)).map((link) => (
                 <li key={link.href}>
                   <Link className="hover:text-cocoa-coral" href={link.href}>
                     {link.label}

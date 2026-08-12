@@ -8,6 +8,7 @@ public class NavLink
     public string Label { get; set; } = null!;
     public string Href { get; set; } = null!;
     public int SortIndex { get; set; }
+    public bool Enabled { get; set; } = true;
 
     public ICollection<NavLink> Children { get; set; } = new List<NavLink>();
 }

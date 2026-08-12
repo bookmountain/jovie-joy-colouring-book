@@ -7,6 +7,7 @@ import { GalleryGrid } from "@/components/content/gallery-grid";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { getStaticPage } from "@/data/content";
 import { listFreebies } from "@/lib/freebies";
+import { requireNavigationRoute } from "@/lib/require-navigation-route";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -19,6 +20,7 @@ const pageSlugAliases: Record<string, string> = {
 
 export default async function StaticPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
+  await requireNavigationRoute(`/pages/${slug}`);
   const sp = await searchParams;
   const pageSlug = pageSlugAliases[slug] ?? slug;
 

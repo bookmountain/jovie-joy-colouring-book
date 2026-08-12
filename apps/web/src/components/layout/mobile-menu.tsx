@@ -5,11 +5,37 @@ import Link from "next/link";
 import { X } from "lucide-react";
 import { useBundle } from "@/state/catalog-provider";
 import { useSite } from "@/state/site-store";
+import type { NavLink } from "@/lib/api";
+import { visibleNavigation } from "@/lib/navigation-visibility";
+
+function MobileNavChildren({ items, close, depth = 1 }: {
+  items: NavLink[];
+  close: () => void;
+  depth?: number;
+}) {
+  if (items.length === 0) return null;
+  return (
+    <div className="mt-2 grid gap-2 pl-3">
+      {items.map((item) => (
+        <div key={item.id || `${depth}-${item.label}`}>
+          <Link
+            className="block text-sm font-bold text-cocoa-text"
+            href={item.href}
+            onClick={close}
+          >
+            {item.label}
+          </Link>
+          <MobileNavChildren close={close} depth={depth + 1} items={item.children ?? []} />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function MobileMenu() {
   const { state, dispatch } = useSite();
   const bundle = useBundle();
-  const primaryNavigation = bundle.navigation;
+  const primaryNavigation = visibleNavigation(bundle.navigation);
   const open = state.activeDrawer === "mobile-menu";
 
   useEffect(() => {
@@ -41,7 +67,7 @@ export function MobileMenu() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-cocoa-ink/35 md:hidden">
+    <div className="fixed inset-0 z-50 bg-cocoa-ink/35 lg:hidden">
       <aside className="h-full w-[min(88vw,380px)] overflow-y-auto rounded-r-coco bg-cocoa-cream p-6 shadow-drawer">
         <div className="mb-6 flex items-center justify-between">
           <p className="text-2xl font-extrabold">Menu</p>
@@ -64,20 +90,10 @@ export function MobileMenu() {
               >
                 {item.label}
               </Link>
-              {item.children?.length ? (
-                <div className="mt-2 grid gap-2 pl-3">
-                  {item.children.map((child) => (
-                    <Link
-                      className="block text-sm font-bold text-cocoa-text"
-                      href={child.href}
-                      key={child.label}
-                      onClick={() => dispatch({ type: "drawer/close" })}
-                    >
-                      {child.label}
-                    </Link>
-                  ))}
-                </div>
-              ) : null}
+              <MobileNavChildren
+                close={() => dispatch({ type: "drawer/close" })}
+                items={item.children ?? []}
+              />
             </div>
           ))}
         </nav>

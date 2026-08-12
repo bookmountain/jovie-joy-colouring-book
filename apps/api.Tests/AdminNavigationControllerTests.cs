@@ -96,6 +96,43 @@ public class AdminNavigationControllerTests : IClassFixture<ApiFactory>
         Assert.Equal("First editor", Assert.Single(after!.Items).Label);
     }
 
+    [Fact]
+    public async Task Visibility_roundtrips_to_public_bundle_changes_revision_and_survives_an_older_payload()
+    {
+        var root = Guid.NewGuid();
+        var child = Guid.NewGuid();
+        var admin = await _factory.CreateAdminClientAsync();
+        var before = await admin.GetFromJsonAsync<AdminNavigationResponse>("/api/admin/navigation");
+
+        var hiddenSave = await admin.PutAsJsonAsync(
+            "/api/admin/navigation",
+            new ReplaceAdminNavigationRequest([
+                new(root, null, "Gallery", "/pages/gallery", 0, false),
+                new(child, root, "Gallery child", "/pages/gallery/child", 0, true),
+            ], before!.Revision));
+        hiddenSave.EnsureSuccessStatusCode();
+        var hidden = await hiddenSave.Content.ReadFromJsonAsync<AdminNavigationResponse>();
+        Assert.False(Assert.Single(hidden!.Items, item => item.Id == root).Enabled);
+        Assert.NotEqual(before.Revision, hidden.Revision);
+
+        var publicBundle = await _factory.CreateClient().GetFromJsonAsync<SiteContentBundleDto>("/api/content");
+        var publicRoot = Assert.Single(publicBundle!.Navigation);
+        Assert.False(publicRoot.Enabled);
+        Assert.True(Assert.Single(publicRoot.Children).Enabled);
+
+        // A rolling-deploy/older client omits Enabled. Existing rows keep their values.
+        var oldClientSave = await admin.PutAsJsonAsync(
+            "/api/admin/navigation",
+            new ReplaceAdminNavigationRequest([
+                new(root, null, "Gallery renamed", "/pages/gallery", 0),
+                new(child, root, "Gallery child", "/pages/gallery/child", 0),
+            ], hidden.Revision));
+        oldClientSave.EnsureSuccessStatusCode();
+        var preserved = await oldClientSave.Content.ReadFromJsonAsync<AdminNavigationResponse>();
+        Assert.False(Assert.Single(preserved!.Items, item => item.Id == root).Enabled);
+        Assert.True(Assert.Single(preserved.Items, item => item.Id == child).Enabled);
+    }
+
     public static IEnumerable<object[]> InvalidTrees()
     {
         var root = Guid.NewGuid();

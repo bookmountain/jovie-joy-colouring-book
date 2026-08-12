@@ -13,8 +13,8 @@ vi.mock("@/lib/adminApi", () => ({
 }));
 vi.mock("@/lib/toast", () => ({ notifySaved: vi.fn(), notifyError: vi.fn() }));
 
-const ROOT = { id: "00000000-0000-0000-0000-000000000001", parentId: null, label: "Books", href: "/products", sortIndex: 0 };
-const CHILD = { id: "00000000-0000-0000-0000-000000000002", parentId: ROOT.id, label: "Physical", href: "/collections/physical", sortIndex: 0 };
+const ROOT = { id: "00000000-0000-0000-0000-000000000001", parentId: null, label: "Books", href: "/products", sortIndex: 0, enabled: true };
+const CHILD = { id: "00000000-0000-0000-0000-000000000002", parentId: ROOT.id, label: "Physical", href: "/collections/physical", sortIndex: 0, enabled: true };
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -51,6 +51,21 @@ describe("Admin navigation page", () => {
     fireEvent.change(screen.getByDisplayValue("Books"), { target: { value: "Stale edit" } });
     fireEvent.click(screen.getByRole("button", { name: "Save navigation" }));
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent(/changed since/i));
+  });
+
+  it("toggles storefront visibility and includes it in the saved tree", async () => {
+    render(<AdminNavigationPage />);
+    await waitFor(() => expect(screen.getByDisplayValue("Books")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("switch", { name: "Hide Books on storefront" }));
+    expect(screen.getByRole("switch", { name: "Show Books on storefront" })).toHaveAttribute("aria-checked", "false");
+    fireEvent.click(screen.getByRole("button", { name: "Save navigation" }));
+
+    await waitFor(() => expect(mocks.replace).toHaveBeenCalledTimes(1));
+    expect(mocks.replace.mock.calls[0][0]).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: ROOT.id, enabled: false }),
+      expect.objectContaining({ id: CHILD.id, enabled: true }),
+    ]));
   });
 
   it("confirms parent deletion and removes descendants from the save payload", async () => {

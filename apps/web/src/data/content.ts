@@ -2,8 +2,9 @@ import type {
   Article, BlogCategory, AboutSection, ComicWorld, StaticPage, FeaturedOnLink,
 } from "@/lib/api";
 import {
-  apiGetBlogs, apiGetBlog, apiGetArticle, apiGetComics, apiGetAbout, apiGetPage, apiGetContent,
+  apiGetBlogs, apiGetBlog, apiGetArticle, apiGetComics, apiGetAbout, apiGetPage,
 } from "@/lib/api";
+import { getSiteContent } from "@/data/site-content";
 
 export type { Article, BlogCategory, AboutSection, ComicWorld, StaticPage, FeaturedOnLink };
 
@@ -18,7 +19,7 @@ export const getAboutSections = () => apiGetAbout();
 export const getStaticPage = (slug: string) => apiGetPage(slug);
 
 export async function getHomeVideo(): Promise<{ src: string; youtubeHref: string } | null> {
-  const bundle = await apiGetContent();
+  const bundle = await getSiteContent();
   return bundle.homeVideo[0]?.data ?? null;
 }
 
@@ -28,17 +29,17 @@ function pickHeroArtwork(data: unknown): string | null {
 }
 
 export async function getFaqArtwork(): Promise<string | null> {
-  const bundle = await apiGetContent();
+  const bundle = await getSiteContent();
   return pickHeroArtwork(bundle.heroArtwork.find((b) => b.key === "hero.artwork.faq")?.data);
 }
 
 export async function getFooterArtwork(): Promise<string | null> {
-  const bundle = await apiGetContent();
+  const bundle = await getSiteContent();
   return pickHeroArtwork(bundle.heroArtwork.find((b) => b.key === "hero.artwork.footer")?.data);
 }
 
 export async function getFeaturedOnLinks(): Promise<FeaturedOnLink[]> {
-  const bundle = await apiGetContent();
+  const bundle = await getSiteContent();
   return bundle.featuredOn.map((b) => {
     const d = b.data as { label: string; href: string; image: string; alt: string };
     return { label: d.label, href: d.href, image: d.image, alt: d.alt };

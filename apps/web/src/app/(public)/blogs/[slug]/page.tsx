@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { BlogCard } from "@/components/content/blog-card";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { getBlogCategory } from "@/data/content";
+import { requireNavigationRoute } from "@/lib/require-navigation-route";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -14,6 +15,7 @@ const blogSlugAliases: Record<string, string> = {
 
 export default async function BlogCategoryPage({ params }: PageProps) {
   const { slug } = await params;
+  await requireNavigationRoute(`/blogs/${slug}`);
   const blogSlug = blogSlugAliases[slug] ?? slug;
 
   let category;

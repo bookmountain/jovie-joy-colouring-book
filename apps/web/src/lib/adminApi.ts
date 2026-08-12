@@ -365,6 +365,7 @@ export type AdminNavigationItem = {
   label: string;
   href: string;
   sortIndex: number;
+  enabled: boolean;
 };
 
 export type AdminNavigationResponse = {

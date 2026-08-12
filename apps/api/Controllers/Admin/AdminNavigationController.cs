@@ -50,6 +50,7 @@ public class AdminNavigationController(
         {
             var existing = await db.NavLinks.ToListAsync(ct);
             var previousHrefs = existing.Select(item => item.Href).ToList();
+            var previousEnabled = existing.ToDictionary(item => item.Id, item => item.Enabled);
             var currentItems = existing
                 .Select(ToDto)
                 .OrderBy(item => item.ParentId)
@@ -80,6 +81,7 @@ public class AdminNavigationController(
                 Label = item.Label.Trim(),
                 Href = item.Href.Trim(),
                 SortIndex = item.SortIndex,
+                Enabled = item.Enabled ?? previousEnabled.GetValueOrDefault(item.Id, true),
             }).ToList();
             var replacementsById = replacements.ToDictionary(item => item.Id);
             foreach (var requestItem in request.Items.Where(item => item.ParentId.HasValue))
@@ -140,11 +142,12 @@ public class AdminNavigationController(
                 item.ParentId,
                 item.Label,
                 item.Href,
-                item.SortIndex))
+                item.SortIndex,
+                item.Enabled))
             .ToListAsync(ct);
 
     private static AdminNavigationItemDto ToDto(NavLink item) =>
-        new(item.Id, item.ParentId, item.Label, item.Href, item.SortIndex);
+        new(item.Id, item.ParentId, item.Label, item.Href, item.SortIndex, item.Enabled);
 
     private static bool IsSerializationFailure(Exception exception)
     {
@@ -163,6 +166,7 @@ public class AdminNavigationController(
             canonical.Append(item.Id.ToString("N")).Append('|')
                 .Append(item.ParentId?.ToString("N") ?? "root").Append('|')
                 .Append(item.SortIndex).Append('|')
+                .Append(item.Enabled ?? true).Append('|')
                 .Append(item.Label.Length).Append(':').Append(item.Label).Append('|')
                 .Append(item.Href.Length).Append(':').Append(item.Href).Append('\n');
         }

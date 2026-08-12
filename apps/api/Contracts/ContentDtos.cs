@@ -31,10 +31,10 @@ public record SiteContentBundleDto(
     List<ContentBlockDto> HomeProductRows,
     List<ContentBlockDto> HomeSectionVisibility);
 
-public record NavLinkDto(Guid Id, string Label, string Href, List<NavLinkDto> Children)
+public record NavLinkDto(Guid Id, string Label, string Href, bool Enabled, List<NavLinkDto> Children)
 {
     public static NavLinkDto From(NavLink n) => new(
-        n.Id, n.Label, n.Href,
+        n.Id, n.Label, n.Href, n.Enabled,
         n.Children.OrderBy(c => c.SortIndex).Select(From).ToList());
 }
 

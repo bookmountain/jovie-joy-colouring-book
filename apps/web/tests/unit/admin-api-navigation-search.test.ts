@@ -12,7 +12,7 @@ beforeEach(() => {
 describe("navigation and quick-search admin API client", () => {
   it("replaces the full navigation tree", async () => {
     const api = await import("@/lib/adminApi");
-    const items = [{ id: "id", parentId: null, label: "Home", href: "/", sortIndex: 0 }];
+    const items = [{ id: "id", parentId: null, label: "Home", href: "/", sortIndex: 0, enabled: true }];
     await api.adminReplaceNavigation(items, "revision-1");
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toContain("/api/admin/navigation");
