@@ -38,6 +38,10 @@ jobs:
       ConnectionStrings__Default: "Host=localhost;Port=5432;Database=jovie_joy;Username=postgres;Password=postgres"
       Jwt__Secret: "ci-secret-ci-secret-ci-secret-1234"
       Stripe__SecretKey: "sk_test_dummy"
+      Admin__Email: "ci-admin@joviejoy.test"
+      Admin__Password: "E2eOnly!9Vq2Lm7Rx5"
+      E2E_ADMIN_EMAIL: "ci-admin@joviejoy.test"
+      E2E_ADMIN_PASSWORD: "E2eOnly!9Vq2Lm7Rx5"
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: "http://localhost:8080"
       # Web -> API base URL (matches the running API above).
