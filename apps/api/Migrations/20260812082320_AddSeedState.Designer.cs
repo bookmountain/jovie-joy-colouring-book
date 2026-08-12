@@ -4,6 +4,7 @@ using System.Text.Json;
 using JovieJoy.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace JovieJoy.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260812082320_AddSeedState")]
+    partial class AddSeedState
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -559,9 +562,6 @@ namespace JovieJoy.Api.Migrations
                     b.Property<int>("DiscountCents")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime?>("DownloadEmailSentAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(320)
@@ -600,9 +600,6 @@ namespace JovieJoy.Api.Migrations
 
                     b.HasIndex("Email");
 
-                    b.HasIndex("StripePaymentIntentId")
-                        .IsUnique();
-
                     b.HasIndex("StripeSessionId")
                         .IsUnique();
 
@@ -616,10 +613,6 @@ namespace JovieJoy.Api.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
-
-                    b.Property<string>("DigitalFilePathAtPurchase")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
 
                     b.Property<Guid>("OrderId")
                         .HasColumnType("uuid");
@@ -743,71 +736,6 @@ namespace JovieJoy.Api.Migrations
                     b.HasIndex("CollectionId");
 
                     b.ToTable("product_collections", (string)null);
-                });
-
-            modelBuilder.Entity("JovieJoy.Api.Data.Entities.ProductDownloadGrant", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("DownloadCount")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<DateTime?>("FirstDownloadedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("LastDownloadedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("OrderId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("OrderItemId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("ProductId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ProductSlug")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("TitleAtPurchase")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
-
-                    b.Property<string>("Token")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrderItemId");
-
-                    b.HasIndex("ProductId");
-
-                    b.HasIndex("Token")
-                        .IsUnique();
-
-                    b.HasIndex("OrderId", "OrderItemId")
-                        .IsUnique();
-
-                    b.ToTable("product_download_grants", (string)null);
                 });
 
             modelBuilder.Entity("JovieJoy.Api.Data.Entities.SeedState", b =>
@@ -1034,32 +962,6 @@ namespace JovieJoy.Api.Migrations
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("JovieJoy.Api.Data.Entities.ProductDownloadGrant", b =>
-                {
-                    b.HasOne("JovieJoy.Api.Data.Entities.Order", "Order")
-                        .WithMany("DownloadGrants")
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("JovieJoy.Api.Data.Entities.OrderItem", "OrderItem")
-                        .WithMany("DownloadGrants")
-                        .HasForeignKey("OrderItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("JovieJoy.Api.Data.Entities.Product", "Product")
-                        .WithMany("DownloadGrants")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Order");
-
-                    b.Navigation("OrderItem");
-
-                    b.Navigation("Product");
-                });
-
             modelBuilder.Entity("JovieJoy.Api.Data.Entities.Wishlist", b =>
                 {
                     b.HasOne("JovieJoy.Api.Data.Entities.User", "User")
@@ -1098,20 +1000,11 @@ namespace JovieJoy.Api.Migrations
 
             modelBuilder.Entity("JovieJoy.Api.Data.Entities.Order", b =>
                 {
-                    b.Navigation("DownloadGrants");
-
                     b.Navigation("Items");
-                });
-
-            modelBuilder.Entity("JovieJoy.Api.Data.Entities.OrderItem", b =>
-                {
-                    b.Navigation("DownloadGrants");
                 });
 
             modelBuilder.Entity("JovieJoy.Api.Data.Entities.Product", b =>
                 {
-                    b.Navigation("DownloadGrants");
-
                     b.Navigation("OrderItems");
 
                     b.Navigation("ProductCollections");

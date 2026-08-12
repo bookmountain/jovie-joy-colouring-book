@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { adminListOrders, type AdminOrder } from "@/lib/adminApi";
 import { formatCents } from "@/lib/format";
 import { AdminButton, AdminSelect } from "@/components/admin/ui";
@@ -8,16 +9,37 @@ import { AdminButton, AdminSelect } from "@/components/admin/ui";
 const STATUSES = ["", "pending", "paid", "failed", "refunded"];
 
 export function OrdersTable() {
+  const searchParams = useSearchParams();
+  const initialSearch = searchParams?.get("q") ?? "";
+  const initialOrder = searchParams?.get("order") ?? null;
   const [status, setStatus] = useState("");
+  const [search, setSearch] = useState(initialSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
   const [page, setPage] = useState(1);
   const [data, setData] = useState<{ items: AdminOrder[]; total: number; pageSize: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(initialOrder);
 
   useEffect(() => {
+    setSearch(initialSearch);
+    setDebouncedSearch(initialSearch);
+    setExpanded(initialOrder);
+    setPage(1);
+  }, [initialOrder, initialSearch]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 220);
+    return () => window.clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    let cancelled = false;
     setError(null);
-    adminListOrders(status || undefined, page, 20).then(setData).catch((e: Error) => setError(e.message));
-  }, [status, page]);
+    adminListOrders(status || undefined, page, 20, debouncedSearch || undefined)
+      .then((response) => { if (!cancelled) setData(response); })
+      .catch((e: Error) => { if (!cancelled) setError(e.message); });
+    return () => { cancelled = true; };
+  }, [status, page, debouncedSearch]);
 
   if (error) return <p className="text-cocoa-coral">{error}</p>;
   if (!data) return <p>Loading…</p>;
@@ -27,8 +49,18 @@ export function OrdersTable() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <label className="text-sm font-semibold">Status</label>
+        <label className="text-sm font-semibold" htmlFor="orders-search">Search</label>
+        <input
+          className="admin-input"
+          id="orders-search"
+          onChange={(event) => { setPage(1); setSearch(event.target.value); }}
+          placeholder="Email, name, or full order id…"
+          style={{ maxWidth: 280 }}
+          value={search}
+        />
+        <label className="text-sm font-semibold" htmlFor="orders-status">Status</label>
         <AdminSelect
+          id="orders-status"
           onChange={(e) => {
             setPage(1);
             setStatus(e.target.value);

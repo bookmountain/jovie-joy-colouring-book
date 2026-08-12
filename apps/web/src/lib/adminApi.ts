@@ -97,15 +97,28 @@ export const adminListProducts = (query: AdminProductListQuery = {}) => {
   return adminFetch<AdminProductListResponse>(`/api/admin/products?${p}`);
 };
 
+export async function adminListAllProducts(): Promise<AdminProductListItem[]> {
+  const pageSize = 100;
+  const first = await adminListProducts({ page: 1, pageSize, sort: "title_asc" });
+  const items = [...first.items];
+  const totalPages = Math.ceil(first.total / Math.max(1, first.pageSize));
+  for (let page = 2; page <= totalPages; page++) {
+    const response = await adminListProducts({ page, pageSize, sort: "title_asc" });
+    items.push(...response.items);
+  }
+  return items;
+}
+
 export type AdminProductBulkAction =
-  | "publish" | "unpublish" | "delete" | "add-to-collection" | "remove-from-collection";
+  | "publish" | "unpublish" | "mark-available" | "mark-unavailable"
+  | "delete" | "add-to-collection" | "remove-from-collection";
 
 export const adminBulkProducts = (body: {
   slugs: string[];
   action: AdminProductBulkAction;
   payload?: { collectionSlug?: string };
 }) =>
-  adminFetch<{ updated: number }>("/api/admin/products/bulk", {
+  adminFetch<{ updated: number; missing: string[] }>("/api/admin/products/bulk", {
     method: "POST",
     body: JSON.stringify(body),
   });
@@ -116,6 +129,46 @@ export const adminDuplicateProduct = (slug: string) =>
 export const adminListProductTags = () =>
   adminFetch<string[]>("/api/admin/products/tags");
 
+export type AdminProductCsvImportMode = "create" | "upsert";
+export type AdminProductCsvImportRow = {
+  rowNumber: number;
+  slug: string;
+  title: string;
+  action: "create" | "update" | "invalid";
+  errors: string[];
+};
+export type AdminProductCsvImportResponse = {
+  valid: boolean;
+  dryRun: boolean;
+  mode: AdminProductCsvImportMode;
+  totalRows: number;
+  createCount: number;
+  updateCount: number;
+  importedCount: number;
+  errors: string[];
+  rows: AdminProductCsvImportRow[];
+};
+
+export const adminImportProductsCsv = (
+  file: File,
+  mode: AdminProductCsvImportMode,
+  dryRun: boolean,
+) => {
+  const form = new FormData();
+  form.append("file", file);
+  const query = new URLSearchParams({ mode, dryRun: String(dryRun) });
+  const path = `/api/admin/products/import?${query}`;
+  const headers = new Headers({ Authorization: `Bearer ${requireToken()}` });
+  return fetch(`${API_URL}${path}`, {
+    method: "POST", body: form, headers, cache: "no-store",
+  }).then(async (response) => {
+    if (response.ok || response.status === 422)
+      return (await response.json()) as AdminProductCsvImportResponse;
+    const text = await response.text().catch(() => "");
+    throw new Error(extractAdminError(text, response.status, "POST", path));
+  });
+};
+
 export const adminGetProduct = (slug: string) => adminFetch<Product>(`/api/admin/products/${slug}`);
 export const adminCreateProduct = (body: AdminProductWriteBody) =>
   adminFetch<Product>("/api/admin/products", { method: "POST", body: JSON.stringify(body) });
@@ -123,9 +176,19 @@ export const adminUpdateProduct = (slug: string, body: AdminProductWriteBody) =>
   adminFetch<Product>(`/api/admin/products/${slug}`, { method: "PUT", body: JSON.stringify(body) });
 export const adminDeleteProduct = (slug: string) =>
   adminFetch<void>(`/api/admin/products/${slug}`, { method: "DELETE" });
-export const adminUploadProductImage = (slug: string, file: File) => {
+export type AdminProductImageIntent = "gallery" | "asset";
+export const adminUploadProductImage = (
+  slug: string,
+  file: File,
+  intent: AdminProductImageIntent = "gallery",
+) => {
   const fd = new FormData(); fd.append("file", file);
-  return adminFetch<{ url: string }>(`/api/admin/products/${slug}/images`, { method: "POST", body: fd });
+  const query = intent === "gallery" ? "" : `?intent=${encodeURIComponent(intent)}`;
+  return adminFetch<{ url: string }>(`/api/admin/products/${slug}/images${query}`, { method: "POST", body: fd });
+};
+export const adminDeleteStagedProductAsset = (url: string) => {
+  const query = new URLSearchParams({ url });
+  return adminFetch<void>(`/api/admin/products/assets?${query}`, { method: "DELETE" });
 };
 export const adminUploadProductPdf = (slug: string, file: File) => {
   const fd = new FormData(); fd.append("file", file);
@@ -172,9 +235,10 @@ export type AdminOrder = {
   totalCents: number; createdAt: string; paidAt: string | null;
   items: { productSlug: string; title: string; qty: number; unitPriceCents: number }[];
 };
-export const adminListOrders = (status?: string, page = 1, pageSize = 20) => {
+export const adminListOrders = (status?: string, page = 1, pageSize = 20, search?: string) => {
   const q = new URLSearchParams();
   if (status) q.set("status", status);
+  if (search) q.set("q", search);
   q.set("page", String(page)); q.set("pageSize", String(pageSize));
   return adminFetch<{ items: AdminOrder[]; total: number; page: number; pageSize: number }>(
     `/api/admin/analytics/orders?${q}`,
@@ -187,6 +251,73 @@ export const adminAnalyticsSummary = () =>
     last30Days: { date: string; revenueCents: number; orders: number }[];
     topProducts: { productSlug: string; title: string; unitsSold: number; revenueCents: number }[];
   }>("/api/admin/analytics/summary");
+
+export type AdminSearchResult = {
+  type: "product" | "order" | "customer" | "cms";
+  id: string;
+  title: string;
+  subtitle: string;
+  href: string;
+};
+
+export const adminQuickSearch = (q: string, limit = 12) => {
+  const params = new URLSearchParams({ q, limit: String(limit) });
+  return adminFetch<{ items: AdminSearchResult[] }>(`/api/admin/search?${params}`);
+};
+
+// Customers + signup audiences
+export type AdminPagedResponse<T> = {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export type AdminCustomerListItem = {
+  email: string;
+  name: string | null;
+  registered: boolean;
+  orderCount: number;
+  lifetimeSpendCents: number;
+  lastOrderAt: string | null;
+  joinedAt: string | null;
+};
+
+export type AdminNotifyMeListItem = {
+  id: string;
+  email: string;
+  productSlug: string;
+  productTitle: string | null;
+  createdAt: string;
+};
+
+export type AdminSubscriberListItem = {
+  email: string;
+  createdAt: string;
+};
+
+function adminAudienceQuery(q: string | undefined, page: number, pageSize: number): string {
+  const params = new URLSearchParams();
+  if (q) params.set("q", q);
+  params.set("page", String(page));
+  params.set("pageSize", String(pageSize));
+  return params.toString();
+}
+
+export const adminListCustomers = (q?: string, page = 1, pageSize = 25) =>
+  adminFetch<AdminPagedResponse<AdminCustomerListItem>>(
+    `/api/admin/customers?${adminAudienceQuery(q, page, pageSize)}`,
+  );
+
+export const adminListNotifyMe = (q?: string, page = 1, pageSize = 25) =>
+  adminFetch<AdminPagedResponse<AdminNotifyMeListItem>>(
+    `/api/admin/notify-me?${adminAudienceQuery(q, page, pageSize)}`,
+  );
+
+export const adminListSubscribers = (q?: string, page = 1, pageSize = 25) =>
+  adminFetch<AdminPagedResponse<AdminSubscriberListItem>>(
+    `/api/admin/subscribers?${adminAudienceQuery(q, page, pageSize)}`,
+  );
 
 // Write request shapes (match Phase 1 AdminDtos)
 export type AdminProductWriteBody = {
@@ -207,6 +338,29 @@ export type AdminCollectionWriteBody = {
 };
 
 // ----------------- Phase 4a: chrome admin -----------------
+
+// Storefront navigation
+export type AdminNavigationItem = {
+  id: string;
+  parentId: string | null;
+  label: string;
+  href: string;
+  sortIndex: number;
+};
+
+export type AdminNavigationResponse = {
+  items: AdminNavigationItem[];
+  revision: string;
+};
+
+export const adminListNavigation = () =>
+  adminFetch<AdminNavigationResponse>("/api/admin/navigation");
+
+export const adminReplaceNavigation = (items: AdminNavigationItem[], expectedRevision: string) =>
+  adminFetch<AdminNavigationResponse>("/api/admin/navigation", {
+    method: "PUT",
+    body: JSON.stringify({ items, expectedRevision }),
+  });
 
 // Static pages
 export type AdminStaticPageWriteBody = {

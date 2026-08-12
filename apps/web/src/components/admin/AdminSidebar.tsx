@@ -24,8 +24,12 @@ const NAV: Array<{
     { href: "/admin/about", label: "About page", icon: "💁" },
     { href: "/admin/freebies", label: "Freebies page", icon: "🎁" },
     { href: "/admin/pages/header", label: "Header", icon: "🧭" },
+    { href: "/admin/navigation", label: "Navigation", icon: "🧭" },
     { href: "/admin/pages/footer", label: "Footer", icon: "🦶" },
     { href: "/admin/pages/announcement", label: "Announcement", icon: "📣" },
+    { href: "/admin/pages/newsletter", label: "Newsletter", icon: "💌" },
+    { href: "/admin/static-pages", label: "Static pages", icon: "📄" },
+    { href: "/admin/content", label: "Advanced content", icon: "🧩" },
   ]},
   { group: "Editorial", items: [
     { href: "/admin/blog", label: "Blog", icon: "📝" },

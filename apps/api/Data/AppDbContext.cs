@@ -12,6 +12,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> opts) : DbContext(opts)
     public DbSet<ProductCollection> ProductCollections => Set<ProductCollection>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<ProductDownloadGrant> ProductDownloadGrants => Set<ProductDownloadGrant>();
     public DbSet<ContentBlock> ContentBlocks => Set<ContentBlock>();
     public DbSet<Wishlist> Wishlists => Set<Wishlist>();
     public DbSet<NotifyMeRequest> NotifyMeRequests => Set<NotifyMeRequest>();
@@ -31,6 +32,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> opts) : DbContext(opts)
     public DbSet<Faq> Faqs => Set<Faq>();
     public DbSet<Freebie> Freebies => Set<Freebie>();
     public DbSet<FreebieRequest> FreebieRequests => Set<FreebieRequest>();
+    public DbSet<SeedState> SeedStates => Set<SeedState>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -113,6 +115,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> opts) : DbContext(opts)
             e.Property(x => x.StripeSessionId).HasMaxLength(255);
             e.HasIndex(x => x.StripeSessionId).IsUnique();
             e.Property(x => x.StripePaymentIntentId).HasMaxLength(255);
+            e.HasIndex(x => x.StripePaymentIntentId).IsUnique();
             e.HasIndex(x => x.Email);
             e.Property(x => x.Status).HasConversion<int>();
             e.HasOne(x => x.User).WithMany(u => u.Orders).HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.SetNull);
@@ -124,8 +127,27 @@ public class AppDbContext(DbContextOptions<AppDbContext> opts) : DbContext(opts)
             e.HasKey(x => x.Id);
             e.Property(x => x.ProductSlug).HasMaxLength(200).IsRequired();
             e.Property(x => x.TitleAtPurchase).HasMaxLength(300);
+            e.Property(x => x.DigitalFilePathAtPurchase).HasMaxLength(500);
             e.HasOne(x => x.Order).WithMany(o => o.Items).HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(x => x.Product).WithMany(p => p.OrderItems).HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        b.Entity<ProductDownloadGrant>(e =>
+        {
+            e.ToTable("product_download_grants");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Token).HasMaxLength(64).IsRequired();
+            e.Property(x => x.FilePath).HasMaxLength(500).IsRequired();
+            e.Property(x => x.ProductSlug).HasMaxLength(200).IsRequired();
+            e.Property(x => x.TitleAtPurchase).HasMaxLength(300).IsRequired();
+            e.HasIndex(x => x.Token).IsUnique();
+            e.HasIndex(x => new { x.OrderId, x.OrderItemId }).IsUnique();
+            e.HasOne(x => x.Order).WithMany(o => o.DownloadGrants)
+                .HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.OrderItem).WithMany(i => i.DownloadGrants)
+                .HasForeignKey(x => x.OrderItemId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Product).WithMany(p => p.DownloadGrants)
+                .HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.SetNull);
         });
 
         b.Entity<ContentBlock>(e =>
@@ -271,6 +293,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> opts) : DbContext(opts)
             e.HasIndex(x => x.FreebieId);
             e.Property(x => x.Ip).HasMaxLength(64);
             e.Property(x => x.UserAgent).HasMaxLength(500);
+        });
+
+        b.Entity<SeedState>(e =>
+        {
+            e.ToTable("seed_states");
+            e.HasKey(x => x.Key);
+            e.Property(x => x.Key).HasMaxLength(80);
+            e.Property(x => x.Version).IsRequired();
+            e.Property(x => x.CompletedAtUtc).IsRequired();
         });
     }
 }

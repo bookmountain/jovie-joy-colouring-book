@@ -11,8 +11,11 @@ public class OrderItem
     public string TitleAtPurchase { get; set; } = null!;
     public int UnitPriceCents { get; set; }
     public int Quantity { get; set; }
+    public string? DigitalFilePathAtPurchase { get; set; }
 
     // Optional live-FK back to product (nullable so deletes don't cascade)
     public Guid? ProductId { get; set; }
     public Product? Product { get; set; }
+
+    public ICollection<ProductDownloadGrant> DownloadGrants { get; set; } = new List<ProductDownloadGrant>();
 }

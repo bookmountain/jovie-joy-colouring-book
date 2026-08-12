@@ -26,6 +26,7 @@ public class Product
 
     public ICollection<ProductCollection> ProductCollections { get; set; } = new List<ProductCollection>();
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+    public ICollection<ProductDownloadGrant> DownloadGrants { get; set; } = new List<ProductDownloadGrant>();
 }
 
 public record ProductOption(string Name, List<string> Values);
