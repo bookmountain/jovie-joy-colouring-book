@@ -72,14 +72,34 @@ Google__RedirectUri=http://192.168.4.106:5080/auth/google/callback
 
 WebAppUrl=http://192.168.4.106:3080
 
+# If a reverse proxy connects directly to the API, set its actual peer IP so
+# X-Forwarded-For can be trusted for per-client admin login limits. Leave unset
+# for direct exposure; do not put the public visitor/Cloudflare IP here.
+# ForwardedHeaders__KnownProxies__0=172.18.0.1
+
 Stripe__SecretKey=sk_test_REPLACE_ME
 Stripe__WebhookSecret=whsec_REPLACE_ME
 Stripe__SuccessUrl=http://192.168.4.106:3080/checkout/success?session_id={CHECKOUT_SESSION_ID}
 Stripe__CancelUrl=http://192.168.4.106:3080/checkout
 
-Admin__Email=admin@joviejoy.com
-Admin__Password=changeme123
+# Required on first boot only. Generate a unique value locally with:
+# openssl rand -base64 32
+Admin__Email=you@yourdomain.com
+Admin__Password=
+
+# Required public API origin for protected download links in email.
+PUBLIC_API_URL=https://api.yourdomain.com
+Freebies__BaseUrl=https://api.yourdomain.com
+
+# Required in production for freebie and paid-product delivery.
+Resend__ApiKey=re_REPLACE_ME
+Resend__FromAddress=downloads@yourdomain.com
+Resend__FromName=Jovie Joy
 ```
+
+The API fails closed when no administrator exists and these bootstrap values are
+missing or unsafe. The password must contain at least 16 characters and must not
+be a common/default password or placeholder. Never commit the populated `.env`.
 
 Lock it down:
 
@@ -128,8 +148,10 @@ Stripe Dashboard:
      - Put a reverse proxy with a public DNS record in front of the VM.
      - Use a tunnel (Cloudflare Tunnel, ngrok) to expose `/webhooks/stripe` publicly.
      - For local development, use `stripe listen --forward-to localhost:8080/webhooks/stripe` from the Stripe CLI.
-   - Events to subscribe to: `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`.
+   - Events to subscribe to: `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `charge.refunded`, `charge.dispute.created`.
 3. Copy the signing secret → `Stripe__WebhookSecret`.
+4. Set `PUBLIC_API_URL` to the public HTTPS API origin. It is used in protected freebie and paid-product download emails; never leave it as localhost in production.
+5. Set `Resend__ApiKey`. Production delivery fails closed when this is missing so a paid order cannot be falsely marked as emailed.
 
 ## 8. Common ops
 

@@ -68,14 +68,16 @@ comics, gallery, about, FAQs, navigation, footer groups, announcement bar
 
 After Phase 3, the admin panel is the Zoe&Book FE itself at `/admin`. Sign in at `/admin/login` with your admin credentials.
 
-### Default credentials
+### Admin bootstrap
 
-| Field    | Value                |
-| -------- | -------------------- |
-| Email    | `admin@joviejoy.com` |
-| Password | `change_me`          |
+A fresh database has no default admin credentials. Before the first API startup,
+set `Admin__Email` and `Admin__Password` in `apps/api/.env`; generate a unique
+password with `openssl rand -base64 32`. The API refuses to start if no admin
+exists and either value is missing, the email is invalid, or the password is
+shorter than 16 characters or resembles a common/default password.
 
-Override defaults via `Admin__Email` / `Admin__Password` in `apps/api/.env`. The admin user is seeded on first API startup only — if it already exists, you must update the hash in the database directly, or set the vars before the first run.
+After an admin exists, bootstrap values are optional and no account is recreated
+from defaults. Treat these values as secrets and never commit them.
 
 ### Admin sections
 
@@ -150,8 +152,10 @@ Stripe__WebhookSecret=whsec_...
 Stripe__SuccessUrl=https://yourdomain.com/success
 Stripe__CancelUrl=https://yourdomain.com/cart
 WebAppUrl=https://yourdomain.com
-Admin__Email=admin@joviejoy.com
-Admin__Password=changeme123
+# Required on first boot only; choose your own email and generated secret.
+Admin__Email=you@yourdomain.com
+# Set this to the output of: openssl rand -base64 32
+Admin__Password=
 ```
 
 ## License

@@ -11,7 +11,7 @@
 **Branch:** `overhaul/zoe-book`. Builds on Phase 1 + Phase 2 commits. After Phase 3 lands, branch is ready to merge to `main`.
 
 **Prereqs:**
-- Phase 1 BE running on `http://localhost:8080` with seeded admin user (`admin@joviejoy.com` / `changeme123` or `Admin__Email/Admin__Password` overrides).
+- Phase 1 BE running on `http://localhost:8080` with an admin bootstrapped from explicit `Admin__Email` / `Admin__Password` environment values.
 - Phase 2 FE in `apps/web/` with `src/lib/api.ts`, `src/lib/auth.ts`, `src/state/site-store.tsx` already in place.
 
 ---
@@ -2111,8 +2111,8 @@ git commit -m "test(admin): admin-auth provider + ImageUpload widget"
 ```typescript
 import { expect, test } from "@playwright/test";
 
-const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? "admin@joviejoy.com";
-const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? "changeme123";
+const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? "";
+const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? "";
 
 test.describe("admin flow", () => {
   test("login → list products → open content list", async ({ page }) => {
@@ -2170,13 +2170,9 @@ git commit -m "test(admin): e2e admin login + navigation smoke"
 
 After Phase 3, the admin panel lives at `/admin` inside the Zoe&Book FE.
 
-Sign in at `/admin/login`. Defaults (override via `Admin__Email` /
-`Admin__Password` env vars on the API):
-
-| Field    | Value                |
-| -------- | -------------------- |
-| Email    | `admin@joviejoy.com` |
-| Password | `changeme123`        |
+Sign in at `/admin/login` with the unique credentials supplied through
+`Admin__Email` / `Admin__Password` when the administrator was bootstrapped.
+There are no shared default credentials.
 
 #### Admin sections
 

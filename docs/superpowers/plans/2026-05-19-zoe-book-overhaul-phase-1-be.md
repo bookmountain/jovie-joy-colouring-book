@@ -2514,10 +2514,12 @@ public static class DbSeeder
 
     private static async Task SeedAdminAsync(AppDbContext db, IConfiguration config)
     {
-        var adminEmail = config["Admin:Email"] ?? "admin@joviejoy.com";
+        var adminEmail = config["Admin:Email"]
+            ?? throw new InvalidOperationException("Admin__Email is required on first boot");
         if (await db.Users.AnyAsync(u => u.Email == adminEmail && u.IsAdmin)) return;
 
-        var adminPassword = config["Admin:Password"] ?? "changeme123";
+        var adminPassword = config["Admin:Password"]
+            ?? throw new InvalidOperationException("Admin__Password is required on first boot");
         db.Users.Add(new User
         {
             Email = adminEmail,
@@ -4357,4 +4359,3 @@ git commit -m "docs: update README + HANDOFF for Phase 1 BE rewrite"
 - [ ] README + HANDOFF updated.
 
 Once all boxes are ticked, Phase 1 is shippable to its branch. **Do not merge to `main` until Phase 2 + Phase 3 also land.**
-

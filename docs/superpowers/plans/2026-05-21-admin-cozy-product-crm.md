@@ -4471,7 +4471,7 @@ import { test, expect } from "@playwright/test";
 test.describe("admin product CRM", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/admin/login");
-    await page.getByLabel("Email", { exact: true }).fill("admin@joviejoy.com");
+    await page.getByLabel("Email", { exact: true }).fill("admin@example.com");
     await page.getByLabel("Password", { exact: true }).fill("change_me");
     await page.getByRole("button", { name: /sign in/i }).click();
     await expect(page).toHaveURL(/\/admin/);

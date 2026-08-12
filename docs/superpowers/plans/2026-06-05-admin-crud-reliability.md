@@ -14,7 +14,7 @@
 
 - **Root cause of "edits don't reflect":** `apps/web/src/lib/api.ts` `get<T>()` defaults content loaders to `next: { revalidate: 60 }` (ISR). Catalog loaders opt into `cache: "no-store"`; content loaders (blogs, about, comics, pages, site content) do not — so storefront serves stale content for up to 60s after an admin save, and there is no on-demand revalidation. **Only manifests in a production build** (`next build && next start`); Next dev mode renders dynamically.
 - The save handlers and API controllers store text verbatim — no truncation in the local data path. The "How to Colo"/"lif" seen on production is stale production data, not a reproducible local bug.
-- **Local stack runs:** Postgres in Docker on host `5433`. `apps/api/.env.local` was pointing at `5432` (fixed to `5433` in Phase 0). API auto-runs `db.Database.Migrate()` + `DbSeeder.SeedAsync` on startup. Admin login: `admin@joviejoy.com` / `changeme123` (from `.env.local`).
+- **Local stack runs:** Postgres in Docker on host `5433`. `apps/api/.env.local` was pointing at `5432` (fixed to `5433` in Phase 0). API auto-runs `db.Database.Migrate()` + `DbSeeder.SeedAsync` on startup. Admin credentials must come from the developer's uncommitted environment; no shared credentials are published here.
 - `AdminConfirmDialog` + `AdminModal` already exist in `apps/web/src/components/admin/ui/` (built for `/admin/freebies`). Reuse them; do not build new dialogs.
 - No toast library installed yet.
 - Backend test harness: `apps/api.Tests/ApiFactory.cs` = `WebApplicationFactory<Program>` with isolated in-memory EF DB + `CreateAdminClientAsync()` (signs a test JWT). xUnit `IClassFixture<ApiFactory>`. Follow `AdminProductsListTests.cs`.
@@ -299,8 +299,8 @@ Create `apps/web/tests/e2e/admin-blog-reflects.spec.ts`:
 import { test, expect } from "@playwright/test";
 
 // Requires API on :8080 and the web server (playwright webServer on :3100).
-const ADMIN_EMAIL = "admin@joviejoy.com";
-const ADMIN_PASSWORD = "changeme123";
+const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? "";
+const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD ?? "";
 
 async function login(page) {
   await page.goto("/admin/login");

@@ -2056,7 +2056,7 @@ git commit -m "test(admin): vitest unit tests for 5 new typed editors"
 import { expect, test } from "@playwright/test";
 
 const TOKEN = "fake-admin-token";
-const USER = { id: "u1", email: "admin@joviejoy.com", name: "Admin", avatarUrl: null, isAdmin: true };
+const USER = { id: "u1", email: "admin@example.com", name: "Admin", avatarUrl: null, isAdmin: true };
 
 test.describe("admin pages flow (Phase 4a)", () => {
   test("login → open Home editor → see Hi Friend section → edit + save", async ({ page }) => {
@@ -2072,7 +2072,7 @@ test.describe("admin pages flow (Phase 4a)", () => {
     }
 
     await page.goto("/admin/login");
-    await page.getByLabel("Email").fill("admin@joviejoy.com");
+    await page.getByLabel("Email").fill("admin@example.com");
     await page.getByLabel("Password").fill("anything");
     await page.locator('button[type="submit"]', { hasText: /sign in/i }).click();
     await page.waitForURL(/\/admin(\/|$)/, { timeout: 60_000 });
