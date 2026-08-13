@@ -10,9 +10,9 @@ import { LoginModal } from "@/components/overlays/login-modal";
 import { SearchDrawer } from "@/components/overlays/search-drawer";
 import { TermsModal } from "@/components/overlays/terms-modal";
 
-// Storefront content is BE-driven; render on each request (skip build-time
-// prerender that would require the API to be up during `next build`).
-export const dynamic = "force-dynamic";
+// Cache anonymous storefront routes and refresh them in the background at most
+// once per minute. Authenticated/admin requests have their own no-store policy.
+export const revalidate = 60;
 
 export default async function PublicLayout({
   children,

@@ -9,7 +9,11 @@ import { HomeVideoSection } from "@/components/content/home-video-section";
 import { NewsletterForm } from "@/components/content/newsletter-form";
 import { getCozyMomentImages } from "@/data/gallery";
 import { getAllCollections } from "@/data/collections";
-import { resolveAssetUrl, type HeroSlide } from "@/lib/api";
+import {
+  resolveAssetUrl,
+  STOREFRONT_REVALIDATE_SECONDS,
+  type HeroSlide,
+} from "@/lib/api";
 import { getSiteContent } from "@/data/site-content";
 import { getProductsForCollection } from "@/lib/catalog";
 import { applyHomepageCollection, type HomeRowData } from "@/lib/home-rows";
@@ -28,7 +32,10 @@ async function resolveReachableAssetUrl(src: string | null | undefined): Promise
   if (!resolved.includes("/uploads/")) return resolved;
 
   try {
-    const response = await fetch(resolved, { method: "HEAD", cache: "no-store" });
+    const response = await fetch(resolved, {
+      method: "HEAD",
+      next: { revalidate: STOREFRONT_REVALIDATE_SECONDS },
+    });
     return response.ok ? resolved : null;
   } catch {
     return null;

@@ -1,7 +1,9 @@
 // Typed REST client for the Zoe&Book BE.
-// All admin-editable content loaders default to `cache: "no-store"` so admin
-// create/update/delete shows on the storefront immediately. A caller can pass an
-// explicit `next: { revalidate }` to opt back into caching for truly static content.
+// Public storefront reads use a short revalidation window so CMS changes appear
+// within a minute without making every visitor wait on the API. Authenticated
+// and mutation requests opt out of caching explicitly below.
+
+export const STOREFRONT_REVALIDATE_SECONDS = 60;
 
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
@@ -115,10 +117,9 @@ export type CheckoutResponse = { checkoutUrl: string; orderId: string };
 async function get<T>(path: string, init?: RequestInit & { next?: { revalidate?: number } }): Promise<T> {
   const url = `${API_URL}${path}`;
   const fetchInit: RequestInit & { next?: { revalidate?: number } } = { ...init };
-  // Admin edits must reflect on the storefront immediately, so content loaders
-  // default to no-store (same convention as the catalog loaders).
+  // An explicit cache policy always wins (for example auth uses no-store).
   if (!fetchInit.cache && !fetchInit.next) {
-    fetchInit.cache = "no-store";
+    fetchInit.next = { revalidate: STOREFRONT_REVALIDATE_SECONDS };
   }
   const res = await fetch(url, fetchInit);
   if (!res.ok) throw new ApiError(res.status, `${url} returned ${res.status}`);
@@ -149,21 +150,21 @@ export const apiGetProducts = (collection?: string, sort?: string) => {
   if (collection) q.set("collection", collection);
   if (sort) q.set("sort", sort);
   const suffix = q.toString() ? `?${q}` : "";
-  return get<Product[]>(`/api/products${suffix}`, { cache: "no-store" });
+  return get<Product[]>(`/api/products${suffix}`);
 };
-export const apiGetProduct = (slug: string) => get<Product>(`/api/products/${slug}`, { cache: "no-store" });
-export const apiGetCollections = () => get<Collection[]>("/api/collections", { cache: "no-store" });
-export const apiGetCollection = (slug: string) => get<CollectionWithProducts>(`/api/collections/${slug}`, { cache: "no-store" });
+export const apiGetProduct = (slug: string) => get<Product>(`/api/products/${slug}`);
+export const apiGetCollections = () => get<Collection[]>("/api/collections");
+export const apiGetCollection = (slug: string) => get<CollectionWithProducts>(`/api/collections/${slug}`);
 export const apiGetBlogs = () => get<BlogCategory[]>("/api/blogs");
 export const apiGetBlog = (slug: string) => get<{ category: BlogCategory; articles: Article[] }>(`/api/blogs/${slug}`);
 export const apiGetArticle = (blogSlug: string, articleSlug: string) =>
   get<Article>(`/api/blogs/${blogSlug}/articles/${articleSlug}`);
 export const apiGetComics = () => get<ComicWorld[]>("/api/comics");
 export const apiGetAbout = () => get<AboutSection[]>("/api/about");
-export const apiGetGallery = () => get<GalleryImage[]>("/api/gallery", { cache: "no-store" });
+export const apiGetGallery = () => get<GalleryImage[]>("/api/gallery");
 export const apiGetPage = (slug: string) => get<StaticPage>(`/api/pages/${slug}`);
 export const apiGetFaqs = () => get<Faq[]>("/api/faqs");
-export const apiGetContent = () => get<SiteContentBundle>("/api/content", { cache: "no-store" });
+export const apiGetContent = () => get<SiteContentBundle>("/api/content");
 
 // Commerce (anonymous OK)
 export const apiNewsletterSignup = (email: string) => post<{ ok: true }>("/api/newsletter", { email });

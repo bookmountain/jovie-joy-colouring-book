@@ -28,6 +28,10 @@ describe("api client", () => {
   test("apiGetProducts returns parsed JSON", async () => {
     const result = await apiGetProducts();
     expect(result).toEqual([{ slug: "x", priceCents: 100 }]);
+    expect(fetch).toHaveBeenCalledWith(
+      "http://localhost:8080/api/products",
+      { next: { revalidate: 60 } },
+    );
   });
 
   test("apiCreateCheckout posts items and parses response", async () => {

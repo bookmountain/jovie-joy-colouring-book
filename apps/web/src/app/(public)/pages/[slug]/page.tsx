@@ -11,17 +11,20 @@ import { requireNavigationRoute } from "@/lib/require-navigation-route";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 const pageSlugAliases: Record<string, string> = {
   faqs: "faq",
 };
 
-export default async function StaticPage({ params, searchParams }: PageProps) {
+// Generate CMS-managed slugs on first request, then keep each route for 60s.
+export function generateStaticParams() {
+  return [];
+}
+
+export default async function StaticPage({ params }: PageProps) {
   const { slug } = await params;
   await requireNavigationRoute(`/pages/${slug}`);
-  const sp = await searchParams;
   const pageSlug = pageSlugAliases[slug] ?? slug;
 
   let page;
@@ -53,13 +56,7 @@ export default async function StaticPage({ params, searchParams }: PageProps) {
         {pageSlug === "gallery" ? <GalleryGrid /> : null}
         {pageSlug === "faq" ? <FaqAccordion /> : null}
         {pageSlug === "freebies" ? (
-          <FreebieGrid
-            items={freebies}
-            downloadBanner={
-              sp?.download === "expired" ? "expired" :
-              sp?.download === "invalid" ? "invalid" : null
-            }
-          />
+          <FreebieGrid items={freebies} />
         ) : null}
       </div>
     </main>

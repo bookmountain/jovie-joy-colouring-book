@@ -17,6 +17,10 @@ type PageProps = {
   params: Promise<{ slug: string; productSlug: string }>;
 };
 
+export function generateStaticParams() {
+  return [];
+}
+
 export default async function CollectionProductPage({ params }: PageProps) {
   const { slug: collectionSlug, productSlug } = await params;
   await requireNavigationRoute(`/collections/${collectionSlug}/products/${productSlug}`);

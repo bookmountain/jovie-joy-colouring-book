@@ -1,38 +1,31 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { SafeImage } from "@/components/common/SafeImage";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
-import { CollectionToolbar } from "@/components/commerce/collection-toolbar";
+import { CollectionBrowser } from "@/components/commerce/collection-browser";
 import { ProductGrid } from "@/components/commerce/product-grid";
-import { type SortKey } from "@/data/collections";
+import type { SortKey } from "@/data/collections";
 import {
   getCollectionBySlug,
   getProductsForCollection,
-  sortProducts,
-  takePageSize,
 } from "@/lib/catalog";
 import { resolveAssetUrl } from "@/lib/api";
+import { sortProducts, takePageSize } from "@/lib/product-list";
 import { requireNavigationRoute } from "@/lib/require-navigation-route";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-function readParam(
-  params: Record<string, string | string[] | undefined>,
-  key: string,
-): string | undefined {
-  const value = params[key];
-  return Array.isArray(value) ? value[0] : value;
+export function generateStaticParams() {
+  return [];
 }
 
 export default async function CollectionPage({
   params,
-  searchParams,
 }: PageProps) {
   const { slug } = await params;
   await requireNavigationRoute(`/collections/${slug}`);
-  const query = (await searchParams) ?? {};
   const [collection, collectionProducts] = await Promise.all([
     getCollectionBySlug(slug),
     getProductsForCollection(slug),
@@ -42,9 +35,10 @@ export default async function CollectionPage({
     notFound();
   }
 
-  const pageSize = Number(readParam(query, "pageSize") ?? "20");
-  const sort = (readParam(query, "sort") ?? collection.defaultSort) as SortKey;
-  const products = takePageSize(sortProducts(collectionProducts, sort), pageSize);
+  const defaultProducts = takePageSize(
+    sortProducts(collectionProducts, collection.defaultSort as SortKey),
+    20,
+  );
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10 lg:px-8">
@@ -70,12 +64,12 @@ export default async function CollectionPage({
         </div>
       ) : null}
       <div className="mt-8">
-        <CollectionToolbar
-          count={collectionProducts.length}
-          pageSize={pageSize}
-          sort={sort}
-        />
-        <ProductGrid products={products} />
+        <Suspense fallback={<ProductGrid products={defaultProducts} />}>
+          <CollectionBrowser
+            defaultSort={collection.defaultSort as SortKey}
+            products={collectionProducts}
+          />
+        </Suspense>
       </div>
     </main>
   );

@@ -1,31 +1,18 @@
+import { Suspense } from "react";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
-import { CollectionToolbar } from "@/components/commerce/collection-toolbar";
+import { CollectionBrowser } from "@/components/commerce/collection-browser";
 import { ProductGrid } from "@/components/commerce/product-grid";
-import { type SortKey } from "@/data/collections";
 import { getAllProducts } from "@/data/products";
-import { sortProducts, takePageSize } from "@/lib/catalog";
+import { sortProducts, takePageSize } from "@/lib/product-list";
 import { requireNavigationRoute } from "@/lib/require-navigation-route";
 
-type PageProps = {
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
-};
-
-function readParam(
-  params: Record<string, string | string[] | undefined>,
-  key: string,
-): string | undefined {
-  const value = params[key];
-  return Array.isArray(value) ? value[0] : value;
-}
-
-export default async function ProductsPage({ searchParams }: PageProps) {
+export default async function ProductsPage() {
   await requireNavigationRoute("/products");
-  const query = (await searchParams) ?? {};
   const allProducts = await getAllProducts();
-
-  const pageSize = Number(readParam(query, "pageSize") ?? "20");
-  const sort = (readParam(query, "sort") ?? "created-descending") as SortKey;
-  const products = takePageSize(sortProducts(allProducts, sort), pageSize);
+  const defaultProducts = takePageSize(
+    sortProducts(allProducts, "created-descending"),
+    20,
+  );
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10 lg:px-8">
@@ -37,12 +24,12 @@ export default async function ProductsPage({ searchParams }: PageProps) {
         </p>
       </div>
       <div className="mt-8">
-        <CollectionToolbar
-          count={allProducts.length}
-          pageSize={pageSize}
-          sort={sort}
-        />
-        <ProductGrid products={products} />
+        <Suspense fallback={<ProductGrid products={defaultProducts} />}>
+          <CollectionBrowser
+            defaultSort="created-descending"
+            products={allProducts}
+          />
+        </Suspense>
       </div>
     </main>
   );

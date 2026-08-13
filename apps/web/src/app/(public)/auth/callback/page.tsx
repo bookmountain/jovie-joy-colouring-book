@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { tokenStorage } from "@/lib/auth";
 import { mergeGuestWishlist } from "@/state/wishlist-sync";
 import { useSite } from "@/state/site-store";
 
-export default function AuthCallback() {
+function AuthCallbackContent() {
   const params = useSearchParams();
   const router = useRouter();
   const { state } = useSite();
@@ -30,5 +30,19 @@ export default function AuthCallback() {
     <main className="mx-auto max-w-md py-16 text-center">
       <p className="coco-heading">Signing you in…</p>
     </main>
+  );
+}
+
+export default function AuthCallback() {
+  return (
+    <Suspense
+      fallback={(
+        <main className="mx-auto max-w-md py-16 text-center">
+          <p className="coco-heading">Signing you in…</p>
+        </main>
+      )}
+    >
+      <AuthCallbackContent />
+    </Suspense>
   );
 }

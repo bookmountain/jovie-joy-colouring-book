@@ -1,11 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { FreebieCard } from "./FreebieCard";
 import { EmailGateModal } from "./EmailGateModal";
 import type { FreebieListItem } from "@/lib/freebies";
 
-export function FreebieGrid({ items, downloadBanner }: { items: FreebieListItem[]; downloadBanner: "expired" | "invalid" | null }) {
+function FreebieGridContent({
+  items,
+  downloadBanner,
+}: {
+  items: FreebieListItem[];
+  downloadBanner: "expired" | "invalid" | null;
+}) {
   const [active, setActive] = useState<FreebieListItem | null>(null);
 
   return (
@@ -24,5 +31,23 @@ export function FreebieGrid({ items, downloadBanner }: { items: FreebieListItem[
       </div>
       {active ? <EmailGateModal item={active} onClose={() => setActive(null)} /> : null}
     </div>
+  );
+}
+
+function FreebieGridWithBanner({ items }: { items: FreebieListItem[] }) {
+  const searchParams = useSearchParams();
+  const download = searchParams.get("download");
+  const downloadBanner = download === "expired" || download === "invalid"
+    ? download
+    : null;
+
+  return <FreebieGridContent downloadBanner={downloadBanner} items={items} />;
+}
+
+export function FreebieGrid({ items }: { items: FreebieListItem[] }) {
+  return (
+    <Suspense fallback={<FreebieGridContent downloadBanner={null} items={items} />}>
+      <FreebieGridWithBanner items={items} />
+    </Suspense>
   );
 }

@@ -14,6 +14,10 @@ const blogSlugAliases: Record<string, string> = {
   "lifestyle-diy": "diy",
 };
 
+export function generateStaticParams() {
+  return [];
+}
+
 export default async function ArticlePage({ params }: PageProps) {
   const { slug, articleSlug } = await params;
   await requireNavigationRoute(`/blogs/${slug}/${articleSlug}`);

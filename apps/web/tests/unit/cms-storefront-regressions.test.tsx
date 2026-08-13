@@ -60,7 +60,10 @@ vi.mock("@/lib/freebies", async (importOriginal) => {
   return { ...actual, listFreebies: mocks.listFreebies };
 });
 
-vi.mock("next/navigation", () => ({ notFound: mocks.notFound }));
+vi.mock("next/navigation", () => ({
+  notFound: mocks.notFound,
+  useSearchParams: () => new URLSearchParams(),
+}));
 vi.mock("@/components/layout/breadcrumbs", () => ({ Breadcrumbs: () => <nav>Breadcrumbs</nav> }));
 vi.mock("@/components/common/SafeImage", () => ({
   SafeImage: ({ src }: { src: string }) => <span aria-label={`Image: ${src}`} data-image-src={src} role="img" />,
@@ -296,7 +299,6 @@ describe("CMS storefront regressions", () => {
 
     const page = await CollectionPage({
       params: Promise.resolve({ slug: "detail-collection" }),
-      searchParams: Promise.resolve({}),
     });
     render(page);
 
@@ -408,7 +410,6 @@ describe("CMS storefront regressions", () => {
 
     const page = await StaticPage({
       params: Promise.resolve({ slug }),
-      searchParams: Promise.resolve({}),
     });
     render(page);
 
