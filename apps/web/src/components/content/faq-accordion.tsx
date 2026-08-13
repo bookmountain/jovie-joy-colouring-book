@@ -1,4 +1,5 @@
 import { getFaqs } from "@/data/faqs";
+import { FaqLinks } from "@/components/content/faq-links";
 
 export async function FaqAccordion() {
   const faqs = await getFaqs();
@@ -11,21 +12,7 @@ export async function FaqAccordion() {
             {faq.question}
           </summary>
           <p className="mt-3 text-sm leading-6 text-cocoa-text">{faq.answer}</p>
-          {faq.links?.length ? (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {faq.links.map((link) => (
-                <a
-                  className="rounded-full border border-cocoa-border bg-white px-4 py-1 text-sm font-extrabold hover:bg-cocoa-honey"
-                  href={link.href}
-                  key={link.label}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  {link.label}
-                </a>
-              ))}
-            </div>
-          ) : null}
+          <FaqLinks links={faq.links} />
         </details>
       ))}
     </div>

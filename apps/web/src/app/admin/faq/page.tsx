@@ -11,6 +11,7 @@ import {
   type AdminFaq,
 } from "@/lib/adminApi";
 import { ContentBlockEditor } from "@/components/admin/ContentBlockEditor";
+import { FaqLinksEditor } from "@/components/admin/FaqLinksEditor";
 import { StaticPageHeaderEditor } from "@/components/admin/StaticPageHeaderEditor";
 import {
   AdminButton,
@@ -24,7 +25,7 @@ import {
 } from "@/components/admin/ui";
 import { notifySaved, notifyDeleted, notifyError } from "@/lib/toast";
 
-const EMPTY: AdminFaq = { slug: "", question: "", answer: "", group: null, sortIndex: 0 };
+const EMPTY: AdminFaq = { slug: "", question: "", answer: "", links: null, group: null, sortIndex: 0 };
 
 export default function AdminFaqPage() {
   const [rows, setRows] = useState<AdminFaq[]>([]);
@@ -54,6 +55,7 @@ export default function AdminFaqPage() {
       const saved = await adminUpdateFaq(row.slug, {
         question: row.question,
         answer: row.answer,
+        links: row.links,
         group: row.group,
         sortIndex: row.sortIndex,
       });
@@ -159,6 +161,11 @@ export default function AdminFaqPage() {
               value={row.answer}
             />
           </AdminField>
+          <FaqLinksEditor
+            idPrefix={row.slug}
+            onChange={(links) => update(row.slug, { links: links.length ? links : null })}
+            value={row.links ?? []}
+          />
           <div className="grid gap-3 sm:grid-cols-2">
             <AdminField>
               <AdminLabel htmlFor={`g-${row.slug}`}>Group (optional)</AdminLabel>
@@ -232,6 +239,11 @@ export default function AdminFaqPage() {
             value={draft.answer}
           />
         </AdminField>
+        <FaqLinksEditor
+          idPrefix="new-faq"
+          onChange={(links) => setDraft({ ...draft, links: links.length ? links : null })}
+          value={draft.links ?? []}
+        />
         <AdminButton
           disabled={creating || !draft.slug || !draft.question}
           onClick={create}
