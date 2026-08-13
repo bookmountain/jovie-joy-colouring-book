@@ -10,6 +10,12 @@ const apiRemotePattern = {
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  experimental: {
+    // Next otherwise advertises a five-minute client Router Cache lifetime for
+    // prefetched/static routes. Keep browser navigation freshness aligned with
+    // the storefront's 60-second server-side fallback policy.
+    staleTimes: { dynamic: 0, static: 60 },
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "cdn.shopify.com" },

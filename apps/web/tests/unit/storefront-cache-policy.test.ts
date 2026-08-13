@@ -52,8 +52,28 @@ describe("storefront cache policy", () => {
 
     const calls = vi.mocked(fetch).mock.calls;
     expect(calls).toHaveLength(15);
+    const tags = calls.map(([, init]) =>
+      (init as { next: { tags: string[] } }).next.tags[0],
+    );
+    expect(tags).toEqual([
+      "storefront:catalog",
+      "storefront:catalog",
+      "storefront:catalog",
+      "storefront:catalog",
+      "storefront:blogs",
+      "storefront:blogs",
+      "storefront:blogs",
+      "storefront:comics",
+      "storefront:about",
+      "storefront:gallery",
+      "storefront:pages",
+      "storefront:faqs",
+      "storefront:content",
+      "storefront:freebies",
+      "storefront:freebies",
+    ]);
     for (const [, init] of calls) {
-      expect(init).toEqual({ next: { revalidate: 60 } });
+      expect((init as { next: { revalidate: number } }).next.revalidate).toBe(60);
     }
   });
 });

@@ -11,7 +11,7 @@ import { getCozyMomentImages } from "@/data/gallery";
 import { getAllCollections } from "@/data/collections";
 import {
   resolveAssetUrl,
-  STOREFRONT_REVALIDATE_SECONDS,
+  storefrontCache,
   type HeroSlide,
 } from "@/lib/api";
 import { getSiteContent } from "@/data/site-content";
@@ -34,7 +34,7 @@ async function resolveReachableAssetUrl(src: string | null | undefined): Promise
   try {
     const response = await fetch(resolved, {
       method: "HEAD",
-      next: { revalidate: STOREFRONT_REVALIDATE_SECONDS },
+      ...storefrontCache("content", "gallery"),
     });
     return response.ok ? resolved : null;
   } catch {

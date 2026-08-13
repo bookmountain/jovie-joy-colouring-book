@@ -1,4 +1,4 @@
-import { API_URL, STOREFRONT_REVALIDATE_SECONDS } from "@/lib/api";
+import { API_URL, storefrontCache } from "@/lib/api";
 import { adminFetch } from "@/lib/adminApi";
 import { tokenStorage } from "@/lib/auth";
 
@@ -46,7 +46,7 @@ export type FreebieRequestRow = {
 
 export async function listFreebies(): Promise<FreebieListItem[]> {
   const res = await fetch(`${API_URL}/api/freebies`, {
-    next: { revalidate: STOREFRONT_REVALIDATE_SECONDS },
+    ...storefrontCache("freebies"),
   });
   if (!res.ok) throw new Error(`listFreebies ${res.status}`);
   return res.json();
@@ -54,7 +54,7 @@ export async function listFreebies(): Promise<FreebieListItem[]> {
 
 export async function getFreebie(slug: string): Promise<Freebie> {
   const res = await fetch(`${API_URL}/api/freebies/${slug}`, {
-    next: { revalidate: STOREFRONT_REVALIDATE_SECONDS },
+    ...storefrontCache("freebies"),
   });
   if (!res.ok) throw new Error(`getFreebie ${res.status}`);
   return res.json();

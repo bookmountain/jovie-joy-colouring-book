@@ -30,7 +30,7 @@ describe("api client", () => {
     expect(result).toEqual([{ slug: "x", priceCents: 100 }]);
     expect(fetch).toHaveBeenCalledWith(
       "http://localhost:8080/api/products",
-      { next: { revalidate: 60 } },
+      { next: { revalidate: 60, tags: ["storefront:catalog"] } },
     );
   });
 

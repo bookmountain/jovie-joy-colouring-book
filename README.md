@@ -124,7 +124,7 @@ Google__ClientSecret=YOUR_CLIENT_SECRET
 
 ## Deployment
 
-Deploys via a **GitHub Actions self-hosted runner** on the VM at `192.168.4.106`. Pushes to `main` trigger the workflow; the runner runs `docker compose -f docker-compose.prod.yml up -d --build` in the repo checkout directory.
+Deploys via a **GitHub Actions self-hosted runner** on the VM at `192.168.4.106`. Pushes to `main` trigger the workflow; the runner uses `apps/api/.env` for Compose interpolation and rebuilds/restarts the stack from the repo checkout directory.
 
 One-time server setup:
 
@@ -156,7 +156,33 @@ WebAppUrl=https://yourdomain.com
 Admin__Email=you@yourdomain.com
 # Set this to the output of: openssl rand -base64 32
 Admin__Password=
+# Shared private API→Next cache-invalidation secret. Generate with:
+# openssl rand -hex 32
+CACHE_REVALIDATION_SECRET=
 ```
+
+The deployment workflow generates this private secret when it is absent or
+blank; you can also generate and set it ahead of time with the command above.
+
+### Storefront cache freshness
+
+The public storefront uses two complementary cache mechanisms:
+
+1. Anonymous pages and their API reads are cached for fast navigation, with a
+   60-second time-based revalidation interval.
+2. After a successful CMS mutation, the API sends a signed, internal POST to
+   Next.js. Next expires only the affected data tag and page routes (catalog,
+   content, gallery, FAQs, and so on), so the next server request reads the saved
+   data instead of waiting for the interval.
+
+The signed notification is deliberately best-effort. A temporary Next.js outage
+does not turn an already-committed CMS save into a false failure; time-based ISR
+remains the normal recovery path. Revalidation marks cache entries stale rather
+than rebuilding every route immediately, so the first request for an affected
+route may perform regeneration. An already-open browser tab also cannot be
+remotely replaced: use **View storefront** (which opens a new tab) or hard-refresh
+an existing preview after saving. Client-side static route reuse is limited to 60
+seconds instead of Next.js's five-minute default.
 
 ## License
 

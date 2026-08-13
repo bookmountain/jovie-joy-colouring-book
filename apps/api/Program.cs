@@ -161,6 +161,19 @@ builder.Services.Configure<OrphanUploadCleanupOptions>(builder.Configuration.Get
 builder.Services.AddScoped<OrphanUploadSweeper>();
 builder.Services.AddHostedService<OrphanUploadCleanupHostedService>();
 builder.Services.AddHttpClient<IEmailSender, ResendEmailSender>();
+builder.Services.AddOptions<StorefrontCacheOptions>()
+    .Bind(builder.Configuration.GetSection("StorefrontCache"))
+    .Validate(options =>
+    {
+        if (builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Test"))
+            return true;
+        return Uri.TryCreate(options.Endpoint, UriKind.Absolute, out var endpoint) &&
+               (endpoint.Scheme == Uri.UriSchemeHttp || endpoint.Scheme == Uri.UriSchemeHttps) &&
+               options.Secret.Trim().Length >= 32 &&
+               options.TimeoutSeconds is >= 1 and <= 30;
+    }, "StorefrontCache requires an HTTP(S) endpoint, a 32+ character secret, and a 1-30 second timeout outside Development/Test.")
+    .ValidateOnStart();
+builder.Services.AddHttpClient<IStorefrontCacheInvalidator, StorefrontCacheInvalidator>();
 
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"]
     ?? throw new InvalidOperationException("Stripe__SecretKey is required");
@@ -245,6 +258,9 @@ app.UseCors();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
+// This wrapper runs its post-save notification after the inner CMS mutation
+// lock has been released, so a slow Next.js request cannot block other editors.
+app.UseMiddleware<JovieJoy.Api.Infrastructure.StorefrontCacheInvalidationMiddleware>();
 app.UseMiddleware<JovieJoy.Api.Infrastructure.AdminMutationLockMiddleware>();
 app.MapControllers();
 app.MapGet("/health", () => Results.Ok(new { status = "ok", time = DateTime.UtcNow }));

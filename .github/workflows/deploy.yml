@@ -37,6 +37,21 @@ jobs:
           git fetch origin main
           git reset --hard origin/main
 
+      - name: Ensure cache revalidation secret
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          cache_env_file="apps/api/.env"
+          if ! grep -Eq '^CACHE_REVALIDATION_SECRET=[^[:space:]]{32,}$' "$cache_env_file"; then
+            generated_cache_secret="$(openssl rand -hex 32)"
+            if grep -q '^CACHE_REVALIDATION_SECRET=' "$cache_env_file"; then
+              sed -i "s|^CACHE_REVALIDATION_SECRET=.*|CACHE_REVALIDATION_SECRET=${generated_cache_secret}|" "$cache_env_file"
+            else
+              printf '\nCACHE_REVALIDATION_SECRET=%s\n' "$generated_cache_secret" >> "$cache_env_file"
+            fi
+            chmod 600 "$cache_env_file"
+            echo "Generated the private storefront cache revalidation secret."
+          fi
+
       - name: Build images
         working-directory: ${{ env.APP_DIR }}
         run: docker compose --env-file apps/api/.env -f docker-compose.prod.yml build

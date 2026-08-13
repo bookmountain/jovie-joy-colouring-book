@@ -72,6 +72,10 @@ Google__RedirectUri=http://192.168.4.106:5080/auth/google/callback
 
 WebAppUrl=http://192.168.4.106:3080
 
+# Shared by the API and Next.js for private, on-demand cache invalidation.
+# Generate once with: openssl rand -hex 32
+CACHE_REVALIDATION_SECRET=REPLACE_WITH_THE_64_HEX_CHARACTER_OUTPUT
+
 # If a reverse proxy connects directly to the API, set its actual peer IP so
 # X-Forwarded-For can be trusted for per-client admin login limits. Leave unset
 # for direct exposure; do not put the public visitor/Cloudflare IP here.
@@ -101,6 +105,11 @@ The API fails closed when no administrator exists and these bootstrap values are
 missing or unsafe. The password must contain at least 16 characters and must not
 be a common/default password or placeholder. Never commit the populated `.env`.
 
+`CACHE_REVALIDATION_SECRET` is required by production Compose. You may generate
+and set it yourself; if it is absent or blank, the deployment workflow generates
+one before the build. The same value is passed to both containers. It never needs
+to be exposed in a browser or stored in a `NEXT_PUBLIC_*` variable.
+
 Lock it down:
 
 ```bash
@@ -114,7 +123,7 @@ Push to `main` (or click "Run workflow" in the Actions tab). The deploy workflow
 1. Verifies `/work/jovie-joy` is a git checkout and the `.env` exists (fails fast otherwise)
 2. Verifies the shared `shared-services` Docker network exists (fails fast if the shared database stack is down)
 3. `git fetch && git reset --hard origin/main` inside `/work/jovie-joy` (leaves the gitignored `.env` alone)
-4. `docker compose -f docker-compose.prod.yml build` then `up -d --remove-orphans`
+4. `docker compose --env-file apps/api/.env -f docker-compose.prod.yml build` then `up -d --remove-orphans`
 5. Polls `http://localhost:5080/health` for up to 60s
 6. Prunes old images
 
