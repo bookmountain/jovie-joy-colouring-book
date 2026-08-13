@@ -13,11 +13,7 @@ public static class SeedFaqs
             new Faq { Slug = "where-buy-physical", SortIndex = 0,
                 Question = "Where can I buy Zoe&Book physical coloring books?",
                 Answer = "Amazon: Available on Amazon in the US, UK, Canada, Australia, Germany, France, Italy, and more. Availability depends on the official marketplace in your country. Partner bookstores may also carry selected cozy titles.",
-                Links = new List<FaqLink>
-                {
-                    new("Amazon", "https://www.amazon.com/"),
-                    new("Penguin Random House", "https://www.penguinrandomhouse.com/"),
-                } },
+                Links = null },
             new Faq { Slug = "where-buy-digital", SortIndex = 1,
                 Question = "Where can I buy Zoe&Book digital coloring pages?",
                 Answer = "You can find digital coloring pages as instant downloads through the Etsy-style marketplace link. Choose a favorite, download instantly, and print on your preferred paper or color digitally.",

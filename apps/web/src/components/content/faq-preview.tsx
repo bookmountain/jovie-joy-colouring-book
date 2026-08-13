@@ -3,7 +3,6 @@ import { SafeImage } from "@/components/common/SafeImage";
 import { getFaqArtwork } from "@/data/content";
 import { getFaqs } from "@/data/faqs";
 import { resolveAssetUrl } from "@/lib/api";
-import { FaqLinks } from "@/components/content/faq-links";
 
 export async function FaqPreview() {
   const [faqArtwork, faqs] = await Promise.all([getFaqArtwork(), getFaqs()]);
@@ -42,7 +41,6 @@ export async function FaqPreview() {
               <p className="max-w-5xl pb-4 pr-10 text-sm leading-7 text-cocoa-text md:text-base">
                 {faq.answer}
               </p>
-              <FaqLinks links={faq.links} />
             </details>
           ))}
         </div>

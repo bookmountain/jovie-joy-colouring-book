@@ -515,10 +515,9 @@ export const adminUploadGalleryImage = (file: File) => {
 };
 
 // FAQs
-export type AdminFaqLink = { label: string; href: string };
-export type AdminFaq = { slug: string; question: string; answer: string; links: AdminFaqLink[] | null; group: string | null; sortIndex: number };
-export type AdminFaqUpdateBody = { question: string; answer: string; links: AdminFaqLink[] | null; group: string | null; sortIndex: number };
-export type AdminFaqCreateBody = { slug: string; question: string; answer: string; links: AdminFaqLink[] | null; group: string | null; sortIndex: number };
+export type AdminFaq = { slug: string; question: string; answer: string; group: string | null; sortIndex: number };
+export type AdminFaqUpdateBody = { question: string; answer: string; group: string | null; sortIndex: number };
+export type AdminFaqCreateBody = { slug: string; question: string; answer: string; group: string | null; sortIndex: number };
 export const adminListFaqs = () => adminFetch<AdminFaq[]>("/api/admin/faqs");
 export const adminCreateFaq = (body: AdminFaqCreateBody) =>
   adminFetch<AdminFaq>("/api/admin/faqs", { method: "POST", body: JSON.stringify(body) });

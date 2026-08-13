@@ -313,6 +313,7 @@ public class DbSeederTests
         Assert.NotEmpty(await db.TrendingTerms.AsNoTracking().ToListAsync());
         Assert.NotEmpty(await db.StaticPages.AsNoTracking().ToListAsync());
         Assert.NotEmpty(await db.Faqs.AsNoTracking().ToListAsync());
+        Assert.Null((await db.Faqs.AsNoTracking().SingleAsync(f => f.Slug == "where-buy-physical")).Links);
         Assert.NotEmpty(await db.FeaturedOnLinks.AsNoTracking().ToListAsync());
 
         var admin = Assert.Single(await db.Users.AsNoTracking().ToListAsync());

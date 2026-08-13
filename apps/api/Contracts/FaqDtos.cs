@@ -12,17 +12,5 @@ public record FaqDto(string Slug, string Question, string Answer, List<FaqLinkDt
         f.Group, f.SortIndex);
 }
 
-public record CreateFaqRequest(
-    string Slug,
-    string Question,
-    string Answer,
-    List<FaqLinkDto>? Links,
-    string? Group,
-    int SortIndex);
-
-public record UpdateFaqRequest(
-    string Question,
-    string Answer,
-    List<FaqLinkDto>? Links,
-    string? Group,
-    int SortIndex);
+public record CreateFaqRequest(string Slug, string Question, string Answer, string? Group, int SortIndex);
+public record UpdateFaqRequest(string Question, string Answer, string? Group, int SortIndex);
