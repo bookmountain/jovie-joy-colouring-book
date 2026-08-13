@@ -20,6 +20,29 @@ async function login(page: Page) {
   await page.waitForURL((u) => !u.pathname.startsWith("/admin/login") && /\/admin(\/|$)/.test(u.pathname));
 }
 
+function validPdf(): Buffer {
+  let pdf = "%PDF-1.7\n";
+  const catalogOffset = Buffer.byteLength(pdf, "ascii");
+  pdf += "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n";
+  const pagesOffset = Buffer.byteLength(pdf, "ascii");
+  pdf += "2 0 obj\n<< /Type /Pages /Count 0 /Kids [] >>\nendobj\n";
+  const xrefOffset = Buffer.byteLength(pdf, "ascii");
+  pdf += [
+    "xref",
+    "0 3",
+    "0000000000 65535 f ",
+    `${catalogOffset.toString().padStart(10, "0")} 00000 n `,
+    `${pagesOffset.toString().padStart(10, "0")} 00000 n `,
+    "trailer",
+    "<< /Size 3 /Root 1 0 R >>",
+    "startxref",
+    xrefOffset.toString(),
+    "%%EOF",
+    "",
+  ].join("\n");
+  return Buffer.from(pdf, "ascii");
+}
+
 test("admin publish of a freebie reflects on /pages/freebies immediately", async ({ page }) => {
   const stamp = Date.now();
   const title = `E2E Reflect Freebie ${stamp}`;
@@ -28,12 +51,12 @@ test("admin publish of a freebie reflects on /pages/freebies immediately", async
   await login(page);
   await page.goto("/admin/freebies");
 
-  // Create a throwaway freebie, published immediately.
+  // New freebies intentionally start as drafts. Create one first, then follow
+  // the same upload-before-publish safety flow an editor uses in production.
   await page.getByRole("button", { name: /\+ new freebie/i }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Title").fill(title);
   await dialog.getByLabel("Excerpt").fill("Throwaway freebie for the reflect e2e.");
-  await dialog.getByLabel(/publish immediately/i).check();
   const [createResp] = await Promise.all([
     page.waitForResponse(
       (r) => r.url().endsWith("/api/admin/freebies") && r.request().method() === "POST",
@@ -43,6 +66,30 @@ test("admin publish of a freebie reflects on /pages/freebies immediately", async
   expect(createResp.ok()).toBeTruthy();
   // Create redirects to the edit page.
   await page.waitForURL(`**/admin/freebies/${slug}`);
+
+  const fileInput = page.locator('input[type="file"][accept=".pdf,.zip"]');
+  await expect(fileInput).toBeAttached();
+  const [uploadResp] = await Promise.all([
+    page.waitForResponse(
+      (r) => r.url().endsWith(`/api/admin/freebies/${slug}/file`) && r.request().method() === "POST",
+    ),
+    fileInput.setInputFiles({
+      name: "reflect-fixture.pdf",
+      mimeType: "application/pdf",
+      buffer: validPdf(),
+    }),
+  ]);
+  expect(uploadResp.ok()).toBeTruthy();
+  await expect(page.getByText(/Current: PDF/i)).toBeVisible();
+
+  await page.getByRole("checkbox", { name: "Published" }).check();
+  const [publishResp] = await Promise.all([
+    page.waitForResponse(
+      (r) => r.url().endsWith(`/api/admin/freebies/${slug}`) && r.request().method() === "PUT",
+    ),
+    page.getByRole("button", { name: /^save$/i }).click(),
+  ]);
+  expect(publishResp.ok()).toBeTruthy();
 
   // Storefront reflects the published freebie immediately.
   await page.goto("/pages/freebies");

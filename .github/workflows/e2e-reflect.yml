@@ -44,6 +44,10 @@ jobs:
       E2E_ADMIN_PASSWORD: "E2eOnly!9Vq2Lm7Rx5"
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: "http://localhost:8080"
+      # The serial suite deliberately signs in again after storefront visits.
+      # Keep production's per-IP limit intact while avoiding CI retries sharing
+      # one runner IP from exhausting the five-attempt window.
+      RateLimiting__AdminLogin__PermitLimit: "100"
       # Web -> API base URL (matches the running API above).
       NEXT_PUBLIC_API_URL: "http://localhost:8080"
       # Exercise the same signed API -> Next cache invalidation callback used in
