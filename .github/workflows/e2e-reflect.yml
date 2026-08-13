@@ -46,6 +46,12 @@ jobs:
       ASPNETCORE_URLS: "http://localhost:8080"
       # Web -> API base URL (matches the running API above).
       NEXT_PUBLIC_API_URL: "http://localhost:8080"
+      # Exercise the same signed API -> Next cache invalidation callback used in
+      # production. The value is intentionally test-only and the services bind
+      # only to this ephemeral GitHub Actions runner.
+      CACHE_REVALIDATION_SECRET: "ci-storefront-cache-revalidation-secret-2026"
+      StorefrontCache__Endpoint: "http://127.0.0.1:3100/api/internal/revalidate"
+      StorefrontCache__Secret: "ci-storefront-cache-revalidation-secret-2026"
 
     steps:
       - uses: actions/checkout@v4
