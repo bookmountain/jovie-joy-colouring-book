@@ -9,7 +9,7 @@ import { AdminButton, AdminPanel, AdminPageHeader } from "@/components/admin/ui"
 const SECTIONS: { key: string; type: string; label: string; help?: string }[] = [
   { key: "home.hero.slides", type: "HomeHeroSlides", label: "Hero carousel", help: "Top-of-page rotating banner. One image per slide — the storefront crops it tall on mobile and wide on desktop." },
   { key: "home.intro", type: "HomeIntro", label: "Hi Friend! panel" },
-  { key: "home.row.new-release", type: "HomeProductRow", label: "Row · New Release", help: "Shows a product row drawn from a collection. Edit the eyebrow, title, link, source collection, and how many items to show." },
+  { key: "home.row.new-release", type: "HomeProductRow", label: "Row · New Release", help: "Automatically shows your newest products by publish date — new uploads appear here immediately. Edit the eyebrow, title, and how many items to show." },
   { key: "home.video", type: "HomeVideo", label: "Home video" },
   { key: "home.row.best-seller", type: "HomeProductRow", label: "Row · Best Seller" },
   { key: "home.row.digital", type: "HomeProductRow", label: "Row · Digital" },

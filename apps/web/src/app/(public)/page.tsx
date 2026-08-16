@@ -15,13 +15,14 @@ import {
   type HeroSlide,
 } from "@/lib/api";
 import { getSiteContent } from "@/data/site-content";
-import { getProductsForCollection } from "@/lib/catalog";
+import { getAllProducts } from "@/data/products";
+import { getProductsForCollection, sortProducts } from "@/lib/catalog";
 import { applyHomepageCollection, type HomeRowData } from "@/lib/home-rows";
 import { homeSectionIsVisible, readHomeSectionVisibility } from "@/lib/home-visibility";
 import { SafeImage } from "@/components/common/SafeImage";
 
 const ROW_FALLBACKS: Record<string, HomeRowData> = {
-  "home.row.new-release": { eyebrow: "Just landed", title: "New Release", href: "/collections/new-release", collectionSlug: "new-release", itemCount: 4 },
+  "home.row.new-release": { eyebrow: "Just landed", title: "New Release", href: "/products", itemCount: 4 },
   "home.row.best-seller": { eyebrow: "Popular products", title: "Best Seller", href: "/collections/frontpage", collectionSlug: "frontpage", itemCount: 4 },
   "home.row.digital":     { eyebrow: "Digital books", title: "Digital", href: "/collections/digital", collectionSlug: "digital", itemCount: 4 },
 };
@@ -57,14 +58,20 @@ export default async function Home() {
   const visibility = readHomeSectionVisibility(bundle);
   const show = (section: Parameters<typeof homeSectionIsVisible>[1]) =>
     homeSectionIsVisible(visibility, section);
-  const needsProductRows = show("newRelease") || show("bestSeller") || show("digital");
-  const collections = needsProductRows ? await getAllCollections() : [];
+  const needsCollectionRows = show("bestSeller") || show("digital");
+  const collections = needsCollectionRows ? await getAllCollections() : [];
 
-  function getRow(key: string, slot: "newrelease" | "bestseller" | "digital"): HomeRowData {
+  function getRow(key: string, slot: "bestseller" | "digital"): HomeRowData {
     const configured = (bundle.homeProductRows.find((b) => b.key === key)?.data ?? ROW_FALLBACKS[key]) as HomeRowData;
     return applyHomepageCollection(configured, collections, slot);
   }
-  const rowNewRelease = getRow("home.row.new-release", "newrelease");
+  // The New Release row is automatic: newest products by publish date, linking
+  // to /products (which already sorts newest-first). Only the copy and item
+  // count come from the CMS block.
+  const rowNewRelease: HomeRowData = {
+    ...((bundle.homeProductRows.find((b) => b.key === "home.row.new-release")?.data ?? ROW_FALLBACKS["home.row.new-release"]) as HomeRowData),
+    href: "/products",
+  };
   const rowBestSeller = getRow("home.row.best-seller", "bestseller");
   const rowDigital = getRow("home.row.digital", "digital");
 
@@ -74,7 +81,7 @@ export default async function Home() {
     digitalProducts,
     cozyMomentImages,
   ] = await Promise.all([
-    show("newRelease") && rowNewRelease.collectionSlug ? getProductsForCollection(rowNewRelease.collectionSlug) : Promise.resolve([]),
+    show("newRelease") ? getAllProducts().then((all) => sortProducts(all, "created-descending")) : Promise.resolve([]),
     show("bestSeller") && rowBestSeller.collectionSlug ? getProductsForCollection(rowBestSeller.collectionSlug) : Promise.resolve([]),
     show("digital") && rowDigital.collectionSlug ? getProductsForCollection(rowDigital.collectionSlug) : Promise.resolve([]),
     show("intro") || show("cozyMoments") ? getCozyMomentImages() : Promise.resolve([]),

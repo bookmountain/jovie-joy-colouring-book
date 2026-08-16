@@ -6,6 +6,7 @@ import { HOME_SECTION_DEFINITIONS } from "@/lib/home-visibility";
 const mocks = vi.hoisted(() => ({
   apiGetContent: vi.fn(),
   getAllCollections: vi.fn(),
+  getAllProducts: vi.fn(),
   getProductsForCollection: vi.fn(),
   getCozyMomentImages: vi.fn(),
 }));
@@ -15,7 +16,11 @@ vi.mock("@/lib/api", async (importOriginal) => {
   return { ...actual, apiGetContent: mocks.apiGetContent };
 });
 vi.mock("@/data/collections", () => ({ getAllCollections: mocks.getAllCollections }));
-vi.mock("@/lib/catalog", () => ({ getProductsForCollection: mocks.getProductsForCollection }));
+vi.mock("@/data/products", () => ({ getAllProducts: mocks.getAllProducts }));
+vi.mock("@/lib/catalog", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/catalog")>();
+  return { ...actual, getProductsForCollection: mocks.getProductsForCollection };
+});
 vi.mock("@/data/gallery", () => ({ getCozyMomentImages: mocks.getCozyMomentImages }));
 
 vi.mock("@/components/content/home-hero", () => ({ HomeHero: () => <section>Hero carousel</section> }));
@@ -42,6 +47,7 @@ describe("public homepage visibility", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getAllCollections.mockResolvedValue([]);
+    mocks.getAllProducts.mockResolvedValue([]);
     mocks.getProductsForCollection.mockResolvedValue([]);
     mocks.getCozyMomentImages.mockResolvedValue([]);
   });
@@ -54,6 +60,7 @@ describe("public homepage visibility", () => {
 
     expect(container.querySelector("main")).toBeEmptyDOMElement();
     expect(mocks.getAllCollections).not.toHaveBeenCalled();
+    expect(mocks.getAllProducts).not.toHaveBeenCalled();
     expect(mocks.getProductsForCollection).not.toHaveBeenCalled();
     expect(mocks.getCozyMomentImages).not.toHaveBeenCalled();
   });

@@ -11,7 +11,7 @@ const configuredRow: HomeRowData = {
 };
 
 function assignedCollection(
-  slot: Exclude<Collection["homepageSlot"], "tile" | null>,
+  slot: Exclude<Collection["homepageSlot"], "tile" | "newrelease" | null>,
 ): Collection {
   return {
     id: `${slot}-id`,
@@ -27,7 +27,7 @@ function assignedCollection(
 }
 
 describe("applyHomepageCollection", () => {
-  it.each(["newrelease", "bestseller", "digital"] as const)(
+  it.each(["bestseller", "digital"] as const)(
     "uses the collection assigned to the %s slot while preserving the configured row copy and count",
     (slot) => {
       const result = applyHomepageCollection(configuredRow, [assignedCollection(slot)], slot);
@@ -46,7 +46,7 @@ describe("applyHomepageCollection", () => {
     const result = applyHomepageCollection(
       configuredRow,
       [assignedCollection("digital")],
-      "newrelease",
+      "bestseller",
     );
 
     expect(result).toBe(configuredRow);

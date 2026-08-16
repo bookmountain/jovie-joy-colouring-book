@@ -11,7 +11,9 @@ export type HomeRowData = {
 export function applyHomepageCollection(
   configured: HomeRowData,
   collections: Collection[],
-  slot: Exclude<Collection["homepageSlot"], "tile" | null>,
+  // "newrelease" is excluded: that homepage row auto-feeds from the newest
+  // products instead of a curated collection.
+  slot: Exclude<Collection["homepageSlot"], "tile" | "newrelease" | null>,
 ): HomeRowData {
   const assigned = collections.find((collection) => collection.homepageSlot === slot);
   return assigned

@@ -26,7 +26,9 @@ const SORT_KEYS = [
   "createdascending", "createddescending",
 ] as const;
 
-const HOMEPAGE_SLOTS = ["", "newrelease", "bestseller", "digital", "tile"] as const;
+// "newrelease" is gone on purpose: the homepage New Release row now feeds
+// itself from the newest products, so no collection can own that slot.
+const HOMEPAGE_SLOTS = ["", "bestseller", "digital", "tile"] as const;
 
 type Props = {
   initial?: Collection;
@@ -40,7 +42,11 @@ export function CollectionForm({ initial, onSubmit, submitLabel }: Props) {
   const [excerpt, setExcerpt] = useState(initial?.excerpt ?? "");
   const [heroImage, setHeroImage] = useState<string | null>(initial?.heroImage ?? null);
   const [defaultSort, setDefaultSort] = useState<string>(initial?.defaultSort ?? "titleascending");
-  const [homepageSlot, setHomepageSlot] = useState<string>(initial?.homepageSlot ?? "");
+  const [homepageSlot, setHomepageSlot] = useState<string>(
+    // Legacy "newrelease" assignments are ignored by the storefront now; show
+    // them as "none" so saving clears them instead of resending a dead value.
+    initial?.homepageSlot === "newrelease" ? "" : initial?.homepageSlot ?? "",
+  );
   const [sortIndex, setSortIndex] = useState(initial?.sortIndex ?? 0);
   const [productOrder, setProductOrder] = useState<string[]>(initial?.productSlugs ?? []);
   const [allProducts, setAllProducts] = useState<Array<{ slug: string; title: string }>>([]);
@@ -154,7 +160,7 @@ export function CollectionForm({ initial, onSubmit, submitLabel }: Props) {
               ))}
             </AdminSelect>
             <p className="text-xs text-cocoa-text">
-              Row headings are edited under Home. New release, bestseller, and digital accept one collection each; tiles accept several.
+              Row headings are edited under Home. Bestseller and digital accept one collection each; tiles accept several. The New Release row fills itself with the newest products.
             </p>
           </AdminField>
           <AdminField>
