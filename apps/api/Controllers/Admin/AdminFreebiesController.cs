@@ -117,7 +117,7 @@ public class AdminFreebiesController(
     }
 
     [HttpPost("{slug}/cover")]
-    [RequestSizeLimit(10 * 1024 * 1024)]
+    [RequestSizeLimit(20 * 1024 * 1024)]
     public async Task<ActionResult<FreebieAdminDto>> UploadCover(
         string slug,
         [FromForm] IFormFile? file,

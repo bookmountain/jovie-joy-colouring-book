@@ -44,6 +44,11 @@ function extractAdminError(text: string, status: number, method: string, path: s
   } catch {
     // not JSON — fall through
   }
+  // 413 comes straight from the server's request-size guard with an empty
+  // body, so translate it instead of showing a bare status code.
+  if (status === 413) {
+    return "This file is too large for the server to accept. Try a smaller file.";
+  }
   return text || `${method} ${path} failed (${status})`;
 }
 
