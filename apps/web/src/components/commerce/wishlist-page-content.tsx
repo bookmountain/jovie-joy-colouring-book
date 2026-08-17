@@ -26,7 +26,7 @@ export function WishlistPageContent() {
       {products.length === 0 ? (
         <div className="mt-8 rounded-coco bg-cocoa-blush p-8 text-center shadow-soft">
           <p className="text-sm text-cocoa-text">Your wish list is empty.</p>
-          <Link className="coco-button-primary mt-4" href="/collections/all">
+          <Link className="coco-button-primary mt-4" href="/products">
             Continue shopping
           </Link>
         </div>

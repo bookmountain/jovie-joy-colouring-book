@@ -71,7 +71,7 @@ export function Footer() {
         <div className="flex gap-4">
           <Link href="/">Home</Link>
           <Link href="/search">Search</Link>
-          <Link href="/collections">Collection</Link>
+          <Link href="/products">Products</Link>
         </div>
       </div>
     </footer>

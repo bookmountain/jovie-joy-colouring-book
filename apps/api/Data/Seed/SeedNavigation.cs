@@ -7,7 +7,11 @@ public static class SeedNavigation
 {
     public static async Task RunAsync(AppDbContext db, bool initializeDefaults = false)
     {
-        if (!initializeDefaults || await db.NavLinks.AnyAsync()) return;
+        if (!initializeDefaults || await db.NavLinks.AnyAsync())
+        {
+            await MigrateCollectionHrefsAsync(db);
+            return;
+        }
 
         // Primary nav (3-level tree)
         var home = new NavLink { Label = "Home", Href = "/", SortIndex = 0 };
@@ -71,5 +75,48 @@ public static class SeedNavigation
             db.TrendingTerms.Add(new TrendingTerm { Term = terms[i], SortIndex = i });
 
         await db.SaveChangesAsync();
+        await MigrateCollectionHrefsAsync(db);
+    }
+
+    // Collection listings moved under /products so the menu, URL and breadcrumb
+    // all use the same word. Menu and footer links are rewritten in place;
+    // /collections/* still redirects, so nothing breaks either way.
+    // Idempotent: rows already on the new shape are skipped.
+    private static async Task MigrateCollectionHrefsAsync(AppDbContext db)
+    {
+        const string prefix = "/collections/";
+        var changed = false;
+
+        var navRows = await db.NavLinks.Where(n => n.Href.StartsWith(prefix)).ToListAsync();
+        foreach (var row in navRows)
+        {
+            row.Href = RewriteHref(row.Href, prefix);
+            changed = true;
+        }
+
+        var footerRows = await db.FooterLinks.Where(f => f.Href.StartsWith(prefix)).ToListAsync();
+        foreach (var row in footerRows)
+        {
+            row.Href = RewriteHref(row.Href, prefix);
+            changed = true;
+        }
+
+        if (changed) await db.SaveChangesAsync();
+    }
+
+    // The storefront used to silently rewrite these legacy slugs while
+    // resolving a /collections URL. Resolve them here instead, so the new
+    // links point straight at a collection that actually exists.
+    private static readonly Dictionary<string, string> SlugAliases = new(StringComparer.Ordinal)
+    {
+        ["paperback"] = "paperback-coloring-book",
+    };
+
+    private static string RewriteHref(string href, string prefix)
+    {
+        var slug = href[prefix.Length..].Trim('/');
+        if (string.IsNullOrEmpty(slug)) return "/products";
+        if (SlugAliases.TryGetValue(slug, out var canonical)) slug = canonical;
+        return $"/products?collection={Uri.EscapeDataString(slug)}";
     }
 }

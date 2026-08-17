@@ -4,8 +4,7 @@ import { AnnouncementBar } from "@/components/layout/announcement-bar";
 import { CollectionTiles } from "@/components/content/collection-tiles";
 import { Header } from "@/components/layout/header";
 import { SearchDrawer } from "@/components/overlays/search-drawer";
-import CollectionsPage from "@/app/(public)/collections/page";
-import CollectionPage from "@/app/(public)/collections/[slug]/page";
+import ProductsPage from "@/app/(public)/products/page";
 import StaticPage from "@/app/(public)/pages/[slug]/page";
 import { BundleProvider } from "@/state/catalog-provider";
 import { SiteProvider, useSite } from "@/state/site-store";
@@ -232,7 +231,7 @@ describe("CMS storefront regressions", () => {
 
     expect(screen.getByRole("heading", { name: "Configured tile" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Legacy hard-coded tile" })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Configured tile/ })).toHaveAttribute("href", "/collections/configured-tile");
+    expect(screen.getByRole("link", { name: /Configured tile/ })).toHaveAttribute("href", "/products?collection=configured-tile");
     expect(screen.getByRole("img", { name: /configured-hero\.png/ })).toHaveAttribute(
       "data-image-src",
       expect.stringMatching(/\/uploads\/configured-hero\.png$/),
@@ -241,7 +240,7 @@ describe("CMS storefront regressions", () => {
     expect(mocks.getProductsForCollection).toHaveBeenCalledWith("configured-tile");
   });
 
-  it("uses a collection hero image instead of its first product image on the public Collections page", async () => {
+  it("uses a collection hero image instead of its first product image on the collection view", async () => {
     mocks.getAllCollections.mockResolvedValue([
       {
         id: "all-id",
@@ -267,8 +266,19 @@ describe("CMS storefront regressions", () => {
       },
     ]);
     mocks.getProductsForCollection.mockResolvedValue([{ images: ["/uploads/first-product.png"] }]);
+    mocks.getCollectionBySlug.mockResolvedValue({
+      id: "collection-id",
+      slug: "cosy-books",
+      title: "Cosy books",
+      excerpt: "A CMS-managed collection",
+      heroImage: "/uploads/collections-hero.png",
+      defaultSort: "featured",
+      homepageSlot: null,
+      productSlugs: ["cosy-product"],
+      sortIndex: 1,
+    });
 
-    render(await CollectionsPage());
+    render(await ProductsPage({ searchParams: Promise.resolve({ collection: "cosy-books" }) }));
 
     expect(screen.queryByRole("heading", { name: "All" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Cosy books" })).toBeInTheDocument();
@@ -277,14 +287,13 @@ describe("CMS storefront regressions", () => {
       expect.stringMatching(/\/uploads\/collections-hero\.png$/),
     );
     expect(screen.queryByRole("img", { name: /first-product\.png/ })).not.toBeInTheDocument();
-    expect(mocks.getProductsForCollection).toHaveBeenCalledTimes(1);
     expect(mocks.getProductsForCollection).toHaveBeenCalledWith("cosy-books");
   });
 
   it.each([
     ["/uploads/detail-hero.png", true],
     [null, false],
-  ])("renders the collection detail hero only when heroImage is %s", async (heroImage, shouldRender) => {
+  ])("renders the collection hero only when heroImage is %s", async (heroImage, shouldRender) => {
     mocks.getCollectionBySlug.mockResolvedValue({
       id: "detail-id",
       slug: "detail-collection",
@@ -297,8 +306,8 @@ describe("CMS storefront regressions", () => {
       sortIndex: 1,
     });
 
-    const page = await CollectionPage({
-      params: Promise.resolve({ slug: "detail-collection" }),
+    const page = await ProductsPage({
+      searchParams: Promise.resolve({ collection: "detail-collection" }),
     });
     render(page);
 

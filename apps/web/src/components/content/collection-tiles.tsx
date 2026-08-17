@@ -39,7 +39,7 @@ export async function CollectionTiles() {
             return (
               <Link
                 className="group relative block aspect-[16/9] overflow-hidden rounded-coco bg-cocoa-blush shadow-soft"
-                href={`/collections/${collection.slug}`}
+                href={`/products?collection=${collection.slug}`}
                 key={collection.slug}
               >
                 <SafeImage

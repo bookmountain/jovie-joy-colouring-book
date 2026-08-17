@@ -5,7 +5,7 @@ import type { Collection } from "@/lib/api";
 const configuredRow: HomeRowData = {
   eyebrow: "CMS eyebrow",
   title: "CMS row title",
-  href: "/collections/configured-fallback",
+  href: "/products?collection=configured-fallback",
   collectionSlug: "configured-fallback",
   itemCount: 7,
 };
@@ -35,7 +35,7 @@ describe("applyHomepageCollection", () => {
       expect(result).toEqual({
         eyebrow: "CMS eyebrow",
         title: "CMS row title",
-        href: `/collections/${slot}-collection`,
+        href: `/products?collection=${slot}-collection`,
         collectionSlug: `${slot}-collection`,
         itemCount: 7,
       });

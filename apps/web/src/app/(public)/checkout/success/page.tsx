@@ -19,7 +19,7 @@ export default function CheckoutSuccess() {
         Your order is being processed. You&apos;ll receive an email with your
         download links shortly.
       </p>
-      <Link className="coco-button-primary" href="/collections">
+      <Link className="coco-button-primary" href="/products">
         Keep browsing
       </Link>
     </main>

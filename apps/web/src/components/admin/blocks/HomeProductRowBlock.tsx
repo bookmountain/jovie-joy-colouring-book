@@ -60,7 +60,7 @@ export function HomeProductRowBlock({ blockKey, data, onChange }: ContentBlockEd
               <AdminInput
                 id={`${idPrefix}-href`}
                 onChange={(e) => onChange({ ...d, href: e.target.value })}
-                placeholder="e.g. /collections/frontpage"
+                placeholder="e.g. /products?collection=frontpage"
                 value={d.href ?? ""}
               />
             </AdminField>

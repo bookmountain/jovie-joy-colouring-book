@@ -22,7 +22,7 @@ export default function CheckoutPage() {
     e.preventDefault();
     setError(null);
     if (state.cart.items.length === 0) {
-      router.push("/collections");
+      router.push("/products");
       return;
     }
     setSubmitting(true);

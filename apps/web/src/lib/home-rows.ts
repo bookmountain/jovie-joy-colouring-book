@@ -20,7 +20,7 @@ export function applyHomepageCollection(
     ? {
         ...configured,
         collectionSlug: assigned.slug,
-        href: `/collections/${assigned.slug}`,
+        href: `/products?collection=${assigned.slug}`,
       }
     : configured;
 }
