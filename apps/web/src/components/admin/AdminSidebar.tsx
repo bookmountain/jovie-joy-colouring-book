@@ -1,21 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { shopIsEnabled } from "@/lib/site-modules";
+import { accountsAreEnabled, cartIsEnabled } from "@/lib/site-modules";
 import { useAdminModules } from "@/state/admin-modules";
 
 export type AdminUser = { email: string; role: string };
 
-// Hidden while the shop module is off: these sections manage the catalogue
-// and commerce flows that the storefront no longer exposes. The pages stay
-// deployed, so re-enabling the module brings them straight back.
-const SHOP_ADMIN_HREFS = new Set([
-  "/admin/products",
-  "/admin/collections",
-  "/admin/orders",
-  "/admin/customers",
-  "/admin/notify-me",
-]);
+// Products and Collections always stay editable — the catalogue is the shop
+// window that feeds the retailer links, whether or not on-site buying is on.
+// Only the sections that depend on a disabled module are hidden.
+const CART_ADMIN_HREFS = new Set(["/admin/orders"]);
+const ACCOUNT_ADMIN_HREFS = new Set(["/admin/customers"]);
 
 const NAV: Array<{
   group: string;
@@ -62,11 +57,14 @@ export function AdminSidebar({
   pathname, user, onSignOut,
 }: { pathname: string; user: AdminUser | null; onSignOut: () => void }) {
   const { modules } = useAdminModules();
-  const shop = shopIsEnabled(modules);
+  const cart = cartIsEnabled(modules);
+  const accounts = accountsAreEnabled(modules);
   const nav = NAV
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => shop || !SHOP_ADMIN_HREFS.has(item.href)),
+      items: group.items.filter((item) =>
+        (cart || !CART_ADMIN_HREFS.has(item.href)) &&
+        (accounts || !ACCOUNT_ADMIN_HREFS.has(item.href))),
     }))
     .filter((group) => group.items.length > 0);
 

@@ -32,8 +32,8 @@ describe("Content CMS homepage visibility", () => {
     render(<AdminContentPage />);
 
     const blogSwitch = await screen.findByRole("switch", { name: "Show Blog posts on homepage" });
-    // 13 homepage sections plus the shop-module toggle.
-    expect(screen.getAllByRole("switch")).toHaveLength(14);
+    // 13 homepage sections plus the cart and customer-accounts toggles.
+    expect(screen.getAllByRole("switch")).toHaveLength(15);
     expect(blogSwitch).toHaveAttribute("aria-checked", "true");
 
     fireEvent.click(blogSwitch);
@@ -49,26 +49,52 @@ describe("Content CMS homepage visibility", () => {
     ));
   });
 
-  it("saves the shop module toggle immediately", async () => {
+  it("saves the cart toggle immediately without touching accounts", async () => {
     mocks.upsert.mockResolvedValue({
       key: "site.modules",
       type: "SiteModules",
-      data: { shop: false },
+      data: { cart: false, accounts: true },
       sortIndex: 0,
       updatedAt: "2026-08-12T00:00:00Z",
     });
     render(<AdminContentPage />);
 
-    const shopSwitch = await screen.findByRole("switch", { name: "Enable shop and checkout" });
-    expect(shopSwitch).toHaveAttribute("aria-checked", "true");
+    const cartSwitch = await screen.findByRole("switch", { name: "Enable cart and checkout" });
+    expect(cartSwitch).toHaveAttribute("aria-checked", "true");
 
-    fireEvent.click(shopSwitch);
+    fireEvent.click(cartSwitch);
 
     await waitFor(() => expect(mocks.upsert).toHaveBeenCalledWith(
       "site.modules",
       expect.objectContaining({
         type: "SiteModules",
-        data: expect.objectContaining({ shop: false }),
+        data: expect.objectContaining({ cart: false, accounts: true }),
+      }),
+    ));
+  });
+
+  it("saves the customer accounts toggle independently of the cart", async () => {
+    mocks.list.mockResolvedValue([{
+      key: "site.modules",
+      type: "SiteModules",
+      data: { cart: false, accounts: true },
+      sortIndex: 0,
+      updatedAt: "2026-08-12T00:00:00Z",
+    }]);
+    render(<AdminContentPage />);
+
+    const accountsSwitch = await screen.findByRole("switch", { name: "Enable customer accounts" });
+    expect(accountsSwitch).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("switch", { name: "Enable cart and checkout" }))
+      .toHaveAttribute("aria-checked", "false");
+
+    fireEvent.click(accountsSwitch);
+
+    await waitFor(() => expect(mocks.upsert).toHaveBeenCalledWith(
+      "site.modules",
+      expect.objectContaining({
+        type: "SiteModules",
+        data: expect.objectContaining({ cart: false, accounts: false }),
       }),
     ));
   });

@@ -18,8 +18,7 @@ import { getSiteContent } from "@/data/site-content";
 import { getAllProducts } from "@/data/products";
 import { getProductsForCollection, sortProducts } from "@/lib/catalog";
 import { applyHomepageCollection, type HomeRowData } from "@/lib/home-rows";
-import { homeSectionIsVisible, readHomeSectionVisibility, type HomeSectionId } from "@/lib/home-visibility";
-import { readSiteModules, shopIsEnabled } from "@/lib/site-modules";
+import { homeSectionIsVisible, readHomeSectionVisibility } from "@/lib/home-visibility";
 import { SafeImage } from "@/components/common/SafeImage";
 
 const ROW_FALLBACKS: Record<string, HomeRowData> = {
@@ -57,13 +56,8 @@ async function keepReachableHeroSlides(slides: HeroSlide[]): Promise<HeroSlide[]
 export default async function Home() {
   const bundle = await getSiteContent();
   const visibility = readHomeSectionVisibility(bundle);
-  const shop = shopIsEnabled(readSiteModules(bundle));
-  // Product rows and collection tiles lead into /products and /collections,
-  // which 404 while the shop module is off — hide them regardless of the
-  // per-section homepage visibility settings.
-  const shopOnlySections: HomeSectionId[] = ["newRelease", "bestSeller", "digital", "collectionTiles"];
   const show = (section: Parameters<typeof homeSectionIsVisible>[1]) =>
-    homeSectionIsVisible(visibility, section) && (shop || !shopOnlySections.includes(section));
+    homeSectionIsVisible(visibility, section);
   const needsCollectionRows = show("bestSeller") || show("digital");
   const collections = needsCollectionRows ? await getAllCollections() : [];
 

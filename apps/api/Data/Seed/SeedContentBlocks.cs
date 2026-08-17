@@ -171,20 +171,48 @@ public static class SeedContentBlocks
     }
 
     // Module toggles ship disabled: the store sells through external retailer
-    // pages, so cart/checkout/accounts stay off until an admin flips the
-    // switch under Advanced content. Absence of the block means "enabled" to
-    // the storefront, which is why the defaults-version upgrade installs it
-    // exactly once on databases that predate it.
+    // pages, so on-site buying and customer accounts stay off until an admin
+    // flips a switch under Advanced content. Product and collection pages are
+    // never gated — the catalogue is the shop window for the retailer links.
+    // Absence of the block means "enabled" to the storefront, which is why the
+    // defaults-version upgrade installs it exactly once on older databases.
     private static ContentBlock SiteModulesBlock(DateTime now) => new()
     {
         Key = "site.modules", Type = ContentBlockType.SiteModules, SortIndex = 0, UpdatedAt = now,
-        Data = JsonDocument.Parse("""{ "shop": false }"""),
+        Data = JsonDocument.Parse("""{ "cart": false, "accounts": false }"""),
     };
 
     public static async Task AddSiteModulesDefaultAsync(AppDbContext db)
     {
         if (await db.ContentBlocks.AnyAsync(b => b.Key == "site.modules")) return;
         db.ContentBlocks.Add(SiteModulesBlock(DateTime.UtcNow));
+        await db.SaveChangesAsync();
+    }
+
+    // v2 shipped a single "shop" flag that also hid product and collection
+    // pages. v3 splits it into cart/accounts and always keeps the catalogue
+    // visible, so the old flag is rewritten once into the new pair.
+    public static async Task MigrateSiteModulesShapeAsync(AppDbContext db)
+    {
+        var block = await db.ContentBlocks.FirstOrDefaultAsync(b => b.Key == "site.modules");
+        if (block is null)
+        {
+            db.ContentBlocks.Add(SiteModulesBlock(DateTime.UtcNow));
+            await db.SaveChangesAsync();
+            return;
+        }
+
+        if (JsonNode.Parse(block.Data.RootElement.GetRawText()) is not JsonObject node) return;
+        if (!node.ContainsKey("shop")) return;
+
+        // The old flag does not map onto the new pair: "shop on" only ever
+        // meant "stop hiding the catalogue", never "I want an on-site cart".
+        // Reset to the shipped default and let the two switches take over.
+        node.Remove("shop");
+        node["cart"] = node["cart"]?.GetValue<bool>() ?? false;
+        node["accounts"] = node["accounts"]?.GetValue<bool>() ?? false;
+        block.Data = JsonDocument.Parse(node.ToJsonString());
+        block.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
     }
 

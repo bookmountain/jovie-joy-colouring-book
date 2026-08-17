@@ -12,7 +12,10 @@ vi.mock("next/link", () => ({
 const adminGetContent = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/adminApi", () => ({ adminGetContent }));
 
-function renderSidebar() {
+function renderSidebar(data: unknown) {
+  adminGetContent.mockResolvedValue({
+    key: "site.modules", type: "SiteModules", data, sortIndex: 0, updatedAt: "",
+  });
   return render(
     <AdminModulesProvider>
       <AdminSidebar pathname="/admin" user={{ email: "a@b.c", role: "Owner" }} onSignOut={() => {}} />
@@ -20,34 +23,39 @@ function renderSidebar() {
   );
 }
 
-describe("AdminSidebar shop module visibility", () => {
+describe("AdminSidebar module visibility", () => {
   afterEach(() => { cleanup(); adminGetContent.mockReset(); });
 
-  test("hides catalogue and commerce sections while the shop module is off", async () => {
-    adminGetContent.mockResolvedValue({
-      key: "site.modules", type: "SiteModules", data: { shop: false }, sortIndex: 0, updatedAt: "",
-    });
-    renderSidebar();
+  test("keeps Products and Collections editable when both modules are off", async () => {
+    renderSidebar({ cart: false, accounts: false });
 
-    await waitFor(() => expect(screen.queryByText("Products")).toBeNull());
-    for (const hidden of ["Products", "Collections", "Orders", "Customers", "Notify me"]) {
-      expect(screen.queryByText(hidden)).toBeNull();
-    }
-    // The whole Catalog group disappears; Commerce keeps only Subscribers.
-    expect(screen.queryByText("Catalog")).toBeNull();
-    expect(screen.getByText("Commerce")).toBeTruthy();
-    expect(screen.getByText("Subscribers")).toBeTruthy();
-    // Content sections are untouched.
-    for (const kept of ["Dashboard", "Freebies page", "Home page", "Blog"]) {
+    await waitFor(() => expect(screen.queryByText("Orders")).toBeNull());
+    // The catalogue is the shop window for retailer links — never hidden.
+    for (const kept of ["Products", "Collections", "Notify me", "Subscribers", "Freebies page"]) {
       expect(screen.getByText(kept)).toBeTruthy();
     }
+    expect(screen.getByText("Catalog")).toBeTruthy();
+    // Only the sections that depend on a disabled module disappear.
+    expect(screen.queryByText("Orders")).toBeNull();
+    expect(screen.queryByText("Customers")).toBeNull();
   });
 
-  test("shows the full navigation while the shop module is on", async () => {
-    adminGetContent.mockResolvedValue({
-      key: "site.modules", type: "SiteModules", data: { shop: true }, sortIndex: 0, updatedAt: "",
-    });
-    renderSidebar();
+  test("hides only Orders when just the cart is off", async () => {
+    renderSidebar({ cart: false, accounts: true });
+
+    await waitFor(() => expect(screen.queryByText("Orders")).toBeNull());
+    expect(screen.getByText("Customers")).toBeTruthy();
+  });
+
+  test("hides only Customers when just accounts are off", async () => {
+    renderSidebar({ cart: true, accounts: false });
+
+    await waitFor(() => expect(screen.queryByText("Customers")).toBeNull());
+    expect(screen.getByText("Orders")).toBeTruthy();
+  });
+
+  test("shows the full navigation while both modules are on", async () => {
+    renderSidebar({ cart: true, accounts: true });
 
     await waitFor(() => expect(adminGetContent).toHaveBeenCalled());
     for (const label of ["Products", "Collections", "Orders", "Customers", "Notify me", "Subscribers"]) {
@@ -57,9 +65,13 @@ describe("AdminSidebar shop module visibility", () => {
 
   test("falls back to the full navigation when the toggle block does not exist", async () => {
     adminGetContent.mockRejectedValue(new Error("not found"));
-    renderSidebar();
+    render(
+      <AdminModulesProvider>
+        <AdminSidebar pathname="/admin" user={{ email: "a@b.c", role: "Owner" }} onSignOut={() => {}} />
+      </AdminModulesProvider>,
+    );
 
     await waitFor(() => expect(adminGetContent).toHaveBeenCalled());
-    expect(screen.getByText("Products")).toBeTruthy();
+    expect(screen.getByText("Orders")).toBeTruthy();
   });
 });

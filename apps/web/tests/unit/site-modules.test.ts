@@ -1,11 +1,11 @@
 import { describe, expect, test } from "vitest";
-import type { NavLink, SiteContentBundle } from "@/lib/api";
+import type { SiteContentBundle } from "@/lib/api";
 import {
   SITE_MODULES_KEY,
-  filterShopNavigation,
+  accountsAreEnabled,
+  cartIsEnabled,
+  cartRouteIsEnabled,
   readSiteModules,
-  shopIsEnabled,
-  shopRouteIsEnabled,
 } from "@/lib/site-modules";
 
 function bundleWith(data: unknown): SiteContentBundle {
@@ -14,22 +14,37 @@ function bundleWith(data: unknown): SiteContentBundle {
   } as unknown as SiteContentBundle;
 }
 
-describe("shopIsEnabled", () => {
-  test("defaults to enabled when the block or flag is absent", () => {
-    expect(shopIsEnabled(undefined)).toBe(true);
-    expect(shopIsEnabled(null)).toBe(true);
-    expect(shopIsEnabled({})).toBe(true);
+describe("cartIsEnabled / accountsAreEnabled", () => {
+  test("default to enabled when the block or flags are absent", () => {
+    for (const modules of [undefined, null, {}]) {
+      expect(cartIsEnabled(modules)).toBe(true);
+      expect(accountsAreEnabled(modules)).toBe(true);
+    }
   });
 
-  test("respects an explicit flag", () => {
-    expect(shopIsEnabled({ shop: true })).toBe(true);
-    expect(shopIsEnabled({ shop: false })).toBe(false);
+  test("respect each flag independently", () => {
+    expect(cartIsEnabled({ cart: false, accounts: true })).toBe(false);
+    expect(accountsAreEnabled({ cart: false, accounts: true })).toBe(true);
+    expect(cartIsEnabled({ cart: true, accounts: false })).toBe(true);
+    expect(accountsAreEnabled({ cart: true, accounts: false })).toBe(false);
+  });
+
+  test("fall back to the legacy shop flag when the new keys are missing", () => {
+    expect(cartIsEnabled({ shop: false })).toBe(false);
+    expect(accountsAreEnabled({ shop: false })).toBe(false);
+    expect(cartIsEnabled({ shop: true })).toBe(true);
+  });
+
+  test("prefer an explicit new flag over the legacy one", () => {
+    expect(cartIsEnabled({ shop: true, cart: false })).toBe(false);
+    expect(accountsAreEnabled({ shop: false, accounts: true })).toBe(true);
   });
 });
 
 describe("readSiteModules", () => {
   test("reads the site.modules block from the bundle", () => {
-    expect(readSiteModules(bundleWith({ shop: false }))).toEqual({ shop: false });
+    expect(readSiteModules(bundleWith({ cart: false, accounts: false })))
+      .toEqual({ cart: false, accounts: false });
   });
 
   test("returns an empty object when the bundle has no block", () => {
@@ -37,51 +52,26 @@ describe("readSiteModules", () => {
   });
 });
 
-describe("shopRouteIsEnabled", () => {
-  const off = { shop: false };
+describe("cartRouteIsEnabled", () => {
+  const off = { cart: false };
 
-  test("blocks every commerce route while the shop is off", () => {
+  test("blocks only checkout while the cart is off", () => {
+    expect(cartRouteIsEnabled(off, "/checkout")).toBe(false);
+    expect(cartRouteIsEnabled(off, "/checkout/success")).toBe(false);
+  });
+
+  test("keeps the catalogue browsable while the cart is off", () => {
     for (const path of [
-      "/products", "/products/cozy-days", "/collections", "/collections/digital",
-      "/collections/digital/products/cozy-days", "/checkout", "/checkout/success",
-      "/search", "/wishlist", "/pages/wishlist",
+      "/", "/products", "/products/soft-life-with-zoebook", "/collections",
+      "/collections/digital", "/search", "/wishlist", "/pages/wishlist",
+      "/pages/freebies", "/blogs/htc",
     ]) {
-      expect(shopRouteIsEnabled(off, path)).toBe(false);
+      expect(cartRouteIsEnabled(off, path)).toBe(true);
     }
   });
 
-  test("keeps content routes reachable while the shop is off", () => {
-    for (const path of ["/", "/pages/freebies", "/pages/about-us", "/blogs/htc", "/pages/comics"]) {
-      expect(shopRouteIsEnabled(off, path)).toBe(true);
-    }
-  });
-
-  test("allows everything while the shop is on", () => {
-    expect(shopRouteIsEnabled({}, "/products")).toBe(true);
-    expect(shopRouteIsEnabled({ shop: true }, "/checkout")).toBe(true);
-  });
-});
-
-describe("filterShopNavigation", () => {
-  const nav: NavLink[] = [
-    { id: "1", label: "Home", href: "/", enabled: true, children: [] },
-    {
-      id: "2", label: "Products", href: "/products", enabled: true,
-      children: [{ id: "3", label: "Stickers", href: "/collections/vinyl-sticker-packs", enabled: true, children: [] }],
-    },
-    {
-      id: "4", label: "Freebies", href: "/pages/freebies", enabled: true,
-      children: [{ id: "5", label: "Digital Books", href: "/collections/digital", enabled: true, children: [] }],
-    },
-  ];
-
-  test("removes shop links (including nested children) while the shop is off", () => {
-    const filtered = filterShopNavigation(nav, { shop: false });
-    expect(filtered.map((item) => item.label)).toEqual(["Home", "Freebies"]);
-    expect(filtered[1].children).toEqual([]);
-  });
-
-  test("returns navigation untouched while the shop is on", () => {
-    expect(filterShopNavigation(nav, {})).toEqual(nav);
+  test("allows everything while the cart is on", () => {
+    expect(cartRouteIsEnabled({}, "/checkout")).toBe(true);
+    expect(cartRouteIsEnabled({ cart: true }, "/checkout")).toBe(true);
   });
 });

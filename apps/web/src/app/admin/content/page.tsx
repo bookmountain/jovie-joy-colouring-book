@@ -22,7 +22,12 @@ import {
   HOME_VISIBILITY_KEY,
   type HomeSectionId,
 } from "@/lib/home-visibility";
-import { SITE_MODULES_KEY, shopIsEnabled, type SiteModules } from "@/lib/site-modules";
+import {
+  SITE_MODULES_KEY,
+  accountsAreEnabled,
+  cartIsEnabled,
+  type SiteModules,
+} from "@/lib/site-modules";
 import { useAdminModules } from "@/state/admin-modules";
 
 const ORDER = ACTIVE_CONTENT_BLOCK_TYPES;
@@ -54,9 +59,16 @@ export default function AdminContentPage() {
   }
   useEffect(reload, []);
 
-  async function saveShopModule(enabled: boolean) {
+  async function saveModule(module: "cart" | "accounts", enabled: boolean) {
     const previous = modules;
-    const next = { ...modules, shop: enabled };
+    // Drop the retired single flag so it can never override the pair below.
+    const { shop: _retired, ...current } = modules;
+    const next: SiteModules = {
+      cart: cartIsEnabled(modules),
+      accounts: accountsAreEnabled(modules),
+      ...current,
+      [module]: enabled,
+    };
     setModules(next);
     setModulesSaving(true);
     setModulesError(null);
@@ -70,7 +82,7 @@ export default function AdminContentPage() {
       reload();
     } catch (reason) {
       setModules(previous);
-      setModulesError(reason instanceof Error ? reason.message : "Store modules save failed");
+      setModulesError(reason instanceof Error ? reason.message : "Store module save failed");
     } finally {
       setModulesSaving(false);
     }
@@ -136,23 +148,41 @@ export default function AdminContentPage() {
         <div>
           <h2 className="text-lg font-bold">Store modules</h2>
           <p className="mt-1 text-sm text-cocoa-text">
-            Turn whole storefront features on or off. Nothing is deleted while a module is off.
+            Turn on-site selling and customer accounts on or off. Product and collection
+            pages stay live either way, so the catalogue always works as a shop window.
+            Nothing is deleted while a module is off.
           </p>
         </div>
         <div className="flex items-center justify-between gap-4 rounded-coco-sm border border-cocoa-line bg-white px-4 py-3">
           <div>
-            <span className="text-sm font-semibold">Shop &amp; checkout</span>
+            <span className="text-sm font-semibold">Cart &amp; checkout</span>
             <p className="mt-1 text-xs text-cocoa-text">
-              Product pages, collections, cart, checkout, search, wishlist and customer sign-in.
-              While off, the sidebar hides Products, Collections, Orders, Customers and Notify me,
-              and shoppers buy through the retailer links you configure elsewhere (e.g. Amazon).
+              While off, product pages drop &quot;Add to cart&quot; and the quantity picker,
+              the basket icon and checkout disappear, and buyers use the retailer links
+              (e.g. Amazon) on each product instead. Orders is hidden from this sidebar.
             </p>
           </div>
           <AdminSwitch
-            aria-label="Enable shop and checkout"
-            checked={shopIsEnabled(modules)}
+            aria-label="Enable cart and checkout"
+            checked={cartIsEnabled(modules)}
             disabled={modulesSaving}
-            onChange={(checked) => void saveShopModule(checked)}
+            onChange={(checked) => void saveModule("cart", checked)}
+          />
+        </div>
+        <div className="flex items-center justify-between gap-4 rounded-coco-sm border border-cocoa-line bg-white px-4 py-3">
+          <div>
+            <span className="text-sm font-semibold">Customer accounts</span>
+            <p className="mt-1 text-xs text-cocoa-text">
+              Google sign-in and the account menu. While off, visitors browse without
+              logging in and Customers is hidden from this sidebar. Your admin login is
+              separate and always works.
+            </p>
+          </div>
+          <AdminSwitch
+            aria-label="Enable customer accounts"
+            checked={accountsAreEnabled(modules)}
+            disabled={modulesSaving}
+            onChange={(checked) => void saveModule("accounts", checked)}
           />
         </div>
         {modulesError ? <p className="text-sm text-cocoa-coral" role="alert">{modulesError}</p> : null}

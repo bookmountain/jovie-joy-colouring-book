@@ -3,11 +3,9 @@
 import Link from "next/link";
 import { useBundle } from "@/state/catalog-provider";
 import { navigationRouteIsEnabled } from "@/lib/navigation-visibility";
-import { readSiteModules, shopIsEnabled, shopRouteIsEnabled } from "@/lib/site-modules";
 
 export function Footer() {
   const bundle = useBundle();
-  const modules = readSiteModules(bundle);
   const footerGroups = bundle.footerLinks;
   const socialLinks = bundle.socialLinks;
   const contact = bundle.footerContact[0]?.data ?? {
@@ -45,9 +43,7 @@ export function Footer() {
           <div key={group.title}>
             <h2 className="text-base font-extrabold">{group.title}</h2>
             <ul className="mt-4 grid gap-2 text-sm text-cocoa-text">
-              {group.links.filter((link) =>
-                navigationRouteIsEnabled(bundle.navigation, link.href) &&
-                shopRouteIsEnabled(modules, link.href)).map((link) => (
+              {group.links.filter((link) => navigationRouteIsEnabled(bundle.navigation, link.href)).map((link) => (
                 <li key={link.href}>
                   <Link className="hover:text-cocoa-coral" href={link.href}>
                     {link.label}
@@ -74,10 +70,8 @@ export function Footer() {
         </div>
         <div className="flex gap-4">
           <Link href="/">Home</Link>
-          {shopIsEnabled(modules) ? <>
-            <Link href="/search">Search</Link>
-            <Link href="/collections">Collection</Link>
-          </> : null}
+          <Link href="/search">Search</Link>
+          <Link href="/collections">Collection</Link>
         </div>
       </div>
     </footer>

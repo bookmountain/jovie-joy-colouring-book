@@ -7,11 +7,14 @@ import type { Product } from "@/data/products";
 import { resolveAssetUrl } from "@/lib/api";
 import { formatMoney } from "@/lib/format";
 import { useSite } from "@/state/site-store";
+import { useBundle } from "@/state/catalog-provider";
+import { cartIsEnabled, readSiteModules } from "@/lib/site-modules";
 import { WishlistButton } from "./wishlist-button";
 
 export function ProductDetailPanel({ product }: { product: Product }) {
   const [quantity, setQuantity] = useState(1);
   const { dispatch } = useSite();
+  const cart = cartIsEnabled(readSiteModules(useBundle()));
   const onSale =
     typeof product.compareAtPriceCents === "number" &&
     product.compareAtPriceCents > product.priceCents;
@@ -56,51 +59,55 @@ export function ProductDetailPanel({ product }: { product: Product }) {
             ))}
           </div>
         </div>
-        <div>
-          <p className="mb-2 text-sm font-extrabold">Quantity</p>
-          <div className="inline-flex min-h-11 items-center rounded-full border border-cocoa-line bg-white">
-            <button
-              aria-label="Decrease quantity"
-              className="grid h-11 w-11 place-items-center"
-              onClick={() => setQuantity((value) => Math.max(1, value - 1))}
-              type="button"
-            >
-              <Minus aria-hidden="true" className="h-4 w-4" />
-            </button>
-            <span className="min-w-10 text-center text-sm font-extrabold">
-              {quantity}
-            </span>
-            <button
-              aria-label="Increase quantity"
-              className="grid h-11 w-11 place-items-center"
-              onClick={() => setQuantity((value) => value + 1)}
-              type="button"
-            >
-              <Plus aria-hidden="true" className="h-4 w-4" />
-            </button>
+        {cart ? (
+          <div>
+            <p className="mb-2 text-sm font-extrabold">Quantity</p>
+            <div className="inline-flex min-h-11 items-center rounded-full border border-cocoa-line bg-white">
+              <button
+                aria-label="Decrease quantity"
+                className="grid h-11 w-11 place-items-center"
+                onClick={() => setQuantity((value) => Math.max(1, value - 1))}
+                type="button"
+              >
+                <Minus aria-hidden="true" className="h-4 w-4" />
+              </button>
+              <span className="min-w-10 text-center text-sm font-extrabold">
+                {quantity}
+              </span>
+              <button
+                aria-label="Increase quantity"
+                className="grid h-11 w-11 place-items-center"
+                onClick={() => setQuantity((value) => value + 1)}
+                type="button"
+              >
+                <Plus aria-hidden="true" className="h-4 w-4" />
+              </button>
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
       <div className="mt-6 flex gap-3">
-        <button
-          className="coco-button-primary flex-1"
-          onClick={() =>
-            dispatch({
-              type: "cart/add",
-              item: {
-                productSlug: product.slug,
-                title: product.title,
-                priceCents: product.priceCents,
-                quantity,
-                image: productImage,
-                option: product.options[0]?.values[0],
-              },
-            })
-          }
-          type="button"
-        >
-          Add to cart
-        </button>
+        {cart ? (
+          <button
+            className="coco-button-primary flex-1"
+            onClick={() =>
+              dispatch({
+                type: "cart/add",
+                item: {
+                  productSlug: product.slug,
+                  title: product.title,
+                  priceCents: product.priceCents,
+                  quantity,
+                  image: productImage,
+                  option: product.options[0]?.values[0],
+                },
+              })
+            }
+            type="button"
+          >
+            Add to cart
+          </button>
+        ) : null}
         <WishlistButton productSlug={product.slug} productTitle={product.title} />
       </div>
       {product.available ? null : (

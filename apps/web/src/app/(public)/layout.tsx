@@ -9,7 +9,7 @@ import { ChooseOptionsModal } from "@/components/overlays/choose-options-modal";
 import { LoginModal } from "@/components/overlays/login-modal";
 import { SearchDrawer } from "@/components/overlays/search-drawer";
 import { TermsModal } from "@/components/overlays/terms-modal";
-import { readSiteModules, shopIsEnabled } from "@/lib/site-modules";
+import { accountsAreEnabled, cartIsEnabled, readSiteModules } from "@/lib/site-modules";
 
 // Cache anonymous storefront routes and refresh them in the background at most
 // once per minute. Authenticated/admin requests have their own no-store policy.
@@ -21,7 +21,8 @@ export default async function PublicLayout({
   children: React.ReactNode;
 }>) {
   const bundle = await getSiteContent();
-  const shop = shopIsEnabled(readSiteModules(bundle));
+  const modules = readSiteModules(bundle);
+  const cart = cartIsEnabled(modules);
 
   return (
     <SiteProviders bundle={bundle}>
@@ -29,13 +30,13 @@ export default async function PublicLayout({
       <Header />
       {children}
       <Footer />
-      {shop ? <>
+      <SearchDrawer />
+      <BackInStockModal />
+      {cart ? <>
         <CartDrawer />
-        <SearchDrawer />
-        <LoginModal />
-        <BackInStockModal />
         <ChooseOptionsModal />
       </> : null}
+      {accountsAreEnabled(modules) ? <LoginModal /> : null}
       <TermsModal />
     </SiteProviders>
   );

@@ -1,40 +1,37 @@
-import type { NavLink, SiteContentBundle } from "@/lib/api";
+import type { SiteContentBundle } from "@/lib/api";
 import { normalizeNavigationPath } from "@/lib/navigation-visibility";
 
 export const SITE_MODULES_KEY = "site.modules";
 
-export type SiteModules = { shop?: boolean };
+export type SiteModules = {
+  /** On-site buying: add to cart, cart drawer, checkout. */
+  cart?: boolean;
+  /** Customer accounts: Google sign-in and the account menu. */
+  accounts?: boolean;
+  /** Legacy single flag; both modules fall back to it when set. */
+  shop?: boolean;
+};
 
-// Storefront routes that only make sense while the shop module is on.
-const SHOP_ROUTE_PREFIXES = [
-  "/products",
-  "/collections",
-  "/checkout",
-  "/search",
-  "/wishlist",
-  "/pages/wishlist",
-];
+// Only checkout is unreachable without the cart. Products, collections,
+// search and wishlist stay browsable so the catalogue still works as a
+// shop window that sends buyers to the retailer links on each product.
+const CART_ROUTE_PREFIXES = ["/checkout"];
 
 export function readSiteModules(bundle: SiteContentBundle): SiteModules {
   return (bundle.siteModules?.find((block) => block.key === SITE_MODULES_KEY)?.data ?? {}) as SiteModules;
 }
 
-// Absence means enabled so environments without the toggle block keep the
-// full storefront; the API seeds the block with shop off.
-export function shopIsEnabled(modules: SiteModules | null | undefined): boolean {
-  return modules?.shop !== false;
+export function cartIsEnabled(modules: SiteModules | null | undefined): boolean {
+  return modules?.cart ?? modules?.shop ?? true;
 }
 
-export function shopRouteIsEnabled(modules: SiteModules | null | undefined, href: string): boolean {
-  if (shopIsEnabled(modules)) return true;
+export function accountsAreEnabled(modules: SiteModules | null | undefined): boolean {
+  return modules?.accounts ?? modules?.shop ?? true;
+}
+
+export function cartRouteIsEnabled(modules: SiteModules | null | undefined, href: string): boolean {
+  if (cartIsEnabled(modules)) return true;
   const path = normalizeNavigationPath(href);
   if (!path) return true;
-  return !SHOP_ROUTE_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
-}
-
-export function filterShopNavigation(items: NavLink[], modules: SiteModules | null | undefined): NavLink[] {
-  if (shopIsEnabled(modules)) return items;
-  return items.flatMap((item) => shopRouteIsEnabled(modules, item.href)
-    ? [{ ...item, children: filterShopNavigation(item.children ?? [], modules) }]
-    : []);
+  return !CART_ROUTE_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
 }
