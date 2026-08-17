@@ -8,7 +8,7 @@ namespace JovieJoy.Api.Data;
 
 public static class DbSeeder
 {
-    public const int CurrentDefaultsVersion = 1;
+    public const int CurrentDefaultsVersion = 2;
     public const int MinimumAdminPasswordLength = 16;
 
     private const string DefaultsStateKey = "cms-defaults";
@@ -104,6 +104,13 @@ public static class DbSeeder
         }
         else if (state.Version < CurrentDefaultsVersion)
         {
+            // v2 introduced the site.modules toggle block. Databases seeded
+            // before it get the disabled-shop default exactly once; deleting
+            // or editing the block afterwards is a CMS decision that later
+            // restarts must respect, hence the marker bump in the same save.
+            if (state.Version < 2)
+                await SeedContentBlocks.AddSiteModulesDefaultAsync(db);
+
             state.Version = CurrentDefaultsVersion;
             state.CompletedAtUtc = DateTime.UtcNow;
             await db.SaveChangesAsync();

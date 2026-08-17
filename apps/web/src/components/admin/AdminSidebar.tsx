@@ -1,8 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import { shopIsEnabled } from "@/lib/site-modules";
+import { useAdminModules } from "@/state/admin-modules";
 
 export type AdminUser = { email: string; role: string };
+
+// Hidden while the shop module is off: these sections manage the catalogue
+// and commerce flows that the storefront no longer exposes. The pages stay
+// deployed, so re-enabling the module brings them straight back.
+const SHOP_ADMIN_HREFS = new Set([
+  "/admin/products",
+  "/admin/collections",
+  "/admin/orders",
+  "/admin/customers",
+  "/admin/notify-me",
+]);
 
 const NAV: Array<{
   group: string;
@@ -48,6 +61,15 @@ function isActive(itemHref: string, pathname: string): boolean {
 export function AdminSidebar({
   pathname, user, onSignOut,
 }: { pathname: string; user: AdminUser | null; onSignOut: () => void }) {
+  const { modules } = useAdminModules();
+  const shop = shopIsEnabled(modules);
+  const nav = NAV
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => shop || !SHOP_ADMIN_HREFS.has(item.href)),
+    }))
+    .filter((group) => group.items.length > 0);
+
   return (
     <aside className="admin-side">
       <div className="brand">
@@ -58,7 +80,7 @@ export function AdminSidebar({
         </div>
       </div>
 
-      {NAV.map((group) => (
+      {nav.map((group) => (
         <div key={group.group}>
           <div className="admin-navgroup-label">{group.group}</div>
           {group.items.map((item) => {

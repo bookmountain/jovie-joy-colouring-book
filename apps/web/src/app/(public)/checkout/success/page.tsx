@@ -3,8 +3,10 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { useSite } from "@/state/site-store";
+import { useRequireShop } from "@/components/commerce/use-require-shop";
 
 export default function CheckoutSuccess() {
+  useRequireShop();
   const { dispatch } = useSite();
   useEffect(() => {
     dispatch({ type: "cart/clear" });

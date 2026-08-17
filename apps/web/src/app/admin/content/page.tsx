@@ -22,6 +22,8 @@ import {
   HOME_VISIBILITY_KEY,
   type HomeSectionId,
 } from "@/lib/home-visibility";
+import { SITE_MODULES_KEY, shopIsEnabled, type SiteModules } from "@/lib/site-modules";
+import { useAdminModules } from "@/state/admin-modules";
 
 const ORDER = ACTIVE_CONTENT_BLOCK_TYPES;
 
@@ -33,6 +35,10 @@ export default function AdminContentPage() {
   const [visibilitySaving, setVisibilitySaving] = useState(false);
   const [visibilityError, setVisibilityError] = useState<string | null>(null);
   const [visibilitySaved, setVisibilitySaved] = useState(false);
+  const { refresh: refreshModules } = useAdminModules();
+  const [modules, setModules] = useState<SiteModules>({});
+  const [modulesSaving, setModulesSaving] = useState(false);
+  const [modulesError, setModulesError] = useState<string | null>(null);
 
   function reload() {
     adminListContent().then((loaded) => {
@@ -42,9 +48,33 @@ export default function AdminContentPage() {
         ...defaultHomeSectionVisibility(),
         ...(saved && typeof saved === "object" ? saved : {}),
       });
+      const savedModules = loaded.find((block) => block.key === SITE_MODULES_KEY)?.data;
+      setModules(savedModules && typeof savedModules === "object" ? (savedModules as SiteModules) : {});
     }).catch((e: Error) => setError(e.message));
   }
   useEffect(reload, []);
+
+  async function saveShopModule(enabled: boolean) {
+    const previous = modules;
+    const next = { ...modules, shop: enabled };
+    setModules(next);
+    setModulesSaving(true);
+    setModulesError(null);
+    try {
+      await adminUpsertContent(SITE_MODULES_KEY, {
+        type: "SiteModules",
+        data: next,
+        sortIndex: 0,
+      });
+      await refreshModules();
+      reload();
+    } catch (reason) {
+      setModules(previous);
+      setModulesError(reason instanceof Error ? reason.message : "Store modules save failed");
+    } finally {
+      setModulesSaving(false);
+    }
+  }
 
   async function remove(key: string) {
     try {
@@ -81,7 +111,8 @@ export default function AdminContentPage() {
 
   const grouped = ORDER.map((type) => ({
     type,
-    items: blocks.filter((b) => b.type === type && b.key !== HOME_VISIBILITY_KEY),
+    items: blocks.filter((b) =>
+      b.type === type && b.key !== HOME_VISIBILITY_KEY && b.key !== SITE_MODULES_KEY),
   })).filter((g) => g.items.length > 0);
   const retired = blocks.filter((block) => retiredContentBlock(block.type));
 
@@ -100,6 +131,32 @@ export default function AdminContentPage() {
         Footer, Announcement, About, FAQ, and Featured On editors for normal changes.
         Retired blocks are ignored by the storefront and can only be removed here.
       </p>
+
+      <AdminPanel className="mt-6 space-y-4">
+        <div>
+          <h2 className="text-lg font-bold">Store modules</h2>
+          <p className="mt-1 text-sm text-cocoa-text">
+            Turn whole storefront features on or off. Nothing is deleted while a module is off.
+          </p>
+        </div>
+        <div className="flex items-center justify-between gap-4 rounded-coco-sm border border-cocoa-line bg-white px-4 py-3">
+          <div>
+            <span className="text-sm font-semibold">Shop &amp; checkout</span>
+            <p className="mt-1 text-xs text-cocoa-text">
+              Product pages, collections, cart, checkout, search, wishlist and customer sign-in.
+              While off, the sidebar hides Products, Collections, Orders, Customers and Notify me,
+              and shoppers buy through the retailer links you configure elsewhere (e.g. Amazon).
+            </p>
+          </div>
+          <AdminSwitch
+            aria-label="Enable shop and checkout"
+            checked={shopIsEnabled(modules)}
+            disabled={modulesSaving}
+            onChange={(checked) => void saveShopModule(checked)}
+          />
+        </div>
+        {modulesError ? <p className="text-sm text-cocoa-coral" role="alert">{modulesError}</p> : null}
+      </AdminPanel>
 
       <AdminPanel className="mt-6 space-y-4">
         <div>

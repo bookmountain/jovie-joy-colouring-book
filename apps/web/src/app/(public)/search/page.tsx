@@ -4,8 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import { ProductGrid } from "@/components/commerce/product-grid";
 import { fetchCatalog, searchCatalog } from "@/lib/catalog";
 import type { Product } from "@/lib/api";
+import { useRequireShop } from "@/components/commerce/use-require-shop";
 
 export default function SearchPage() {
+  useRequireShop();
   const [query, setQuery] = useState("");
   const [catalog, setCatalog] = useState<Product[]>([]);
 

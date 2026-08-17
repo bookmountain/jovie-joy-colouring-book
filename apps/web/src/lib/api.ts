@@ -125,6 +125,7 @@ export type SiteContentBundle = {
   homeHeroSlides: ContentBlock<{ intervalMs?: number; slides: HeroSlide[] }>[];
   homeProductRows: ContentBlock<{ eyebrow?: string; title?: string; href?: string; collectionSlug?: string; itemCount?: number }>[];
   homeSectionVisibility?: ContentBlock<Record<string, boolean>>[];
+  siteModules?: ContentBlock<{ shop?: boolean }>[];
 };
 
 export type HeroSlide = {

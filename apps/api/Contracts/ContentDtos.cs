@@ -29,7 +29,8 @@ public record SiteContentBundleDto(
     List<ContentBlockDto> NewsletterCopy,
     List<ContentBlockDto> HomeHeroSlides,
     List<ContentBlockDto> HomeProductRows,
-    List<ContentBlockDto> HomeSectionVisibility);
+    List<ContentBlockDto> HomeSectionVisibility,
+    List<ContentBlockDto> SiteModules);
 
 public record NavLinkDto(Guid Id, string Label, string Href, bool Enabled, List<NavLinkDto> Children)
 {

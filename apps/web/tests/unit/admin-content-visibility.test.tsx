@@ -32,7 +32,8 @@ describe("Content CMS homepage visibility", () => {
     render(<AdminContentPage />);
 
     const blogSwitch = await screen.findByRole("switch", { name: "Show Blog posts on homepage" });
-    expect(screen.getAllByRole("switch")).toHaveLength(13);
+    // 13 homepage sections plus the shop-module toggle.
+    expect(screen.getAllByRole("switch")).toHaveLength(14);
     expect(blogSwitch).toHaveAttribute("aria-checked", "true");
 
     fireEvent.click(blogSwitch);
@@ -44,6 +45,30 @@ describe("Content CMS homepage visibility", () => {
       expect.objectContaining({
         type: "HomeSectionVisibility",
         data: expect.objectContaining({ blogPosts: false, heroCarousel: true }),
+      }),
+    ));
+  });
+
+  it("saves the shop module toggle immediately", async () => {
+    mocks.upsert.mockResolvedValue({
+      key: "site.modules",
+      type: "SiteModules",
+      data: { shop: false },
+      sortIndex: 0,
+      updatedAt: "2026-08-12T00:00:00Z",
+    });
+    render(<AdminContentPage />);
+
+    const shopSwitch = await screen.findByRole("switch", { name: "Enable shop and checkout" });
+    expect(shopSwitch).toHaveAttribute("aria-checked", "true");
+
+    fireEvent.click(shopSwitch);
+
+    await waitFor(() => expect(mocks.upsert).toHaveBeenCalledWith(
+      "site.modules",
+      expect.objectContaining({
+        type: "SiteModules",
+        data: expect.objectContaining({ shop: false }),
       }),
     ));
   });

@@ -6,8 +6,10 @@ import { useSite } from "@/state/site-store";
 import { apiCreateCheckout } from "@/lib/api";
 import { tokenStorage } from "@/lib/auth";
 import { formatCents } from "@/lib/format";
+import { useRequireShop } from "@/components/commerce/use-require-shop";
 
 export default function CheckoutPage() {
+  useRequireShop();
   const { state, cartSubtotal } = useSite();
   const router = useRouter();
   const [email, setEmail] = useState("");

@@ -20,6 +20,7 @@ public enum ContentBlockType
     HomeHeroSlides,
     HomeProductRow,
     HomeSectionVisibility,
+    SiteModules,
 }
 
 public static class ContentBlockPolicy

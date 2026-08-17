@@ -159,12 +159,32 @@ public static class SeedContentBlocks
         // The caller decides whether this is a genuinely new database before
         // any other seeders run. A missing row — including an entirely empty
         // table — is otherwise an intentional CMS deletion and stays deleted.
+        blocks.Add(SiteModulesBlock(now));
+
         if (initializeDefaults && !await db.ContentBlocks.AnyAsync())
             db.ContentBlocks.AddRange(blocks);
 
         await MigrateLegacyHeroSlideShapeAsync(db);
         await MigrateLegacyHeroArtworkShapeAsync(db);
 
+        await db.SaveChangesAsync();
+    }
+
+    // Module toggles ship disabled: the store sells through external retailer
+    // pages, so cart/checkout/accounts stay off until an admin flips the
+    // switch under Advanced content. Absence of the block means "enabled" to
+    // the storefront, which is why the defaults-version upgrade installs it
+    // exactly once on databases that predate it.
+    private static ContentBlock SiteModulesBlock(DateTime now) => new()
+    {
+        Key = "site.modules", Type = ContentBlockType.SiteModules, SortIndex = 0, UpdatedAt = now,
+        Data = JsonDocument.Parse("""{ "shop": false }"""),
+    };
+
+    public static async Task AddSiteModulesDefaultAsync(AppDbContext db)
+    {
+        if (await db.ContentBlocks.AnyAsync(b => b.Key == "site.modules")) return;
+        db.ContentBlocks.Add(SiteModulesBlock(DateTime.UtcNow));
         await db.SaveChangesAsync();
     }
 

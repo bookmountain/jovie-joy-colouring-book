@@ -108,7 +108,8 @@ internal static class DefaultSeedCompatibility
         "new-release", "cute-comfy", "bold-easy", "classic", "seasonal", "patterns",
     ];
 
-    private static readonly HashSet<string> ContentKeys =
+    // Defaults-version 1 content keys; v2 added "site.modules".
+    private static readonly HashSet<string> V1ContentKeys =
     [
         "home.hero.slides", "announcement.bar", "home.video", "hero.artwork.faq",
         "hero.artwork.footer", "home.intro", "home.cozy-moments.header",
@@ -116,8 +117,11 @@ internal static class DefaultSeedCompatibility
         "home.row.best-seller", "home.row.digital",
     ];
 
+    private static readonly HashSet<string> ContentKeys =
+        new(V1ContentKeys.Append("site.modules"), StringComparer.Ordinal);
+
     private static readonly HashSet<string> LegacyContentKeys =
-        new(ContentKeys.Append("home.hero"), StringComparer.Ordinal);
+        new(V1ContentKeys.Append("home.hero"), StringComparer.Ordinal);
 
     private static readonly HashSet<string> BlogCategorySlugs =
     [
@@ -343,7 +347,7 @@ internal static class DefaultSeedCompatibility
     {
         var keys = await db.ContentBlocks.AsNoTracking().Select(x => x.Key).ToListAsync();
         if (keys.Count == 0) return SectionState.Empty;
-        return Exact(keys, ContentKeys) || Exact(keys, LegacyContentKeys)
+        return Exact(keys, ContentKeys) || Exact(keys, V1ContentKeys) || Exact(keys, LegacyContentKeys)
             ? SectionState.CompleteSeed
             : SectionState.Other;
     }

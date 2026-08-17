@@ -7,6 +7,7 @@ import { useBundle } from "@/state/catalog-provider";
 import { useSite } from "@/state/site-store";
 import type { NavLink } from "@/lib/api";
 import { visibleNavigation } from "@/lib/navigation-visibility";
+import { filterShopNavigation, readSiteModules } from "@/lib/site-modules";
 
 function MobileNavChildren({ items, close, depth = 1 }: {
   items: NavLink[];
@@ -35,7 +36,7 @@ function MobileNavChildren({ items, close, depth = 1 }: {
 export function MobileMenu() {
   const { state, dispatch } = useSite();
   const bundle = useBundle();
-  const primaryNavigation = visibleNavigation(bundle.navigation);
+  const primaryNavigation = filterShopNavigation(visibleNavigation(bundle.navigation), readSiteModules(bundle));
   const open = state.activeDrawer === "mobile-menu";
 
   useEffect(() => {

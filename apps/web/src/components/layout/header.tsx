@@ -9,11 +9,14 @@ import { useSite } from "@/state/site-store";
 import { MegaMenu } from "./mega-menu";
 import { MobileMenu } from "./mobile-menu";
 import { visibleNavigation } from "@/lib/navigation-visibility";
+import { filterShopNavigation, readSiteModules, shopIsEnabled } from "@/lib/site-modules";
 
 export function Header() {
   const { cartCount, state, dispatch } = useSite();
   const bundle = useBundle();
-  const primaryNavigation = visibleNavigation(bundle.navigation);
+  const modules = readSiteModules(bundle);
+  const shop = shopIsEnabled(modules);
+  const primaryNavigation = filterShopNavigation(visibleNavigation(bundle.navigation), modules);
   const brand = bundle.headerBrand[0]?.data ?? { name: "Zoe&Book", searchPlaceholder: "Search the store" };
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const closeMenuTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -51,7 +54,7 @@ export function Header() {
       <header className="sticky top-0 z-30 border-b border-cocoa-line bg-white">
         <div className="hidden lg:block">
           <div className="mx-auto grid max-w-[1570px] grid-cols-[minmax(260px,380px)_1fr_minmax(260px,380px)] items-center gap-6 px-4 py-[18px]">
-            <button
+            {shop ? <button
               aria-label="Search"
               className="flex h-[50px] max-w-[365px] items-center justify-between rounded-full bg-[#fafafa] px-5 text-left text-base font-medium text-[#acacac] transition hover:bg-cocoa-cream"
               onClick={() => dispatch({ type: "drawer/open", drawer: "search" })}
@@ -59,7 +62,7 @@ export function Header() {
             >
               <span>{brand.searchPlaceholder}</span>
               <Search aria-hidden="true" className="h-5 w-5 text-[#727272]" />
-            </button>
+            </button> : <span />}
             <Link
               aria-label={brand.name || "Zoe&Book"}
               className="justify-self-center font-display text-[31px] font-extrabold leading-none tracking-normal text-cocoa-ink"
@@ -67,7 +70,7 @@ export function Header() {
             >
               {brand.name}
             </Link>
-            <div className="flex items-center justify-end gap-5 text-cocoa-ink">
+            {shop ? <div className="flex items-center justify-end gap-5 text-cocoa-ink">
               <UserMenu />
               <Link
                 aria-label={`My wish list (${state.wishlist.length})`}
@@ -94,7 +97,7 @@ export function Header() {
                   </span>
                 ) : null}
               </button>
-            </div>
+            </div> : <span />}
           </div>
           <nav className="mx-auto flex max-w-[1170px] items-center justify-center gap-[30px] px-4 py-[11px]">
             {primaryNavigation.map((item) => (
@@ -125,7 +128,7 @@ export function Header() {
             {brand.name}
           </Link>
           <div className="flex items-center justify-end gap-1 sm:gap-2">
-            <button
+            {shop ? <><button
               aria-label="Search"
               className="grid h-10 w-10 place-items-center rounded-full transition hover:bg-cocoa-cream"
               onClick={() => dispatch({ type: "drawer/open", drawer: "search" })}
@@ -160,7 +163,7 @@ export function Header() {
                   {cartCount}
                 </span>
               ) : null}
-            </button>
+            </button></> : null}
           </div>
         </div>
       </header>
