@@ -35,9 +35,14 @@ public class ContentController(AppDbContext db) : ControllerBase
         List<ContentBlockDto> grab(ContentBlockType t) =>
             byType.TryGetValue(t, out var list) ? list : new List<ContentBlockDto>();
 
+        // Group on the key alone. Including the title used to split a column in
+        // two the moment one of its links was renamed, so the heading is taken
+        // from the first link in the group instead.
         var footerGroups = footer
-            .GroupBy(f => new { f.GroupKey, f.GroupTitle })
-            .Select(g => new FooterLinkGroupDto(g.Key.GroupKey, g.Key.GroupTitle,
+            .GroupBy(f => f.GroupKey)
+            .Select(g => new FooterLinkGroupDto(
+                g.Key,
+                g.OrderBy(x => x.SortIndex).First().GroupTitle,
                 g.OrderBy(x => x.SortIndex).Select(x => new FooterLinkItemDto(x.Label, x.Href)).ToList()))
             .ToList();
 
