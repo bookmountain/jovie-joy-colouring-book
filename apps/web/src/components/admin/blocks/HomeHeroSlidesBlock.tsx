@@ -10,6 +10,7 @@ type Slide = {
   label: string;
   href: string;
   image: string;
+  mobileImage: string;
 };
 
 type Data = {
@@ -17,15 +18,26 @@ type Data = {
   slides?: Slide[];
 };
 
-const EMPTY_SLIDE: Slide = { label: "", href: "", image: "" };
+const EMPTY_SLIDE: Slide = { label: "", href: "", image: "", mobileImage: "" };
 
-// Tolerate the legacy { desktop, mobile } shape — prefer desktop if image is missing.
+// Tolerate the legacy { desktop, mobile } shape — prefer desktop if image is
+// missing, and carry a legacy mobile asset over as the portrait variant.
 function normalizeSlide(s: unknown): Slide {
-  const raw = (s ?? {}) as { label?: string; href?: string; image?: string; desktop?: string; mobile?: string };
+  const raw = (s ?? {}) as {
+    label?: string;
+    href?: string;
+    image?: string;
+    mobileImage?: string;
+    desktop?: string;
+    mobile?: string;
+  };
+  const image = raw.image || raw.desktop || raw.mobile || "";
+  const mobileImage = raw.mobileImage || (raw.mobile && raw.mobile !== image ? raw.mobile : "");
   return {
     label: raw.label ?? "",
     href: raw.href ?? "",
-    image: raw.image || raw.desktop || raw.mobile || "",
+    image,
+    mobileImage,
   };
 }
 
@@ -130,11 +142,19 @@ export function HomeHeroSlidesBlock({ blockKey, data, onChange }: ContentBlockEd
           </div>
 
           <ImageUpload
-            label="Image"
+            label="Image (desktop, landscape ~2:1)"
             onChange={(url) => setSlide(idx, { image: url ?? "" })}
             upload={(f) => adminUploadContentImage(blockKey, f)}
             value={slide.image || null}
             variant="banner"
+          />
+
+          <ImageUpload
+            aspectRatio="5 / 8"
+            label="Mobile image (portrait, optional — phones show the desktop image uncropped when empty)"
+            onChange={(url) => setSlide(idx, { mobileImage: url ?? "" })}
+            upload={(f) => adminUploadContentImage(blockKey, f)}
+            value={slide.mobileImage || null}
           />
         </AdminPanel>
       ))}

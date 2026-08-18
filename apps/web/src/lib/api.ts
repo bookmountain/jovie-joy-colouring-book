@@ -132,6 +132,8 @@ export type HeroSlide = {
   label: string;
   href: string;
   image: string;
+  /** Optional portrait crop shown on small screens instead of cover-cropping `image`. */
+  mobileImage?: string;
 };
 
 export type UserDto = { id: string; email: string; name: string | null; avatarUrl: string | null; isAdmin: boolean };

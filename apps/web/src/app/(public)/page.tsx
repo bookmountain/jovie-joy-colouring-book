@@ -46,8 +46,15 @@ async function resolveReachableAssetUrl(src: string | null | undefined): Promise
 async function keepReachableHeroSlides(slides: HeroSlide[]): Promise<HeroSlide[]> {
   const checked = await Promise.all(
     slides.map(async (slide) => {
-      const image = await resolveReachableAssetUrl(slide.image);
-      return image ? { ...slide, image } : null;
+      const [image, mobileImage] = await Promise.all([
+        resolveReachableAssetUrl(slide.image),
+        slide.mobileImage ? resolveReachableAssetUrl(slide.mobileImage) : Promise.resolve(null),
+      ]);
+      // A dead mobile image drops back to the desktop asset; a dead desktop
+      // image drops the whole slide.
+      if (!image) return null;
+      const { mobileImage: _unused, ...rest } = slide;
+      return mobileImage ? { ...rest, image, mobileImage } : { ...rest, image };
     }),
   );
   return checked.filter((slide): slide is HeroSlide => Boolean(slide));

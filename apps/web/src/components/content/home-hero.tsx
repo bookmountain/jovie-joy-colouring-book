@@ -31,12 +31,26 @@ export function HomeHero({ slides, intervalMs = 5000 }: Props) {
       <div className="mx-auto max-w-[1470px] px-4">
         <Link
           aria-label={slide.label || "Featured banner"}
-          className="group relative block aspect-[5/8] overflow-hidden rounded-coco-sm bg-cocoa-cream md:aspect-[2/1]"
+          className={`group relative block overflow-hidden rounded-coco-sm bg-cocoa-cream md:aspect-[2/1] ${
+            slide.mobileImage ? "aspect-[5/8]" : "aspect-[2/1]"
+          }`}
           href={slide.href || "#"}
         >
+          {slide.mobileImage ? (
+            <SafeImage
+              alt={slide.label || ""}
+              className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.01] md:hidden"
+              fill
+              priority
+              sizes="100vw"
+              src={resolveAssetUrl(slide.mobileImage)}
+            />
+          ) : null}
           <SafeImage
             alt={slide.label || ""}
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.01]"
+            className={`h-full w-full object-cover transition duration-500 group-hover:scale-[1.01] ${
+              slide.mobileImage ? "hidden md:block" : ""
+            }`}
             fill
             priority
             sizes="(min-width: 1470px) 1470px, 100vw"

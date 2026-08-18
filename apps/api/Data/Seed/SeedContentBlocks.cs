@@ -18,8 +18,9 @@ public static class SeedContentBlocks
                 // Drives the homepage hero carousel. Slide images are seeded with
                 // cocowyo placeholders so the storefront isn't empty on first boot —
                 // admin MUST replace each via /admin/pages/home before launch.
-                // The storefront uses a single image per slide with responsive CSS;
-                // there is no separate mobile asset.
+                // Each slide carries a landscape `image`; an optional portrait
+                // `mobileImage` (uploaded in admin) is shown on phones instead of
+                // cover-cropping the landscape art.
                 Key = "home.hero.slides", Type = ContentBlockType.HomeHeroSlides, SortIndex = 0, UpdatedAt = now,
                 Data = JsonDocument.Parse("""
                 {
@@ -216,7 +217,8 @@ public static class SeedContentBlocks
         await db.SaveChangesAsync();
     }
 
-    // Rewrites legacy { desktop, mobile } slides to { image } in place.
+    // Rewrites legacy { desktop, mobile } slides to { image, mobileImage } in
+    // place. A distinct legacy mobile asset is kept as the portrait variant.
     // Idempotent: slides that already have `image` are left alone.
     private static async Task MigrateLegacyHeroSlideShapeAsync(AppDbContext db)
     {
@@ -233,10 +235,14 @@ public static class SeedContentBlocks
             var image = slide["image"]?.GetValue<string>();
             if (!string.IsNullOrEmpty(image)) continue;
 
-            var fallback = slide["desktop"]?.GetValue<string>() ?? slide["mobile"]?.GetValue<string>();
+            var desktop = slide["desktop"]?.GetValue<string>();
+            var mobile = slide["mobile"]?.GetValue<string>();
+            var fallback = string.IsNullOrEmpty(desktop) ? mobile : desktop;
             if (string.IsNullOrEmpty(fallback)) continue;
 
             slide["image"] = fallback;
+            if (!string.IsNullOrEmpty(mobile) && mobile != fallback)
+                slide["mobileImage"] = mobile;
             slide.Remove("desktop");
             slide.Remove("mobile");
             mutated = true;
