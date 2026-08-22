@@ -225,6 +225,69 @@ export const adminUploadContentImage = (key: string, file: File) => {
   const fd = new FormData(); fd.append("file", file);
   return adminFetch<{ url: string }>(`/api/admin/content/${key}/image`, { method: "POST", body: fd });
 };
+// Videos are large (up to 1 GB), so use XHR to report upload progress —
+// fetch() can't observe request-body progress.
+const postVideoForm = (
+  path: string,
+  form: FormData,
+  onProgress?: (sentBytes: number) => void,
+) => new Promise<string>((resolve, reject) => {
+  const xhr = new XMLHttpRequest();
+  xhr.open("POST", `${API_URL}${path}`);
+  xhr.setRequestHeader("Authorization", `Bearer ${requireToken()}`);
+  xhr.upload.onprogress = (e) => {
+    if (e.lengthComputable && onProgress) onProgress(e.loaded);
+  };
+  xhr.onerror = () => reject(new Error("The upload failed — check your connection and try again."));
+  xhr.onload = () => {
+    if (xhr.status >= 200 && xhr.status < 300) resolve(xhr.responseText);
+    else reject(new Error(extractAdminError(xhr.responseText, xhr.status, "POST", path)));
+  };
+  xhr.send(form);
+});
+
+// The public site sits behind Cloudflare, which rejects request bodies over
+// ~100 MB. Files above SINGLE_REQUEST_LIMIT are therefore sent as sequential
+// chunks that the API reassembles.
+const VIDEO_SINGLE_REQUEST_LIMIT = 80 * 1024 * 1024;
+const VIDEO_CHUNK_SIZE = 32 * 1024 * 1024;
+
+export const adminUploadContentVideo = async (
+  key: string,
+  file: File,
+  onProgress?: (fraction: number) => void,
+): Promise<{ url: string }> => {
+  if (file.size <= VIDEO_SINGLE_REQUEST_LIMIT) {
+    const fd = new FormData();
+    fd.append("file", file);
+    const text = await postVideoForm(
+      `/api/admin/content/${key}/video`,
+      fd,
+      (sent) => onProgress?.(sent / Math.max(1, file.size)),
+    );
+    return JSON.parse(text) as { url: string };
+  }
+
+  const { uploadId } = await adminFetch<{ uploadId: string }>(
+    `/api/admin/content/${key}/video/chunk-sessions`,
+    { method: "POST" },
+  );
+  for (let offset = 0; offset < file.size; offset += VIDEO_CHUNK_SIZE) {
+    const chunk = file.slice(offset, offset + VIDEO_CHUNK_SIZE);
+    const fd = new FormData();
+    fd.append("file", chunk, "chunk.bin");
+    fd.append("offset", String(offset));
+    await postVideoForm(
+      `/api/admin/content/${key}/video/chunk-sessions/${uploadId}`,
+      fd,
+      (sent) => onProgress?.(Math.min(offset + Math.min(sent, chunk.size), file.size) / file.size),
+    );
+  }
+  return adminFetch<{ url: string }>(
+    `/api/admin/content/${key}/video/chunk-sessions/${uploadId}/complete`,
+    { method: "POST", body: JSON.stringify({ fileName: file.name, contentType: file.type }) },
+  );
+};
 
 // General upload (used when no entity yet)
 export const adminUploadGeneral = (file: File, folder?: string) => {

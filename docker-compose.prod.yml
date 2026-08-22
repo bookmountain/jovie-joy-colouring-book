@@ -10,7 +10,7 @@ services:
       - ./apps/api/.env
     environment:
       ConnectionStrings__Default: Host=${POSTGRES_HOST:-shared-postgres};Port=${POSTGRES_PORT:-5432};Database=${POSTGRES_DB:?POSTGRES_DB required in apps/api/.env};Username=${POSTGRES_USER:?POSTGRES_USER required in apps/api/.env};Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required in apps/api/.env}
-      Freebies__BaseUrl: ${PUBLIC_API_URL:-https://jovie-joy-api.bookmountain.work}
+      Freebies__BaseUrl: ${PUBLIC_API_URL:-https://api.zoeandbook.com}
       StorefrontCache__Endpoint: http://web:3000/api/internal/revalidate
       StorefrontCache__Secret: ${CACHE_REVALIDATION_SECRET:?CACHE_REVALIDATION_SECRET required in apps/api/.env}
     ports:
@@ -26,7 +26,7 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: https://jovie-joy-api.bookmountain.work
+        NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-https://api.zoeandbook.com}
     image: jovie-joy-web:latest
     container_name: jovie-joy-web
     restart: unless-stopped

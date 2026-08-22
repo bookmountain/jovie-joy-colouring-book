@@ -1,30 +1,26 @@
-import { getHomeVideo } from "@/data/content";
+import { getHomeVideos } from "@/data/content";
+import { resolveAssetUrl } from "@/lib/api";
 
 export async function HomeVideoSection() {
-  const homeVideo = await getHomeVideo();
-  if (!homeVideo) return null;
+  const videos = await getHomeVideos();
+  if (videos.length === 0) return null;
 
   return (
     <section aria-label="Zoe&Book video showcase" className="bg-white py-0">
-      <div className="mx-auto max-w-7xl px-4 lg:px-8">
-        <a
-          aria-label="Watch the Zoe&Book video on YouTube"
-          className="group block overflow-hidden rounded-[24px] bg-cocoa-cream shadow-soft"
-          href={homeVideo.youtubeHref}
-          rel="noreferrer"
-          target="_blank"
-        >
+      <div className="mx-auto flex max-w-7xl justify-center gap-2 px-4 sm:gap-5 lg:px-8">
+        {videos.map((src) => (
           <video
             autoPlay
-            className="block aspect-[20/9] w-full object-cover"
+            className="block aspect-[9/16] w-full max-w-[420px] flex-1 rounded-[16px] bg-cocoa-cream object-cover shadow-soft sm:rounded-[24px]"
+            key={src}
             loop
             muted
             playsInline
             preload="metadata"
           >
-            <source src={homeVideo.src} type="video/mp4" />
+            <source src={resolveAssetUrl(src)} type={src.endsWith(".webm") ? "video/webm" : "video/mp4"} />
           </video>
-        </a>
+        ))}
       </div>
     </section>
   );

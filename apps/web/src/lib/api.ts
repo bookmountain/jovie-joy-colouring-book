@@ -109,7 +109,7 @@ export type SiteContentBundle = {
   aboutSections: ContentBlock[];
   faqs: ContentBlock[];
   featuredOn: ContentBlock[];
-  homeVideo: ContentBlock<{ src: string; youtubeHref: string }>[];
+  homeVideo: ContentBlock<{ videos?: string[]; src?: string; youtubeHref?: string }>[];
   footerGroups: ContentBlock[];
   announcement: ContentBlock<{ enabled: boolean; text: string; href: string; backgroundImage?: string }>[];
   heroArtwork: ContentBlock<{ image?: string; desktop?: string; mobile?: string }>[];

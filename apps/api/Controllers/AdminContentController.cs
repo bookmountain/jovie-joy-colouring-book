@@ -88,4 +88,65 @@ public class AdminContentController(
         }
         catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
     }
+
+    // Leave headroom above the video cap for the multipart envelope.
+    private const long VideoRequestLimit = UploadService.MaxVideoBytes + 4 * 1024 * 1024;
+
+    [HttpPost("{key}/video")]
+    [RequestSizeLimit(VideoRequestLimit)]
+    [RequestFormLimits(MultipartBodyLengthLimit = VideoRequestLimit)]
+    public async Task<ActionResult<UploadResponse>> UploadVideo(string key, IFormFile file, CancellationToken ct)
+    {
+        try
+        {
+            var url = await uploads.SaveVideoAsync(file, "content", key.Replace('.', '-'), ct);
+            return Ok(new UploadResponse(url));
+        }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+    }
+
+    // Chunked variant of the video upload for use behind Cloudflare, whose
+    // per-request body cap (~100 MB) is far below the 1 GB video limit. The
+    // client starts a session, appends sequential chunks, then completes it.
+    private const long VideoChunkRequestLimit = 40 * 1024 * 1024;
+
+    public sealed record CompleteVideoChunkSessionRequest(string FileName, string ContentType);
+
+    [HttpPost("{key}/video/chunk-sessions")]
+    public async Task<ActionResult<object>> BeginVideoChunkSession(string key, CancellationToken ct)
+    {
+        try
+        {
+            var uploadId = await uploads.BeginVideoChunkSessionAsync(ct);
+            return Ok(new { uploadId });
+        }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+    }
+
+    [HttpPost("{key}/video/chunk-sessions/{uploadId}")]
+    [RequestSizeLimit(VideoChunkRequestLimit)]
+    [RequestFormLimits(MultipartBodyLengthLimit = VideoChunkRequestLimit)]
+    public async Task<ActionResult<object>> AppendVideoChunk(
+        string key, string uploadId, IFormFile file, [FromForm] long offset, CancellationToken ct)
+    {
+        try
+        {
+            var received = await uploads.AppendVideoChunkAsync(uploadId, file, offset, ct);
+            return Ok(new { received });
+        }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+    }
+
+    [HttpPost("{key}/video/chunk-sessions/{uploadId}/complete")]
+    public async Task<ActionResult<UploadResponse>> CompleteVideoChunkSession(
+        string key, string uploadId, [FromBody] CompleteVideoChunkSessionRequest req, CancellationToken ct)
+    {
+        try
+        {
+            var url = await uploads.FinalizeVideoChunkSessionAsync(
+                uploadId, req.FileName, req.ContentType, "content", key.Replace('.', '-'), ct);
+            return Ok(new UploadResponse(url));
+        }
+        catch (InvalidOperationException ex) { return BadRequest(new { error = ex.Message }); }
+    }
 }

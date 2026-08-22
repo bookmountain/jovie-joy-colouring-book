@@ -18,9 +18,14 @@ export const getComicWorlds = () => apiGetComics();
 export const getAboutSections = () => apiGetAbout();
 export const getStaticPage = (slug: string) => apiGetPage(slug);
 
-export async function getHomeVideo(): Promise<{ src: string; youtubeHref: string } | null> {
+export async function getHomeVideos(): Promise<string[]> {
   const bundle = await getSiteContent();
-  return bundle.homeVideo[0]?.data ?? null;
+  const data = bundle.homeVideo[0]?.data;
+  if (!data) return [];
+  if (Array.isArray(data.videos)) return data.videos.filter(Boolean).slice(0, 3);
+  // Legacy single-video shape: only keep it if it's an admin-uploaded asset,
+  // never a third-party CDN link.
+  return data.src?.startsWith("/uploads/") ? [data.src] : [];
 }
 
 function pickHeroArtwork(data: unknown): string | null {

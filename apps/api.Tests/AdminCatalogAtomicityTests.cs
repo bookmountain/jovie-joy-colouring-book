@@ -215,6 +215,28 @@ public class AdminCatalogAtomicityTests
             string filePrefix,
             CancellationToken ct) => throw new NotSupportedException();
 
+        public Task<string> SaveVideoAsync(
+            IFormFile file,
+            string subfolder,
+            string filePrefix,
+            CancellationToken ct) => throw new NotSupportedException();
+
+        public Task<string> BeginVideoChunkSessionAsync(CancellationToken ct) => throw new NotSupportedException();
+
+        public Task<long> AppendVideoChunkAsync(
+            string sessionId,
+            IFormFile chunk,
+            long offset,
+            CancellationToken ct) => throw new NotSupportedException();
+
+        public Task<string> FinalizeVideoChunkSessionAsync(
+            string sessionId,
+            string fileName,
+            string contentType,
+            string subfolder,
+            string filePrefix,
+            CancellationToken ct) => throw new NotSupportedException();
+
         public Task<CustomerDownloadUpload> SaveCustomerDownloadAsync(
             IFormFile file,
             string subfolder,

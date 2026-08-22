@@ -65,12 +65,9 @@ public static class SeedContentBlocks
             new()
             {
                 Key = "home.video", Type = ContentBlockType.HomeVideo, SortIndex = 0, UpdatedAt = now,
-                Data = JsonDocument.Parse("""
-                {
-                  "src": "https://cocowyo.com/cdn/shop/videos/c/vp/35c5461dff43486e92c79a0e5735e7a0/35c5461dff43486e92c79a0e5735e7a0.HD-1080p-7.2Mbps-42161933.mp4?v=0",
-                  "youtubeHref": "https://www.youtube.com/watch?v=_9VUPq3SxOc"
-                }
-                """),
+                // Ships empty: the section stays hidden until the admin uploads
+                // portrait videos in /admin/pages/home.
+                Data = JsonDocument.Parse("""{ "videos": [] }"""),
             },
             new()
             {

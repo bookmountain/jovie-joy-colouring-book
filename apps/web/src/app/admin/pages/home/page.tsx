@@ -10,7 +10,7 @@ const SECTIONS: { key: string; type: string; label: string; help?: string }[] = 
   { key: "home.hero.slides", type: "HomeHeroSlides", label: "Hero carousel", help: "Top-of-page rotating banner. One image per slide — the storefront crops it tall on mobile and wide on desktop." },
   { key: "home.intro", type: "HomeIntro", label: "Hi Friend! panel" },
   { key: "home.row.new-release", type: "HomeProductRow", label: "Row · New Release", help: "Automatically shows your newest products by publish date — new uploads appear here immediately. Edit the eyebrow, title, and how many items to show." },
-  { key: "home.video", type: "HomeVideo", label: "Home video" },
+  { key: "home.video", type: "HomeVideo", label: "Home videos", help: "Three portrait (phone-style) videos shown in one row. Upload MP4 or WebM files up to 1 GB each. The section is hidden until at least one video is uploaded and saved." },
   { key: "home.row.best-seller", type: "HomeProductRow", label: "Row · Best Seller" },
   { key: "home.row.digital", type: "HomeProductRow", label: "Row · Digital" },
   { key: "home.cozy-moments.header", type: "HomeCozyMomentsHeader", label: "Cozy Moments heading", help: "Images for the grid are managed in /admin/gallery." },

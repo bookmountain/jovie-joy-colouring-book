@@ -12,12 +12,9 @@ test("homepage shows Zoe&Book storefront sections", async ({ page }) => {
 test("homepage includes the visual learning blocks from the reference layout", async ({ page }) => {
   await page.goto("/");
 
-  const videoSection = page.getByLabel("Zoe&Book video showcase");
-  await expect(videoSection.locator("video[autoplay][muted][loop]")).toBeVisible();
-  await expect(videoSection.locator("source")).toHaveAttribute(
-    "src",
-    /cocowyo\.com\/cdn\/shop\/videos/,
-  );
+  // The video row ships empty and stays hidden until an admin uploads
+  // portrait videos, so a fresh seed must NOT render the section.
+  await expect(page.getByLabel("Zoe&Book video showcase")).toHaveCount(0);
 
   const featuredOn = page.getByLabel("Featured On");
   await expect(featuredOn.getByRole("heading", { name: "Featured On" })).toBeVisible();

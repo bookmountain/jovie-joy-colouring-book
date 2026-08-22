@@ -10,6 +10,11 @@ public sealed record CustomerDownloadUpload(string Url, string Kind, long SizeBy
 public interface IUploadService
 {
     Task<string> SaveImageAsync(IFormFile file, string subfolder, string filePrefix, CancellationToken ct);
+    Task<string> SaveVideoAsync(IFormFile file, string subfolder, string filePrefix, CancellationToken ct);
+    Task<string> BeginVideoChunkSessionAsync(CancellationToken ct);
+    Task<long> AppendVideoChunkAsync(string sessionId, IFormFile chunk, long offset, CancellationToken ct);
+    Task<string> FinalizeVideoChunkSessionAsync(
+        string sessionId, string fileName, string contentType, string subfolder, string filePrefix, CancellationToken ct);
     Task<CustomerDownloadUpload> SaveCustomerDownloadAsync(
         IFormFile file,
         string subfolder,
@@ -23,6 +28,7 @@ public interface IUploadService
 public class UploadService(IWebHostEnvironment env, ILogger<UploadService> logger) : IUploadService
 {
     private const long MaxImageBytes = 20 * 1024 * 1024;
+    public const long MaxVideoBytes = 1024L * 1024 * 1024;
     public const int MaxZipEntries = 250;
     public const long MaxZipUncompressedBytes = 250L * 1024 * 1024;
     public const int MaxZipCompressionRatio = 100;
@@ -85,6 +91,164 @@ public class UploadService(IWebHostEnvironment env, ILogger<UploadService> logge
 
         var relativeDir = Path.GetRelativePath(uploadsRoot, dir).Replace(Path.DirectorySeparatorChar, '/');
         return $"/uploads/{relativeDir}/{fileName}";
+    }
+
+    public async Task<string> SaveVideoAsync(IFormFile file, string subfolder, string filePrefix, CancellationToken ct)
+    {
+        if (file.Length is <= 0 || file.Length > MaxVideoBytes)
+            throw new InvalidOperationException($"Videos must be non-empty and {FormatMegabytes(MaxVideoBytes)} MB or smaller");
+
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        var contentType = file.ContentType.Trim().ToLowerInvariant();
+        ValidateVideoKind(extension, contentType);
+
+        await ValidateVideoHeaderAsync(file, contentType, ct);
+
+        var uploadsRoot = GetUploadsRoot();
+        var dir = ResolveInsideUploads(uploadsRoot, subfolder);
+        Directory.CreateDirectory(dir);
+        var fileName = $"{SanitizeFilePrefix(filePrefix)}_{Path.GetRandomFileName()}{extension}";
+        var filePath = Path.Combine(dir, fileName);
+        try
+        {
+            await using var output = new FileStream(
+                filePath,
+                FileMode.CreateNew,
+                FileAccess.Write,
+                FileShare.None,
+                bufferSize: 81920,
+                useAsync: true);
+            await file.CopyToAsync(output, ct);
+            await output.FlushAsync(ct);
+            if (output.Length != file.Length)
+                throw new InvalidOperationException("The uploaded video ended before its declared size");
+        }
+        catch
+        {
+            try
+            {
+                if (File.Exists(filePath)) File.Delete(filePath);
+            }
+            catch (Exception cleanupError) when (cleanupError is IOException or UnauthorizedAccessException)
+            {
+                logger.LogWarning(cleanupError, "Could not remove incomplete upload {UploadPath}", filePath);
+            }
+            throw;
+        }
+
+        var relativeDir = Path.GetRelativePath(uploadsRoot, dir).Replace(Path.DirectorySeparatorChar, '/');
+        return $"/uploads/{relativeDir}/{fileName}";
+    }
+
+    // Chunked video uploads: the public site sits behind Cloudflare, which caps a
+    // single request body at ~100 MB. Large videos arrive as sequential chunks
+    // appended to a session file, then get validated and moved into place.
+    private const string ChunkSessionFolder = "tmp-chunks";
+
+    public async Task<string> BeginVideoChunkSessionAsync(CancellationToken ct)
+    {
+        var uploadsRoot = GetUploadsRoot();
+        var dir = ResolveInsideUploads(uploadsRoot, ChunkSessionFolder);
+        Directory.CreateDirectory(dir);
+        var sessionId = Path.GetRandomFileName().Replace(".", "");
+        await using var _ = new FileStream(
+            Path.Combine(dir, $"{sessionId}.part"),
+            FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 1, useAsync: true);
+        ct.ThrowIfCancellationRequested();
+        return sessionId;
+    }
+
+    public async Task<long> AppendVideoChunkAsync(string sessionId, IFormFile chunk, long offset, CancellationToken ct)
+    {
+        var path = ResolveChunkSessionPath(sessionId);
+        if (!File.Exists(path))
+            throw new InvalidOperationException("Unknown or expired upload session — start the upload again");
+        if (chunk.Length <= 0)
+            throw new InvalidOperationException("Chunks must not be empty");
+
+        await using var output = new FileStream(
+            path, FileMode.Append, FileAccess.Write, FileShare.None, bufferSize: 81920, useAsync: true);
+        if (output.Length != offset)
+            throw new InvalidOperationException(
+                $"Chunk offset {offset} does not match the {output.Length} bytes received so far — restart the upload");
+        if (output.Length + chunk.Length > MaxVideoBytes)
+            throw new InvalidOperationException($"Videos must be {FormatMegabytes(MaxVideoBytes)} MB or smaller");
+        await chunk.CopyToAsync(output, ct);
+        await output.FlushAsync(ct);
+        return output.Length;
+    }
+
+    public async Task<string> FinalizeVideoChunkSessionAsync(
+        string sessionId, string fileName, string contentType, string subfolder, string filePrefix, CancellationToken ct)
+    {
+        var path = ResolveChunkSessionPath(sessionId);
+        if (!File.Exists(path))
+            throw new InvalidOperationException("Unknown or expired upload session — start the upload again");
+
+        var extension = Path.GetExtension(fileName).ToLowerInvariant();
+        var normalizedContentType = contentType.Trim().ToLowerInvariant();
+        ValidateVideoKind(extension, normalizedContentType);
+
+        var header = new byte[12];
+        int read;
+        await using (var input = new FileStream(
+                         path, FileMode.Open, FileAccess.Read, FileShare.None, bufferSize: 81920, useAsync: true))
+        {
+            if (input.Length <= 0 || input.Length > MaxVideoBytes)
+                throw new InvalidOperationException($"Videos must be non-empty and {FormatMegabytes(MaxVideoBytes)} MB or smaller");
+            read = await input.ReadAtLeastAsync(header, header.Length, throwOnEndOfStream: false, ct);
+        }
+        ValidateVideoHeaderBytes(header, read, normalizedContentType);
+
+        var uploadsRoot = GetUploadsRoot();
+        var dir = ResolveInsideUploads(uploadsRoot, subfolder);
+        Directory.CreateDirectory(dir);
+        var finalName = $"{SanitizeFilePrefix(filePrefix)}_{Path.GetRandomFileName()}{extension}";
+        var finalPath = Path.Combine(dir, finalName);
+        File.Move(path, finalPath);
+
+        var relativeDir = Path.GetRelativePath(uploadsRoot, dir).Replace(Path.DirectorySeparatorChar, '/');
+        return $"/uploads/{relativeDir}/{finalName}";
+    }
+
+    private string ResolveChunkSessionPath(string sessionId)
+    {
+        if (string.IsNullOrEmpty(sessionId) || sessionId.Length > 64 ||
+            !sessionId.All(char.IsAsciiLetterOrDigit))
+            throw new InvalidOperationException("Invalid upload session id");
+        var dir = ResolveInsideUploads(GetUploadsRoot(), ChunkSessionFolder);
+        return Path.Combine(dir, $"{sessionId}.part");
+    }
+
+    private static void ValidateVideoKind(string extension, string contentType)
+    {
+        var allowed = (extension is ".mp4" or ".m4v" && contentType == "video/mp4") ||
+                      (extension == ".webm" && contentType == "video/webm");
+        if (!allowed)
+            throw new InvalidOperationException("The file extension and content type must both identify an MP4 or WebM video");
+    }
+
+    private static async Task ValidateVideoHeaderAsync(IFormFile file, string contentType, CancellationToken ct)
+    {
+        // Videos are far too large to fully parse server-side, so check the
+        // container magic bytes: MP4 has an "ftyp" box at offset 4, WebM opens
+        // with the EBML signature.
+        var header = new byte[12];
+        await using var input = file.OpenReadStream();
+        var read = await input.ReadAtLeastAsync(header, header.Length, throwOnEndOfStream: false, ct);
+        ValidateVideoHeaderBytes(header, read, contentType);
+    }
+
+    private static void ValidateVideoHeaderBytes(byte[] header, int read, string contentType)
+    {
+        var valid = contentType switch
+        {
+            "video/mp4" => read >= 8 && header.AsSpan(4, 4).SequenceEqual("ftyp"u8),
+            "video/webm" => read >= 4 && header.AsSpan(0, 4).SequenceEqual(new byte[] { 0x1a, 0x45, 0xdf, 0xa3 }),
+            _ => false,
+        };
+        if (!valid)
+            throw new InvalidOperationException("The uploaded bytes do not match the declared video type");
     }
 
     public async Task<CustomerDownloadUpload> SaveCustomerDownloadAsync(
