@@ -154,11 +154,6 @@ public class AdminProductsController(
 
         if (!Enum.TryParse<ProductType>(req.ProductType, ignoreCase: true, out var pt))
             return BadRequest(new { error = $"Unknown productType '{req.ProductType}'" });
-        if (pt == ProductType.Digital && req.PublishedAt.HasValue)
-            return BadRequest(new
-            {
-                error = "Create digital products as drafts, upload the PDF, then publish them.",
-            });
 
         var product = new Product
         {
@@ -212,10 +207,6 @@ public class AdminProductsController(
 
         if (!Enum.TryParse<ProductType>(req.ProductType, ignoreCase: true, out var pt))
             return BadRequest(new { error = $"Unknown productType '{req.ProductType}'" });
-        if (pt == ProductType.Digital &&
-            req.PublishedAt.HasValue &&
-            string.IsNullOrWhiteSpace(product.PdfPath))
-            return BadRequest(new { error = "Upload the digital product PDF before publishing." });
 
         var previousAssets = ProductAssetPaths(product).ToList();
 
@@ -429,20 +420,6 @@ public class AdminProductsController(
         switch (req.Action)
         {
             case "publish":
-                var incompleteDigitalSlugs = products
-                    .Where(product => product.ProductType == ProductType.Digital &&
-                                      string.IsNullOrWhiteSpace(product.PdfPath))
-                    .Select(product => product.Slug)
-                    .OrderBy(slug => slug, StringComparer.Ordinal)
-                    .ToList();
-                if (incompleteDigitalSlugs.Count > 0)
-                {
-                    return BadRequest(new
-                    {
-                        error = "Upload a PDF before publishing digital products.",
-                        slugs = incompleteDigitalSlugs,
-                    });
-                }
                 foreach (var p in products) { p.PublishedAt = p.PublishedAt ?? now; p.UpdatedAt = now; }
                 break;
             case "unpublish":

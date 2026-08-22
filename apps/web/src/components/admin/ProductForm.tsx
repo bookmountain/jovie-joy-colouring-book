@@ -106,6 +106,7 @@ export function ProductForm({ initial, onSubmit, submitLabel, onDiscard, onDelet
   const [sourceLinks, setSourceLinks] = useState<SourceLinkValue[]>(initial?.sourceLinks ?? []);
   const [pdfPath, setPdfPath] = useState<string | null>(initial?.pdfPath ?? null);
   const [pdfBusy, setPdfBusy] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   const [allCollections, setAllCollections] = useState<{ slug: string; title: string }[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -186,10 +187,6 @@ export function ProductForm({ initial, onSubmit, submitLabel, onDiscard, onDelet
 
   async function handleSubmit() {
     setError(null);
-    if (productFormat === "digital" && publishedAt && !pdfPath) {
-      setError("Upload the digital product PDF before publishing. Save it as a draft first.");
-      return;
-    }
     setSubmitting(true);
     try {
       const body: AdminProductWriteBody = {
@@ -326,7 +323,7 @@ export function ProductForm({ initial, onSubmit, submitLabel, onDiscard, onDelet
           </AdminPanel>
 
           {productFormat === "digital" ? (
-            <AdminPanel variant="dashed" sectionTag="Digital fulfillment" hint="The uploaded PDF is what the customer receives by email after Stripe payment succeeds.">
+            <AdminPanel variant="dashed" sectionTag="Digital fulfillment" hint="Optional. The uploaded PDF is what the customer downloads after Stripe checkout. Leave it empty if this product sells through an external link (e.g. Etsy) — set that under Source links.">
               {pdfPath ? (
                 <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "8px 0" }}>
                   <div style={{ fontSize: 28 }}>📄</div>
@@ -356,7 +353,8 @@ export function ProductForm({ initial, onSubmit, submitLabel, onDiscard, onDelet
                   </AdminButton>
                 </div>
               )}
-              {!initial ? <p className="panel-hint" style={{ marginTop: 8 }}>Save the product first, then upload its PDF here.</p> : null}
+              {!initial ? <p className="panel-hint" style={{ marginTop: 8 }}>Create the product first (it saves as a draft), then upload its PDF here and publish.</p> : null}
+              {pdfError ? <p style={{ color: "#a3392a", fontSize: 12, marginTop: 8 }}>{pdfError}</p> : null}
               <input
                 id="pf-pdf-input"
                 type="file"
@@ -366,10 +364,13 @@ export function ProductForm({ initial, onSubmit, submitLabel, onDiscard, onDelet
                   const f = e.target.files?.[0];
                   e.target.value = "";
                   if (!f || !initial) return;
+                  setPdfError(null);
                   setPdfBusy(true);
                   try {
                     const res = await adminUploadProductPdf(initial.slug, f);
                     setPdfPath((res as { pdfPath: string | null }).pdfPath ?? null);
+                  } catch (err) {
+                    setPdfError(err instanceof Error ? err.message : "PDF upload failed");
                   } finally {
                     setPdfBusy(false);
                   }

@@ -99,7 +99,7 @@ public class AdminProductsBulkTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
-    public async Task Bulk_publish_rejects_the_entire_request_when_a_digital_product_has_no_pdf()
+    public async Task Bulk_publish_accepts_a_digital_product_without_a_pdf()
     {
         var client = await _f.CreateAdminClientAsync();
         var slugs = await _f.SeedDraftProducts(2);
@@ -118,17 +118,14 @@ public class AdminProductsBulkTests : IClassFixture<ApiFactory>
             action = "publish"
         });
 
-        Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
-        var error = await response.Content.ReadFromJsonAsync<DigitalPublishError>();
-        Assert.NotNull(error);
-        Assert.Equal([slugs[1]], error!.Slugs);
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
 
         using var verifyScope = _f.Services.CreateScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<Data.AppDbContext>();
         var products = await verifyDb.Products
             .Where(product => slugs.Contains(product.Slug))
             .ToListAsync();
-        Assert.All(products, product => Assert.Null(product.PublishedAt));
+        Assert.All(products, product => Assert.NotNull(product.PublishedAt));
     }
 
     [Fact]
@@ -259,5 +256,4 @@ public class AdminProductsBulkTests : IClassFixture<ApiFactory>
 
     private record UpdatedEnvelope(int Updated, List<string> Missing);
     private record ErrorEnvelope(string Error);
-    private record DigitalPublishError(string Error, List<string> Slugs);
 }

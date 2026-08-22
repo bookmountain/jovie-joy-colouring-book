@@ -36,9 +36,7 @@ public class CollectionsController(AppDbContext db) : ControllerBase
             .Select(pc => pc.Product)
             .Where(p =>
                 p.PublishedAt != null &&
-                p.PublishedAt <= now &&
-                (p.ProductType != ProductType.Digital ||
-                 !string.IsNullOrEmpty(p.PdfPath)))
+                p.PublishedAt <= now)
             .ToList();
 
         List<Data.Entities.Product> ordered;

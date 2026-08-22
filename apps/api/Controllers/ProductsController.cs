@@ -15,9 +15,7 @@ public class ProductsController(AppDbContext db) : ControllerBase
         var now = DateTime.UtcNow;
         return query.Where(p =>
             p.PublishedAt != null &&
-            p.PublishedAt <= now &&
-            (p.ProductType != ProductType.Digital ||
-             !string.IsNullOrEmpty(p.PdfPath)));
+            p.PublishedAt <= now);
     }
 
     [HttpGet]
@@ -60,9 +58,7 @@ public class ProductsController(AppDbContext db) : ControllerBase
             .Include(p => p.ProductCollections).ThenInclude(pc => pc.Collection)
             .Where(p =>
                 p.PublishedAt != null &&
-                p.PublishedAt <= now &&
-                (p.ProductType != ProductType.Digital ||
-                 !string.IsNullOrEmpty(p.PdfPath)))
+                p.PublishedAt <= now)
             .FirstOrDefaultAsync(p => p.Slug == slug, ct);
 
         return product is null ? NotFound() : Ok(ProductDto.FromPublic(product));

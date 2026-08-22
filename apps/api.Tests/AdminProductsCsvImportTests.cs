@@ -90,26 +90,22 @@ public class AdminProductsCsvImportTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
-    public async Task Import_rejects_published_digital_product_without_an_existing_pdf()
+    public async Task Import_accepts_published_digital_product_without_a_pdf()
     {
         var client = await _factory.CreateAdminClientAsync();
         var slug = $"csv-digital-without-pdf-{Guid.NewGuid():N}";
         var csv = "slug,title,price_cents,product_type,published_at\n" +
-                  $"{slug},Incomplete digital product,1234,digital,2026-08-12T00:00:00Z\n";
+                  $"{slug},External-link digital product,1234,digital,2026-08-12T00:00:00Z\n";
 
         var response = await PostCsv(client, csv, mode: "create", dryRun: false);
 
-        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
-        var result = await response.Content.ReadFromJsonAsync<ProductCsvImportResponse>();
-        Assert.NotNull(result);
-        Assert.False(result!.Valid);
-        Assert.Contains(
-            result.Rows.Single().Errors,
-            error => error.Contains("uploaded PDF", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        Assert.False(await db.Products.AnyAsync(product => product.Slug == slug));
+        var product = await db.Products.SingleAsync(product => product.Slug == slug);
+        Assert.Null(product.PdfPath);
+        Assert.NotNull(product.PublishedAt);
     }
 
     [Fact]

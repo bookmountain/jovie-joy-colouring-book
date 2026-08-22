@@ -115,15 +115,6 @@ public sealed class ProductCsvImportService(
             if (effectiveCompareAt.HasValue && effectiveCompareAt.Value < row.PriceCents)
                 row.Errors.Add("compare_at_price_cents must be greater than or equal to price_cents.");
 
-            var effectivePublishedAt = row.HasPublishedAt
-                ? row.PublishedAt
-                : existing?.PublishedAt;
-            if (row.ProductType == ProductType.Digital &&
-                effectivePublishedAt.HasValue &&
-                string.IsNullOrWhiteSpace(existing?.PdfPath))
-            {
-                row.Errors.Add("Digital products need an uploaded PDF before they can be published. Import as a draft, upload the PDF, then publish it in the product editor.");
-            }
         }
 
         if (parsed.Rows.Any(row => row.Errors.Count > 0) || dryRun)

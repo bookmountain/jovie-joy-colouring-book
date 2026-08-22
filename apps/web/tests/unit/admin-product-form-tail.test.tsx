@@ -40,14 +40,14 @@ describe("ProductForm — source links, digital, danger", () => {
     expect(screen.getByRole("button", { name: /^upload pdf$/i })).toBeTruthy();
   });
 
-  test("does not publish a digital product before its PDF is uploaded", () => {
+  test("publishes a digital product even without a PDF (external-link fulfilment)", () => {
     const onSubmit = vi.fn();
     render(<ProductForm initial={{ ...physical, productType: "digital" }} onSubmit={onSubmit} submitLabel="Save" />);
 
     fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
 
-    expect(onSubmit).not.toHaveBeenCalled();
-    expect(screen.getByText(/upload the digital product pdf before publishing/i)).toBeTruthy();
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(onSubmit.mock.calls[0][0]).toMatchObject({ publishedAt: "2026-01-01" });
   });
 
   test("danger zone Delete invokes onDelete after confirming in the dialog", async () => {

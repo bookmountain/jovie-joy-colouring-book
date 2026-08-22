@@ -63,19 +63,20 @@ public sealed class ProductDownloadsTests : IClassFixture<ApiFactory>, IDisposab
     }
 
     [Fact]
-    public async Task Digital_product_without_a_file_is_not_public_or_checkout_eligible()
+    public async Task Digital_product_without_a_file_is_public_but_not_checkout_eligible()
     {
         var slug = $"missing-pdf-{Guid.NewGuid():N}";
         await SeedProduct(slug, null, publishedAt: DateTime.UtcNow.AddDays(-1));
 
+        // Published digital products stay browsable without a PDF (fulfilment can
+        // be an external link, e.g. Etsy) …
         var client = _factory.CreateClient();
         var detailResponse = await client.GetAsync($"/api/products/{slug}");
-        Assert.True(
-            detailResponse.StatusCode == HttpStatusCode.NotFound,
-            $"Expected hidden digital product, received {detailResponse.StatusCode}: {await detailResponse.Content.ReadAsStringAsync()}");
+        Assert.Equal(HttpStatusCode.OK, detailResponse.StatusCode);
         var catalog = await client.GetFromJsonAsync<List<ProductDto>>("/api/products");
-        Assert.DoesNotContain(catalog!, product => product.Slug == slug);
+        Assert.Contains(catalog!, product => product.Slug == slug);
 
+        // … but our own checkout still refuses to sell a download with no file.
         await using var db = CreateContext();
         var service = CreateOrderService(db, new FakeStripeService(), new FakeEmailSender());
         var request = new CheckoutRequest("buyer@example.com", null, [new CartLineRequest(slug, 1)], null);
