@@ -7,11 +7,11 @@ export async function HomeVideoSection() {
 
   return (
     <section aria-label="Zoe&Book video showcase" className="bg-white py-0">
-      <div className="mx-auto flex max-w-7xl justify-center gap-2 px-4 sm:gap-5 lg:px-8">
+      <div className="mx-auto flex max-w-7xl snap-x snap-mandatory gap-2 overflow-x-auto px-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:justify-center sm:gap-5 sm:overflow-visible lg:px-8">
         {videos.map((src) => (
           <video
             autoPlay
-            className="block aspect-[9/16] w-full max-w-[420px] flex-1 rounded-[16px] bg-cocoa-cream object-cover shadow-soft sm:rounded-[24px]"
+            className="block aspect-[9/16] w-[80%] max-w-[420px] flex-none snap-center rounded-[16px] bg-cocoa-cream object-cover shadow-soft sm:w-full sm:flex-1 sm:snap-align-none sm:rounded-[24px]"
             key={src}
             loop
             muted

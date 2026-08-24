@@ -35,6 +35,11 @@ public record FreebieRequestDto(
     DateTime? FirstDownloadedAt, DateTime? LastDownloadedAt,
     DateTime ExpiresAt, DateTime CreatedAt);
 
+public record FreebieRequestAdminRowDto(
+    Guid Id, string FreebieSlug, string FreebieTitle, string Email, bool OptedIntoNewsletter,
+    int DownloadCount, DateTime? FirstDownloadedAt, DateTime? LastDownloadedAt,
+    DateTime ExpiresAt, DateTime CreatedAt);
+
 public record CreateFreebieRequest(string Slug, string Title, string Excerpt, List<string>? Description, bool? Published);
 public record UpdateFreebieRequest(string? Title, string? Excerpt, List<string>? Description, bool Published);
 public record FreebieRequestCreate(string Email, bool OptIn);

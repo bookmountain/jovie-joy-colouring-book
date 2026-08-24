@@ -105,6 +105,13 @@ export async function adminReorderFreebies(items: { slug: string; sortIndex: num
 export async function adminFreebieRequests(slug: string): Promise<FreebieRequestRow[]> {
   return adminFetch(`/api/admin/freebies/${slug}/requests`);
 }
+export type FreebieSignupRow = FreebieRequestRow & {
+  freebieSlug: string;
+  freebieTitle: string;
+};
+export async function adminAllFreebieRequests(): Promise<FreebieSignupRow[]> {
+  return adminFetch("/api/admin/freebies/requests");
+}
 export async function adminResendFreebieRequest(slug: string, id: string): Promise<void> {
   await adminFetch(`/api/admin/freebies/${slug}/requests/${id}/resend`, { method: "POST" });
 }

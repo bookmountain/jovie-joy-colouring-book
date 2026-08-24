@@ -35,6 +35,21 @@ public class AdminFreebiesController(
         return Ok(rows.Select(x => FreebieAdminDto.From(x.F, x.Count, x.Last)));
     }
 
+    // Literal route registered alongside {slug}; ASP.NET gives literals precedence,
+    // so a freebie can never be reached at the slug "requests".
+    [HttpGet("requests")]
+    public async Task<ActionResult<IEnumerable<FreebieRequestAdminRowDto>>> AllRequests(CancellationToken ct)
+    {
+        var requests = await db.FreebieRequests.AsNoTracking()
+            .OrderByDescending(r => r.CreatedAt)
+            .Take(1000)
+            .Select(r => new FreebieRequestAdminRowDto(
+                r.Id, r.Freebie.Slug, r.Freebie.Title, r.Email, r.OptedIntoNewsletter,
+                r.DownloadCount, r.FirstDownloadedAt, r.LastDownloadedAt, r.ExpiresAt, r.CreatedAt))
+            .ToListAsync(ct);
+        return Ok(requests);
+    }
+
     [HttpGet("{slug}")]
     public async Task<ActionResult<FreebieAdminDto>> Get(string slug, CancellationToken ct)
     {
@@ -51,6 +66,8 @@ public class AdminFreebiesController(
     {
         if (string.IsNullOrWhiteSpace(req.Slug) || string.IsNullOrWhiteSpace(req.Title))
             return BadRequest(new { error = "Slug and Title are required" });
+        if (string.Equals(req.Slug, "requests", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { error = "The slug 'requests' is reserved" });
         if (req.Published == true)
             return BadRequest(new { error = "Create the freebie as a draft, upload its file, then publish it." });
         if (await db.Freebies.AnyAsync(x => x.Slug == req.Slug, ct))

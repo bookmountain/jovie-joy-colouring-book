@@ -11,6 +11,7 @@ import {
   type FreebieAdmin,
 } from "@/lib/freebies";
 import { StaticPageHeaderEditor } from "@/components/admin/StaticPageHeaderEditor";
+import { FreebieSignupsPanel } from "@/components/admin/freebie/FreebieSignupsPanel";
 import {
   AdminPageHeader,
   AdminPanel,
@@ -131,6 +132,8 @@ export default function AdminFreebiesPage() {
           </table>
         )}
       </AdminPanel>
+
+      <FreebieSignupsPanel />
 
       <AdminModal
         open={newOpen}
