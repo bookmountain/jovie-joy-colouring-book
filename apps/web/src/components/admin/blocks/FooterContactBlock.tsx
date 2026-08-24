@@ -9,7 +9,10 @@ type Data = {
   customerCareEmail?: string;
   licensingLabel?: string;
   licensingEmail?: string;
+  backgroundColor?: string;
 };
+
+const DEFAULT_FOOTER_BACKGROUND = "#f8edff";
 
 export function FooterContactBlock({ data, onChange }: ContentBlockEditorProps) {
   const d = (data ?? {}) as Data;
@@ -22,6 +25,26 @@ export function FooterContactBlock({ data, onChange }: ContentBlockEditorProps) 
           onChange={(e) => onChange({ ...d, blurb: e.target.value })}
           value={d.blurb ?? ""}
         />
+      </AdminField>
+      <AdminField>
+        <AdminLabel htmlFor="fc-bg">Background colour</AdminLabel>
+        <div className="flex items-center gap-2">
+          <input
+            aria-label="Pick footer background colour"
+            className="h-9 w-12 cursor-pointer rounded border border-cocoa-line bg-white p-1"
+            id="fc-bg"
+            onChange={(e) => onChange({ ...d, backgroundColor: e.target.value })}
+            type="color"
+            value={d.backgroundColor ?? DEFAULT_FOOTER_BACKGROUND}
+          />
+          <AdminInput
+            aria-label="Footer background colour hex value"
+            className="w-32"
+            onChange={(e) => onChange({ ...d, backgroundColor: e.target.value })}
+            placeholder={DEFAULT_FOOTER_BACKGROUND}
+            value={d.backgroundColor ?? ""}
+          />
+        </div>
       </AdminField>
       <div className="grid gap-3 sm:grid-cols-2">
         <AdminField>

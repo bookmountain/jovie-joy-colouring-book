@@ -15,9 +15,10 @@ export function Footer() {
     licensingEmail: "studio@zoeandbook.com",
     blurb: "Drop us a note anytime:",
   };
+  const backgroundColor = bundle.footerContact[0]?.data?.backgroundColor || "#f8edff";
 
   return (
-    <footer className="mt-0 bg-[#f8edff]">
+    <footer className="mt-0" style={{ backgroundColor }}>
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-10 md:grid-cols-[1.2fr_1fr_1fr] lg:px-8">
         <div>
           <p className="font-cute text-4xl font-extrabold tracking-normal text-cocoa-ink">

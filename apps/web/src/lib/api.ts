@@ -119,7 +119,7 @@ export type SiteContentBundle = {
   trendingTerms: string[];
   homeIntro: ContentBlock<{ title?: string; body?: string; image1?: string; image2?: string }>[];
   homeCozyMomentsHeader: ContentBlock<{ heading?: string }>[];
-  footerContact: ContentBlock<{ blurb?: string; customerCareLabel?: string; customerCareEmail?: string; licensingLabel?: string; licensingEmail?: string }>[];
+  footerContact: ContentBlock<{ blurb?: string; customerCareLabel?: string; customerCareEmail?: string; licensingLabel?: string; licensingEmail?: string; backgroundColor?: string }>[];
   headerBrand: ContentBlock<{ name?: string; searchPlaceholder?: string }>[];
   newsletterCopy: ContentBlock<{ heading?: string; ctaLabel?: string; successMessage?: string }>[];
   homeHeroSlides: ContentBlock<{ intervalMs?: number; slides: HeroSlide[] }>[];
