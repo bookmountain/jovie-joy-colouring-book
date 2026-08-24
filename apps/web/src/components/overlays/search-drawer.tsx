@@ -5,7 +5,7 @@ import Link from "next/link";
 import { SafeImage } from "@/components/common/SafeImage";
 import { X } from "lucide-react";
 import { fetchCatalog, getPopularProducts, searchCatalog } from "@/lib/catalog";
-import { formatMoney } from "@/lib/format";
+import { formatMoneyUsd } from "@/lib/format";
 import { useBundle } from "@/state/catalog-provider";
 import { useSite } from "@/state/site-store";
 import type { Product } from "@/lib/api";
@@ -115,7 +115,7 @@ export function SearchDrawer() {
                       {product.excerpt}
                     </p>
                     <p className="mt-2 text-sm font-extrabold text-cocoa-purple">
-                      {formatMoney(product.priceCents)}
+                      {formatMoneyUsd(product.priceCents)}
                     </p>
                   </div>
                 </Link>

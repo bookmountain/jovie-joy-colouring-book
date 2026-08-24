@@ -4,7 +4,7 @@ import Link from "next/link";
 import { SafeImage } from "@/components/common/SafeImage";
 import type { Product } from "@/data/products";
 import { resolveAssetUrl } from "@/lib/api";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, formatMoneyUsd } from "@/lib/format";
 import { useSite } from "@/state/site-store";
 import { WishlistButton } from "./wishlist-button";
 
@@ -64,7 +64,7 @@ export function ProductCard({ product }: { product: Product }) {
                 onSale ? "text-cocoa-purple" : "text-cocoa-text"
               }`}
             >
-              {formatMoney(product.priceCents)}
+              {formatMoneyUsd(product.priceCents)}
             </span>
           </div>
           <p className="mt-0.5 text-xs text-[#777]">Unit price / per</p>

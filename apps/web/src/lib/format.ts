@@ -9,6 +9,12 @@ export function formatMoney(cents: number): string {
   return formatPrice(cents / 100);
 }
 
+// Customer-facing selling prices carry an explicit "USD" so shoppers
+// outside the US (e.g. Australia) know which dollar they are paying.
+export function formatMoneyUsd(cents: number): string {
+  return `${formatMoney(cents)} USD`;
+}
+
 export const formatCents = (cents: number): string =>
   `$${(cents / 100).toFixed(2)}`;
 

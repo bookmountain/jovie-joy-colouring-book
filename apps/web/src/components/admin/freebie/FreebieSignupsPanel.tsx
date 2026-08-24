@@ -22,6 +22,7 @@ export function FreebieSignupsPanel() {
   useEffect(() => {
     adminAllFreebieRequests()
       .then(setRows)
+      .catch(() => setRows([]))
       .finally(() => setLoading(false));
   }, []);
 

@@ -5,7 +5,7 @@ import { Minus, Plus } from "lucide-react";
 import { SafeImage } from "@/components/common/SafeImage";
 import type { Product } from "@/data/products";
 import { resolveAssetUrl } from "@/lib/api";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, formatMoneyUsd } from "@/lib/format";
 import { useSite } from "@/state/site-store";
 import { useBundle } from "@/state/catalog-provider";
 import { cartIsEnabled, readSiteModules } from "@/lib/site-modules";
@@ -41,7 +41,7 @@ export function ProductDetailPanel({ product }: { product: Product }) {
             onSale ? "text-cocoa-purple" : "text-cocoa-text"
           }`}
         >
-          {formatMoney(product.priceCents)}
+          {formatMoneyUsd(product.priceCents)}
         </span>
       </div>
       <p className="mt-1 text-sm text-[#777]">Unit price / per</p>
