@@ -24,7 +24,7 @@ import { SafeImage } from "@/components/common/SafeImage";
 const ROW_FALLBACKS: Record<string, HomeRowData> = {
   "home.row.new-release": { eyebrow: "Just landed", title: "New Release", href: "/products", itemCount: 4 },
   "home.row.best-seller": { eyebrow: "Popular products", title: "Best Seller", href: "/products?collection=frontpage", collectionSlug: "frontpage", itemCount: 4 },
-  "home.row.digital":     { eyebrow: "Digital books", title: "Digital", href: "/products?collection=digital", collectionSlug: "digital", itemCount: 4 },
+  "home.row.digital":     { eyebrow: "Digital products", title: "Digital Product", href: "/products?collection=digital", collectionSlug: "digital", itemCount: 4 },
 };
 
 async function resolveReachableAssetUrl(src: string | null | undefined): Promise<string | null> {

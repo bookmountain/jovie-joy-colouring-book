@@ -149,7 +149,7 @@ public static class SeedContentBlocks
             {
                 Key = "home.row.digital", Type = ContentBlockType.HomeProductRow, SortIndex = 2, UpdatedAt = now,
                 Data = JsonDocument.Parse("""
-                { "eyebrow": "Digital books", "title": "Digital", "href": "/collections/digital", "collectionSlug": "digital", "itemCount": 4 }
+                { "eyebrow": "Digital products", "title": "Digital Product", "href": "/collections/digital", "collectionSlug": "digital", "itemCount": 4 }
                 """),
             },
         };
