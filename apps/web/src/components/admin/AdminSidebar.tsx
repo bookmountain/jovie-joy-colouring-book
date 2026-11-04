@@ -26,6 +26,7 @@ const NAV: Array<{
     { href: "/admin/customers", label: "Customers", icon: "👥" },
     { href: "/admin/notify-me", label: "Notify me", icon: "🔔" },
     { href: "/admin/subscribers", label: "Subscribers", icon: "✉️" },
+    { href: "/admin/emails", label: "Emails", icon: "📬" },
   ]},
   { group: "Site content", items: [
     { href: "/admin/pages/home", label: "Home page", icon: "🏠" },

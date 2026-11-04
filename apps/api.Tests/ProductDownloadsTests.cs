@@ -449,6 +449,9 @@ public sealed class ProductDownloadsTests : IClassFixture<ApiFactory>, IDisposab
             string downloadUrl,
             CancellationToken ct) => Task.CompletedTask;
 
+        public Task SendCampaignEmailAsync(CampaignEmailMessage message, string? idempotencyKey, CancellationToken ct) =>
+            Task.CompletedTask;
+
         public async Task SendProductDownloadsAsync(
             string to,
             string? customerName,

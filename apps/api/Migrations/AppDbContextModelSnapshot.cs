@@ -247,6 +247,123 @@ namespace JovieJoy.Api.Migrations
                     b.ToTable("content_blocks", (string)null);
                 });
 
+            modelBuilder.Entity("JovieJoy.Api.Data.Entities.EmailCampaign", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(5000)
+                        .HasColumnType("character varying(5000)");
+
+                    b.Property<string>("ButtonLabel")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("EditedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Headline")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ItemSlug")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ItemTitle")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Preheader")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("PriceLabel")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("Kind", "ItemId")
+                        .IsUnique();
+
+                    b.ToTable("email_campaigns", (string)null);
+                });
+
+            modelBuilder.Entity("JovieJoy.Api.Data.Entities.EmailCampaignRecipient", b =>
+                {
+                    b.Property<Guid>("CampaignId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("CampaignId", "Email");
+
+                    b.HasIndex("CampaignId", "Status");
+
+                    b.ToTable("email_campaign_recipients", (string)null);
+                });
+
             modelBuilder.Entity("JovieJoy.Api.Data.Entities.Faq", b =>
                 {
                     b.Property<string>("Slug")
@@ -518,7 +635,18 @@ namespace JovieJoy.Api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("UnsubscribeToken")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime?>("UnsubscribedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Email");
+
+                    b.HasIndex("UnsubscribeToken")
+                        .IsUnique();
 
                     b.ToTable("newsletter_subscribers", (string)null);
                 });
@@ -971,6 +1099,17 @@ namespace JovieJoy.Api.Migrations
                     b.Navigation("World");
                 });
 
+            modelBuilder.Entity("JovieJoy.Api.Data.Entities.EmailCampaignRecipient", b =>
+                {
+                    b.HasOne("JovieJoy.Api.Data.Entities.EmailCampaign", "Campaign")
+                        .WithMany("Recipients")
+                        .HasForeignKey("CampaignId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Campaign");
+                });
+
             modelBuilder.Entity("JovieJoy.Api.Data.Entities.FreebieRequest", b =>
                 {
                     b.HasOne("JovieJoy.Api.Data.Entities.Freebie", "Freebie")
@@ -1089,6 +1228,11 @@ namespace JovieJoy.Api.Migrations
             modelBuilder.Entity("JovieJoy.Api.Data.Entities.ComicWorld", b =>
                 {
                     b.Navigation("Comics");
+                });
+
+            modelBuilder.Entity("JovieJoy.Api.Data.Entities.EmailCampaign", b =>
+                {
+                    b.Navigation("Recipients");
                 });
 
             modelBuilder.Entity("JovieJoy.Api.Data.Entities.Freebie", b =>

@@ -184,7 +184,7 @@ public class AdminAudienceController(AppDbContext db) : ControllerBase
             .Take(pageSize)
             .ToListAsync(ct);
         var items = rows.Select(subscriber =>
-            new AdminSubscriberListItem(subscriber.Email, subscriber.CreatedAt)).ToList();
+            new AdminSubscriberListItem(subscriber.Email, subscriber.CreatedAt, subscriber.UnsubscribedAt)).ToList();
 
         return Ok(new AdminPagedResponse<AdminSubscriberListItem>(items, total, page, pageSize));
     }

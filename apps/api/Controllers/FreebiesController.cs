@@ -78,7 +78,10 @@ public class FreebiesController(
             db.FreebieRequests.Add(row);
         }
 
-        if (body.OptIn && !await db.NewsletterSubscribers.AnyAsync(s => s.Email == body.Email, ct))
+        // Case-insensitive, and an existing row is left alone: the opt-in box is
+        // ticked by default, so downloading again must not undo an unsubscribe.
+        var normalizedEmail = body.Email.Trim().ToLower();
+        if (body.OptIn && !await db.NewsletterSubscribers.AnyAsync(s => s.Email.ToLower() == normalizedEmail, ct))
             db.NewsletterSubscribers.Add(new NewsletterSubscriber { Email = body.Email });
 
         var url = $"{opts.Value.BaseUrl.TrimEnd('/')}/api/freebies/download/{stagedToken}";

@@ -18,16 +18,26 @@ const item: FreebieListItem = {
 describe("EmailGateModal", () => {
   beforeEach(() => { vi.clearAllMocks(); });
 
-  it("renders the form with opt-in checked by default", () => {
+  it("renders the form with opt-in unticked by default", () => {
     render(<EmailGateModal item={item} onClose={() => {}} />);
     const checkbox = screen.getByLabelText(/future colouring freebies/i) as HTMLInputElement;
-    expect(checkbox.checked).toBe(true);
+    expect(checkbox.checked).toBe(false);
   });
 
   it("submits to requestFreebie and shows success state", async () => {
     (freebiesLib.requestFreebie as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);
     render(<EmailGateModal item={item} onClose={() => {}} />);
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: "u@e.com" } });
+    fireEvent.click(screen.getByRole("button", { name: /send me the link/i }));
+    await waitFor(() => expect(screen.getByText(/check your inbox/i)).toBeInTheDocument());
+    expect(freebiesLib.requestFreebie).toHaveBeenCalledWith("demo", "u@e.com", false);
+  });
+
+  it("only opts in when the box is actively ticked", async () => {
+    (freebiesLib.requestFreebie as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);
+    render(<EmailGateModal item={item} onClose={() => {}} />);
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: "u@e.com" } });
+    fireEvent.click(screen.getByLabelText(/future colouring freebies/i));
     fireEvent.click(screen.getByRole("button", { name: /send me the link/i }));
     await waitFor(() => expect(screen.getByText(/check your inbox/i)).toBeInTheDocument());
     expect(freebiesLib.requestFreebie).toHaveBeenCalledWith("demo", "u@e.com", true);

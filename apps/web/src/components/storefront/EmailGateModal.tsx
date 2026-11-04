@@ -11,7 +11,7 @@ type State =
 
 export function EmailGateModal({ item, onClose }: { item: FreebieListItem; onClose: () => void }) {
   const [email, setEmail] = useState("");
-  const [optIn, setOptIn] = useState(true);
+  const [optIn, setOptIn] = useState(false);
   const [state, setState] = useState<State>({ kind: "form" });
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -62,7 +62,9 @@ export function EmailGateModal({ item, onClose }: { item: FreebieListItem; onClo
               />
               <span>Send me future colouring freebies and updates.</span>
             </label>
-            <p className="text-xs text-cocoa-muted">We only use your email to send the download link.</p>
+            <p className="text-xs text-cocoa-muted">
+              We&apos;ll email your download link. Tick the box to also hear about new products and freebies. You can unsubscribe any time.
+            </p>
             {state.kind === "error" ? (
               <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{state.message}</p>
             ) : null}

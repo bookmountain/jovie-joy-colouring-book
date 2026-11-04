@@ -161,6 +161,9 @@ builder.Services.Configure<OrphanUploadCleanupOptions>(builder.Configuration.Get
 builder.Services.AddScoped<OrphanUploadSweeper>();
 builder.Services.AddHostedService<OrphanUploadCleanupHostedService>();
 builder.Services.AddHttpClient<IEmailSender, ResendEmailSender>();
+builder.Services.Configure<EmailCampaignOptions>(builder.Configuration.GetSection("EmailCampaigns"));
+builder.Services.AddScoped<EmailCampaignService>();
+builder.Services.AddHostedService<EmailCampaignHostedService>();
 builder.Services.AddOptions<StorefrontCacheOptions>()
     .Bind(builder.Configuration.GetSection("StorefrontCache"))
     .Validate(options =>

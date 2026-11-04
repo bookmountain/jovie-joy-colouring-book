@@ -99,6 +99,12 @@ Freebies__BaseUrl=https://api.yourdomain.com
 Resend__ApiKey=re_REPLACE_ME
 Resend__FromAddress=downloads@yourdomain.com
 Resend__FromName=Jovie Joy
+
+# Required before marketing emails can be sent. A real postal address (a PO box
+# is fine); it appears in every email footer.
+EmailCampaigns__PostalAddress=REPLACE_ME
+# Optional: where replies to marketing emails go.
+EmailCampaigns__ReplyTo=
 ```
 
 The API fails closed when no administrator exists and these bootstrap values are

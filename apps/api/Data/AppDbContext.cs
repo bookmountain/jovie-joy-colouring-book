@@ -17,6 +17,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> opts) : DbContext(opts)
     public DbSet<Wishlist> Wishlists => Set<Wishlist>();
     public DbSet<NotifyMeRequest> NotifyMeRequests => Set<NotifyMeRequest>();
     public DbSet<NewsletterSubscriber> NewsletterSubscribers => Set<NewsletterSubscriber>();
+    public DbSet<EmailCampaign> EmailCampaigns => Set<EmailCampaign>();
+    public DbSet<EmailCampaignRecipient> EmailCampaignRecipients => Set<EmailCampaignRecipient>();
     public DbSet<BlogCategory> BlogCategories => Set<BlogCategory>();
     public DbSet<Article> Articles => Set<Article>();
     public DbSet<ComicWorld> ComicWorlds => Set<ComicWorld>();
@@ -189,6 +191,41 @@ public class AppDbContext(DbContextOptions<AppDbContext> opts) : DbContext(opts)
             e.ToTable("newsletter_subscribers");
             e.HasKey(x => x.Email);
             e.Property(x => x.Email).HasMaxLength(320);
+            e.Property(x => x.UnsubscribeToken).HasMaxLength(64).IsRequired();
+            e.HasIndex(x => x.UnsubscribeToken).IsUnique();
+        });
+
+        b.Entity<EmailCampaign>(e =>
+        {
+            e.ToTable("email_campaigns");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Kind).HasConversion<string>().HasMaxLength(20);
+            // Status is a concurrency token so Draft -> Sending is an atomic
+            // compare-and-swap: two simultaneous sends cannot both win.
+            e.Property(x => x.Status).HasConversion<string>().HasMaxLength(20).IsConcurrencyToken();
+            e.Property(x => x.ItemSlug).HasMaxLength(200).IsRequired();
+            e.Property(x => x.ItemTitle).HasMaxLength(300).IsRequired();
+            e.Property(x => x.Subject).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Preheader).HasMaxLength(300).IsRequired();
+            e.Property(x => x.Headline).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Body).HasMaxLength(5000).IsRequired();
+            e.Property(x => x.ButtonLabel).HasMaxLength(60).IsRequired();
+            e.Property(x => x.ImageUrl).HasMaxLength(1000).IsRequired();
+            e.Property(x => x.PriceLabel).HasMaxLength(60);
+            e.HasIndex(x => new { x.Kind, x.ItemId }).IsUnique();
+            e.HasIndex(x => x.Status);
+        });
+
+        b.Entity<EmailCampaignRecipient>(e =>
+        {
+            e.ToTable("email_campaign_recipients");
+            e.HasKey(x => new { x.CampaignId, x.Email });
+            e.Property(x => x.Email).HasMaxLength(320);
+            e.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
+            e.Property(x => x.LastError).HasMaxLength(500);
+            e.HasOne(x => x.Campaign).WithMany(c => c.Recipients)
+                .HasForeignKey(x => x.CampaignId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => new { x.CampaignId, x.Status });
         });
 
         b.Entity<BlogCategory>(e =>

@@ -24,4 +24,5 @@ public record AdminNotifyMeListItem(
 
 public record AdminSubscriberListItem(
     string Email,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    DateTime? UnsubscribedAt = null);

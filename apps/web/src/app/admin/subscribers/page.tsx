@@ -18,6 +18,13 @@ const columns: AdminTableColumn<AdminSubscriberListItem>[] = [
     label: "Subscribed",
     render: (row) => dateFormatter.format(new Date(row.createdAt)),
   },
+  {
+    key: "unsubscribedAt",
+    label: "Status",
+    render: (row) => row.unsubscribedAt
+      ? `Unsubscribed ${dateFormatter.format(new Date(row.unsubscribedAt))}`
+      : "Subscribed",
+  },
 ];
 
 export default function SubscribersPage() {

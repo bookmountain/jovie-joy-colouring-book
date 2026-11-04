@@ -140,6 +140,57 @@ public class ResendEmailSender(
         }
     }
 
+    public async Task SendCampaignEmailAsync(CampaignEmailMessage message, string? idempotencyKey, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(opts.Value.ApiKey) &&
+            !environment.IsDevelopment() &&
+            !environment.IsEnvironment("Test"))
+            throw new InvalidOperationException("Resend__ApiKey is required to deliver marketing emails.");
+
+        if (string.IsNullOrWhiteSpace(opts.Value.ApiKey))
+        {
+            log.LogInformation("[dev-noop email] to={To} subject={Subject}", message.To, message.Subject);
+            return;
+        }
+
+        var payload = new Dictionary<string, object?>
+        {
+            ["from"] = $"{opts.Value.FromName} <{opts.Value.FromAddress}>",
+            ["to"] = new[] { message.To },
+            ["subject"] = message.Subject,
+            ["html"] = message.Html,
+            ["text"] = message.Text,
+        };
+        if (!string.IsNullOrWhiteSpace(message.ReplyTo))
+            payload["reply_to"] = message.ReplyTo;
+        if (!string.IsNullOrWhiteSpace(message.OneClickUnsubscribeUrl))
+        {
+            // RFC 8058 one-click unsubscribe, which Gmail and Yahoo expect on bulk mail.
+            payload["headers"] = new Dictionary<string, string>
+            {
+                ["List-Unsubscribe"] = $"<{message.OneClickUnsubscribeUrl}>",
+                ["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click",
+            };
+        }
+
+        using var req = new HttpRequestMessage(HttpMethod.Post, "https://api.resend.com/emails")
+        {
+            Content = JsonContent.Create(payload),
+        };
+        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", opts.Value.ApiKey);
+        if (!string.IsNullOrWhiteSpace(idempotencyKey))
+            req.Headers.TryAddWithoutValidation("Idempotency-Key", idempotencyKey);
+
+        var response = await http.SendAsync(req, ct);
+        if (response.IsSuccessStatusCode) return;
+
+        var body = await response.Content.ReadAsStringAsync(ct);
+        log.LogError("Resend campaign email failed: {Status} {Body}", response.StatusCode, body);
+        if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            throw new EmailRateLimitedException($"Resend rate limit: {body}");
+        throw new InvalidOperationException($"Resend send failed: {(int)response.StatusCode}");
+    }
+
     private static string BuildHtml(Freebie f, string url, int ttlDays) => $@"
 <!doctype html><html><body style=""font-family:system-ui,sans-serif;color:#222"">
   <h2 style=""margin:0 0 12px 0"">{System.Net.WebUtility.HtmlEncode(f.Title)}</h2>

@@ -48,6 +48,9 @@ public class ApiFactory : WebApplicationFactory<Program>
         // Most controller suites share one factory across many test methods, so
         // keep anonymous endpoint limits out of their way. Dedicated rate-limit
         // tests override these values with small limits.
+        // Tests drive EmailCampaignService directly so ticks can't race assertions.
+        builder.UseSetting("EmailCampaigns:WorkerEnabled", "false");
+        builder.UseSetting("EmailCampaigns:PostalAddress", "1 Test Lane, Testville");
         builder.UseSetting("RateLimiting:Checkout:PermitLimit", "1000");
         builder.UseSetting("RateLimiting:FreebieRequest:PermitLimit", "1000");
         builder.ConfigureServices(services =>

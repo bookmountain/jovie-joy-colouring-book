@@ -198,6 +198,8 @@ export const apiGetContent = () => get<SiteContentBundle>("/api/content", "conte
 
 // Commerce (anonymous OK)
 export const apiNewsletterSignup = (email: string) => post<{ ok: true }>("/api/newsletter", { email });
+export const apiNewsletterUnsubscribe = (token: string) =>
+  post<{ ok: true }>(`/api/newsletter/unsubscribe/${encodeURIComponent(token)}`, {});
 export const apiNotifyMe = (email: string, productSlug: string) =>
   post<{ ok: true }>("/api/notify-me", { email, productSlug });
 export const apiCreateCheckout = (

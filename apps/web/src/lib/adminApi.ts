@@ -378,9 +378,79 @@ export type AdminNotifyMeListItem = {
   createdAt: string;
 };
 
+export type EmailCampaignStatus = "Draft" | "Sending" | "Sent" | "Skipped";
+
+export type EmailCampaignListItem = {
+  id: string;
+  kind: "Product" | "Freebie";
+  itemSlug: string;
+  itemTitle: string;
+  status: EmailCampaignStatus;
+  subject: string;
+  recipientCount: number;
+  sentCount: number;
+  failedCount: number;
+  createdAt: string;
+  approvedAt: string | null;
+  sentAt: string | null;
+};
+
+export type EmailCampaignDetail = EmailCampaignListItem & {
+  preheader: string;
+  headline: string;
+  body: string;
+  buttonLabel: string;
+  imageUrl: string;
+  priceLabel: string | null;
+  itemLive: boolean;
+  subscriberCount: number;
+  skippedCount: number;
+};
+
+export type EmailCampaignContent = Pick<
+  EmailCampaignDetail,
+  "subject" | "preheader" | "headline" | "body" | "buttonLabel"
+>;
+
+export type EmailCampaignPreview = { subject: string; preheader: string; html: string; text: string };
+
+const emailCampaignPath = (id: string, action = "") =>
+  `/api/admin/email-campaigns/${encodeURIComponent(id)}${action}`;
+
+export const adminListEmailCampaigns = () =>
+  adminFetch<{ items: EmailCampaignListItem[]; subscriberCount: number }>("/api/admin/email-campaigns");
+
+export const adminGetEmailCampaign = (id: string) =>
+  adminFetch<EmailCampaignDetail>(emailCampaignPath(id));
+
+export const adminPreviewEmailCampaign = (id: string) =>
+  adminFetch<EmailCampaignPreview>(emailCampaignPath(id, "/preview"));
+
+export const adminUpdateEmailCampaign = (id: string, content: EmailCampaignContent) =>
+  adminFetch<EmailCampaignDetail>(emailCampaignPath(id), {
+    method: "PUT",
+    body: JSON.stringify(content),
+  });
+
+export const adminTestEmailCampaign = (id: string, to: string) =>
+  adminFetch<{ ok: true }>(emailCampaignPath(id, "/test"), {
+    method: "POST",
+    body: JSON.stringify({ to }),
+  });
+
+export const adminSendEmailCampaign = (id: string) =>
+  adminFetch<{ recipientCount: number }>(emailCampaignPath(id, "/send"), { method: "POST" });
+
+export const adminSkipEmailCampaign = (id: string) =>
+  adminFetch<EmailCampaignDetail>(emailCampaignPath(id, "/skip"), { method: "POST" });
+
+export const adminRestoreEmailCampaign = (id: string) =>
+  adminFetch<EmailCampaignDetail>(emailCampaignPath(id, "/restore"), { method: "POST" });
+
 export type AdminSubscriberListItem = {
   email: string;
   createdAt: string;
+  unsubscribedAt: string | null;
 };
 
 function adminAudienceQuery(q: string | undefined, page: number, pageSize: number): string {

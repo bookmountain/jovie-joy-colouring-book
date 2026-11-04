@@ -25,4 +25,17 @@ public class FakeEmailSender : IEmailSender
         ProductDownloadEmails.Add((to, customerName, downloads));
         return Task.CompletedTask;
     }
+
+    public List<(CampaignEmailMessage Message, string? IdempotencyKey)> CampaignEmails { get; } = [];
+    public List<(CampaignEmailMessage Message, string? IdempotencyKey)> CampaignAttempts { get; } = [];
+    public Func<CampaignEmailMessage, Exception?>? CampaignFailure { get; set; }
+
+    public Task SendCampaignEmailAsync(CampaignEmailMessage message, string? idempotencyKey, CancellationToken ct)
+    {
+        CampaignAttempts.Add((message, idempotencyKey));
+        var failure = CampaignFailure?.Invoke(message);
+        if (failure is not null) throw failure;
+        CampaignEmails.Add((message, idempotencyKey));
+        return Task.CompletedTask;
+    }
 }
