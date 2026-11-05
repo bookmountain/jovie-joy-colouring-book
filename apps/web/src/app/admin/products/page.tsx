@@ -215,7 +215,7 @@ export default function AdminProductsPage() {
       key: "collections",
       label: "Collections",
       render: (row) => row.collectionSlugs.slice(0, 3).map((s) => (
-        <span key={s} style={{ background: "var(--admin-coral-soft)", color: "#a3392a", padding: "2px 7px", borderRadius: 999, fontSize: 10, fontWeight: 700, marginRight: 3 }}>{s}</span>
+        <span key={s} style={{ background: "var(--admin-coral-soft)", color: "#a3392a", padding: "2px 7px", borderRadius: 999, fontSize: 10, fontWeight: 700, marginRight: 3 }}>{allCollections.find((c) => c.slug === s)?.title ?? s}</span>
       )),
     },
     { key: "updated", label: "Updated", sortable: true, render: (row) => <span>{relTime(row.updatedAt)}</span> },

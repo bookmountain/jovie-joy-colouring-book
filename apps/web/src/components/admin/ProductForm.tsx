@@ -427,7 +427,7 @@ export function ProductForm({ initial, onSubmit, submitLabel, onDiscard, onDelet
             </AdminField>
           </AdminPanel>
 
-          <AdminPanel sectionTag="Format" hint="Drives where this product appears and how it's fulfilled.">
+          <AdminPanel sectionTag="Format" hint="Sets how this product is fulfilled. Collections below decide where it appears.">
             <AdminFormatPicker value={productFormat} onChange={setProductFormat} />
           </AdminPanel>
 
@@ -458,6 +458,7 @@ export function ProductForm({ initial, onSubmit, submitLabel, onDiscard, onDelet
           <AdminPanel sectionTag="Organization">
             <AdminField>
               <AdminLabel>Collections</AdminLabel>
+              <p className="panel-hint">Decides which Products menu pages show this product. Tags and Format don&rsquo;t.</p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
                 {allCollections.map((c) => {
                   const on = collectionSlugs.includes(c.slug);
